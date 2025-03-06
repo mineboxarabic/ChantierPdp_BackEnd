@@ -1,0 +1,51 @@
+package com.danone.pdpbackend.Controller;
+
+import com.danone.pdpbackend.Services.RisqueService;
+import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.entities.Risque;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/risque")
+public class RisqueController {
+    @Autowired
+    private RisqueService risqueService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<Risque>>> getAllRisques() {
+        //return new ApiResponse<>(risqueService.getAllRisques(), "Risques fetched");
+        return ResponseEntity.ok(new ApiResponse<>(risqueService.getAllRisques(), "Risques fetched"));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<Risque>> getRisqueById(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(risqueService.getRisqueById(id), "Risque fetched"));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<Risque>> createRisque(@RequestBody Risque risque) {
+        return ResponseEntity.ok(new ApiResponse<>(risqueService.createRisque(risque), "Risque created"));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ApiResponse<Risque>> updateRisque(@PathVariable Long id, @RequestBody Risque risqueDetails) {
+        try {
+            return ResponseEntity.ok(new ApiResponse<>(risqueService.updateRisque(id, risqueDetails), "Risque updated"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Boolean>> deleteRisque(@PathVariable Long id) {
+
+        if (!risqueService.deleteRisque(id)) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(new ApiResponse<>(true, "Risque deleted"));
+    }
+}
