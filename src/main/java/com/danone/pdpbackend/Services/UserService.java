@@ -1,25 +1,25 @@
 package com.danone.pdpbackend.Services;
 
 import com.danone.pdpbackend.dto.UsersRegisterData;
-import com.danone.pdpbackend.entities.AppUser;
+import com.danone.pdpbackend.entities.User;
 
 import java.util.List;
 
 public interface UserService {
 
 
-    List<AppUser> findAll();
+    List<User> findAll();
 
-    AppUser createUser(AppUser appUser);
+    User createUser(User user);
 
 
-    AppUser getUserById(Long id);
+    User getUserById(Long id);
 
-    AppUser updateUser(AppUser appUser, Long id);
+    User updateUser(User user, Long id);
 
     boolean deleteUser(Long id);
 
     boolean registerUser(UsersRegisterData user);
 
-    AppUser findByEmail(String email);
+    User findByEmail(String email);
 }

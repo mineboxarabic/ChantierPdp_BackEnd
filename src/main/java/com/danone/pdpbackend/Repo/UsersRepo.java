@@ -1,23 +1,29 @@
 package com.danone.pdpbackend.Repo;
 
-import com.danone.pdpbackend.entities.AppUser;
+import com.danone.pdpbackend.entities.User;
 import org.springframework.data.repository.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @org.springframework.stereotype.Repository
-public interface UsersRepo extends Repository<AppUser, Long>
+public interface UsersRepo extends Repository<User, Long>
 {
 
 
-    List<AppUser> findAll();
-    List<AppUser> findAllBy();
+    List<User> findAll();
+    List<User> findAllBy();
 
-    AppUser save(AppUser appUser);
 
-    List<AppUser> findAllById(Long id);
+    Optional<User> findByUsername(String username);
+    
+    User save(User user);
+
+    List<User> findAllById(Long id);
 
     void deleteById(Long id);
 
-    AppUser findByEmail(String email);
+    User findByEmail(String email);
+
+    Boolean existsUserByUsername(String username);
 }

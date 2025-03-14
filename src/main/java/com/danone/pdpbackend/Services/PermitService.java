@@ -13,4 +13,5 @@ public interface PermitService {
     Permit updatePermit(Long id, Permit permitDetails);
 
     boolean deletePermit(Long id);
+
 }

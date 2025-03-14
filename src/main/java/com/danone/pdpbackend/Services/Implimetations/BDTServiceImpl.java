@@ -1,10 +1,14 @@
 package com.danone.pdpbackend.Services.Implimetations;
 
 import com.danone.pdpbackend.Repo.BDTRepo;
+import com.danone.pdpbackend.Repo.ObjectAnswerRepo;
 import com.danone.pdpbackend.Repo.RisqueRepo;
 import com.danone.pdpbackend.Repo.AuditSecuRepo;
 import com.danone.pdpbackend.Services.BDTService;
+import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import com.danone.pdpbackend.entities.BDT.BDT;
+import com.danone.pdpbackend.entities.ObjectAnswered;
+import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.Risque;
 import com.danone.pdpbackend.entities.AuditSecu;
 import lombok.extern.slf4j.Slf4j;
@@ -18,11 +22,13 @@ public class BDTServiceImpl implements BDTService {
     private final BDTRepo bdtRepo;
     private final RisqueRepo risqueRepo;
     private final AuditSecuRepo auditSecuRepo;
+    private final ObjectAnswerRepo objectAnswerRepo;
 
-    public BDTServiceImpl(BDTRepo bdtRepo, RisqueRepo risqueRepo, AuditSecuRepo auditSecuRepo) {
+    public BDTServiceImpl(BDTRepo bdtRepo, RisqueRepo risqueRepo, AuditSecuRepo auditSecuRepo, ObjectAnswerRepo objectAnswerRepo) {
         this.bdtRepo = bdtRepo;
         this.risqueRepo = risqueRepo;
         this.auditSecuRepo = auditSecuRepo;
+        this.objectAnswerRepo = objectAnswerRepo;
     }
 
     @Override
@@ -58,21 +64,38 @@ public class BDTServiceImpl implements BDTService {
         return true;
     }
 
+
     @Override
-    public Risque addRisqueToBDT(Long bdtId, Long risqueId) {
+    public ObjectAnswered removeObjectAnswered(Long bdtId, Long id, ObjectAnsweredObjects objectAnsweredObject) {
         BDT bdt = getBDT(bdtId);
-        Risque risque = risqueRepo.findRisqueById(risqueId);
-        bdt.getRisques().add(risque);
+        ObjectAnswered objectAnswered = objectAnswerRepo.findById(id);
+
+        if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
+            bdt.getRisques().remove(objectAnswered);
+        } else if(objectAnsweredObject == ObjectAnsweredObjects.AUDIT){
+            bdt.getAuditSecu().remove(objectAnswered);
+        }
+        objectAnswerRepo.delete(objectAnswered);
         bdtRepo.save(bdt);
-        return risque;
+        return objectAnswered;
     }
 
     @Override
-    public AuditSecu addAuditToBDT(Long bdtId, Long auditId) {
+    public ObjectAnswered addObjectAnswered(Long bdtId, Long id, ObjectAnsweredObjects objectAnsweredObject) {
         BDT bdt = getBDT(bdtId);
-        AuditSecu audit = auditSecuRepo.findById(auditId).orElseThrow(() -> new IllegalArgumentException("AuditSecu not found"));
-        bdt.getAuditSecu().add(audit);
+        ObjectAnswered objectAnswered = objectAnswerRepo.findById(id);
+
+        if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE)
+        {
+            bdt.getRisques().add(objectAnswered);
+        }
+        else if(objectAnsweredObject == ObjectAnsweredObjects.AUDIT)
+        {
+            bdt.getAuditSecu().add(objectAnswered);
+        }
+
+        objectAnswerRepo.delete(objectAnswered);
         bdtRepo.save(bdt);
-        return audit;
+        return objectAnswered;
     }
 }

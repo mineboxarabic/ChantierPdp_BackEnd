@@ -123,30 +123,36 @@ public class PdpServiceImpl implements PdpService {
 
     private void updateObjectAnsweredList(List<ObjectAnswered> updatedList,List<ObjectAnswered> existingList, ObjectAnswerRepo repo) {
 
-        if (updatedList.size() != existingList.size()) {
-            for (ObjectAnswered objectAnswered : existingList) {
-                boolean found = false;
-                for (ObjectAnswered updated : updatedList) {
-                    if (objectAnswered.getId().equals(updated.getId())) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    repo.deleteById(objectAnswered.getId());
-                    existingList.remove(objectAnswered);
 
-                }
+        //We have three cases either we add new objects of objectAnswered or we update the existing ones, or we delete the ones that are not in the updated list
+
+        //First we add the new objects
+/*        for (ObjectAnswered item : updatedList) {
+            if (item.getId() == null) {
+                item = repo.save(item);
+                existingList.add(item);
+            }
+        }*/
+
+        //Then we update the existing ones
+        for (ObjectAnswered item : updatedList) {
+            if (item.getId() != null) {
+                ObjectAnswered existingItem = repo.findById(item.getId());
+                existingItem.setAnswer(item.getAnswer());
+                repo.save(existingItem);
             }
         }
 
-
-        if (updatedList != null) {
-            for (ObjectAnswered objectAnswered : updatedList) {
-                objectAnswered.setAnswer(objectAnswered.getAnswer());
-                repo.save(objectAnswered);
+        //Finally we delete the ones that are not in the updated list
+/*
+        for (ObjectAnswered item : existingList) {
+            if (!updatedList.contains(item)) {
+                repo.delete(item);
             }
         }
+*/
+
+
     }
 
     private void updateAnalyseDeRisques(Pdp updatedPdp) {
@@ -289,7 +295,7 @@ public class PdpServiceImpl implements PdpService {
         Pdp pdp = getPdp(pdpId);
         ObjectAnswered objectAnswered = saveNewObjectAnswer(pdpId, dispositifId,"Dispositif");
         objectAnswered = objectAnswerRepo.save(objectAnswered);
-        pdp.getDispositifs().add(objectAnswered);
+        //pdp.getDispositifs().add(objectAnswered);
         pdpRepo.save(pdp);
         return objectAnswered;
     }
@@ -373,6 +379,20 @@ public class PdpServiceImpl implements PdpService {
         objectAnswered = objectAnswerRepo.save(objectAnswered);
         pdpRepo.save(pdp);
         return objectAnswered;
+    }
+
+    @Override
+    public ObjectAnsweredEntreprises removeAnalyse(Long pdpId, Long analyseId) {
+        Pdp pdp = getPdp(pdpId);
+        ObjectAnsweredEntreprises objectAnsweredEntreprises = objectAnswerEntreprisesRepo.findById(analyseId);
+
+
+        pdp.getAnalyseDeRisques().remove(objectAnsweredEntreprises);
+        pdpRepo.save(pdp);
+
+        objectAnswerEntreprisesRepo.deleteById(analyseId);
+
+        return objectAnsweredEntreprises;
     }
 
 

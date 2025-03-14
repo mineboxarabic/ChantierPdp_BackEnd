@@ -42,6 +42,7 @@ public class PermitServiceImpl implements PermitService {
         if (permitDetails.getTitle() != null) permit.setTitle(permitDetails.getTitle());
         if (permitDetails.getDescription() != null) permit.setDescription(permitDetails.getDescription());
         if (permitDetails.getLogo() != null) permit.setLogo(permitDetails.getLogo());
+        if(permitDetails.getPdfData() != null) permit.setPdfData(permitDetails.getPdfData());
 
 
         return permitRepo.save(permit);
@@ -51,4 +52,6 @@ public class PermitServiceImpl implements PermitService {
     public boolean deletePermit(Long id) {
         return permitRepo.deleteById(id);
     }
+
+
 }

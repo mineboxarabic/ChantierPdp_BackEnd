@@ -1,7 +1,7 @@
 package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.UserService;
-import com.danone.pdpbackend.entities.AppUser;
+import com.danone.pdpbackend.entities.User;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,10 +26,10 @@ class UserControllerTest {
 
     @Test
     void createUser_shouldReturnCreatedStatus_whenValidUserProvided() throws Exception {
-        AppUser validUser = new AppUser();
+        User validUser = new User();
         validUser.setName("John Doe");
 
-        doNothing().when(userService).createUser(Mockito.any(AppUser.class));
+        doNothing().when(userService).createUser(Mockito.any(User.class));
 
         String jsonRequest = """
                 {

@@ -156,5 +156,13 @@ public class PdpController {
         return ResponseEntity.ok(new ApiResponse<>(pdpService.getPdp(id) != null, "Pdp exist"));
     }
 
+
+    //        return fetch('api/pdp/' + pdpId + '/analyse/' + analyseId, 'DELETE', null,
+    @DeleteMapping("/{pdpId}/analyse/{analyseId}")
+    public ResponseEntity<ApiResponse<ObjectAnsweredEntreprises>> removeAnalyseFromPdp(@PathVariable Long pdpId, @PathVariable Long analyseId)
+    {
+        return ResponseEntity.ok(new ApiResponse<>(pdpService.removeAnalyse(pdpId, analyseId), "Analyse removed from pdp successfully"));
+    }
+
 }
 

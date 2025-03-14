@@ -3,13 +3,8 @@ package com.danone.pdpbackend.entities;
 
 import com.danone.pdpbackend.Utils.Image.ImageModel;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Slf4j
 @Entity(name = "entreprise")
@@ -29,11 +24,11 @@ public class Entreprise {
 
     @JoinColumn(name = "referentpdp")
     @ManyToOne
-    private AppUser referentPdp;
+    private User referentPdp;
 
     @JoinColumn(name = "responsablechantier")
     @ManyToOne
-    private AppUser responsableChantier;
+    private User responsableChantier;
 
     @Column(name = "raisonsociale")
     private String raisonSociale;
@@ -43,15 +38,7 @@ public class Entreprise {
     private ImageModel image; // For storing binary data
 
     public Entreprise() {
-       /* try {
-            // Load the default image
-            Path imagePath = Paths.get(getClass().getClassLoader().getResource("images.png").toURI());
-            byte[] image = Files.readAllBytes(imagePath);
-            this.image = image;
-            log.info("path : {}", Paths.get("src/main/resources/image.png").toAbsolutePath());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }*/
+
     }
 
 }

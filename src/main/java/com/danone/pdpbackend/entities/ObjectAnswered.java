@@ -22,6 +22,9 @@ public class ObjectAnswered {
     @ManyToOne
     Permit permit;
 
+    @ManyToOne
+    AuditSecu auditSecu;
+
     Boolean answer;
 
 

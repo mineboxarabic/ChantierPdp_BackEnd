@@ -14,4 +14,6 @@ public interface ObjectAnswerEntreprisesRepo extends Repository<ObjectAnsweredEn
     ObjectAnsweredEntreprises save(ObjectAnsweredEntreprises objectAnsweredEntreprises);
 
     ObjectAnsweredEntreprises findById(Long id);
+
+    void deleteById(Long id);
 }

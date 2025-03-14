@@ -8,7 +8,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class HoraireDeTravaille {
-
     Boolean enJournee = false;
     Boolean enNuit = false;
     Boolean samedi = false;

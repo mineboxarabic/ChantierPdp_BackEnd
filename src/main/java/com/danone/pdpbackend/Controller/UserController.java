@@ -4,7 +4,7 @@ package com.danone.pdpbackend.Controller;
 import com.danone.pdpbackend.Services.UserService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.dto.UsersRegisterData;
-import com.danone.pdpbackend.entities.AppUser;
+import com.danone.pdpbackend.entities.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,27 +24,26 @@ public class UserController {
 
     //Read
     @GetMapping("")
-    public ResponseEntity<ApiResponse<List<AppUser>>> fetchAll(){
+    public ResponseEntity<ApiResponse<List<User>>> fetchAll(){
         return new ResponseEntity<>(new ApiResponse<>(userService.findAll(), "Info fetched"), HttpStatus.OK);
     }
 
     //Create
     @PostMapping("")
-    public ResponseEntity<ApiResponse<AppUser>> createUser(@RequestBody AppUser appUser){
-        log.info("Creating user with name: {}", appUser.getName());
-        userService.createUser(appUser);
-        return new ResponseEntity<>(new ApiResponse<>( userService.createUser(appUser), "User Created Successfully"), HttpStatus.CREATED);
+    public ResponseEntity<ApiResponse<User>> createUser(@RequestBody User user){
+        userService.createUser(user);
+        return new ResponseEntity<>(new ApiResponse<>( userService.createUser(user), "User Created Successfully"), HttpStatus.CREATED);
     }
 
     //Update
    @PutMapping("/{id}")
-   public ResponseEntity<ApiResponse<AppUser>> updateUser(@RequestBody AppUser appUser, @PathVariable Long id){
+   public ResponseEntity<ApiResponse<User>> updateUser(@RequestBody User user, @PathVariable Long id){
        log.info("Updating user with id: {}", id);
-       AppUser appUser1 = userService.updateUser(appUser, id);
-       if(appUser1 == null){
-           return new ResponseEntity<>(new ApiResponse<>(appUser1,"User Not Found"), HttpStatus.NOT_FOUND);
+       User user1 = userService.updateUser(user, id);
+       if(user1 == null){
+           return new ResponseEntity<>(new ApiResponse<>(user1,"User Not Found"), HttpStatus.NOT_FOUND);
        }
-       return new ResponseEntity<>(new ApiResponse<>(appUser1, "User Updated Successfully"), HttpStatus.OK);
+       return new ResponseEntity<>(new ApiResponse<>(user1, "User Updated Successfully"), HttpStatus.OK);
    }
 
    @DeleteMapping("/{id}")
@@ -69,7 +68,7 @@ public class UserController {
    @PostMapping("login")
     public ResponseEntity<Object> loginUser(@RequestBody UsersRegisterData user){
 
-        AppUser appUser = userService.findByEmail(user.email);
+        User appUser = userService.findByEmail(user.email);
 
         if(appUser != null){
             if(user.password.equals(appUser.getPassword())){

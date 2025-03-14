@@ -10,7 +10,6 @@ import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 @Entity(name = "pdp")
 @Getter
@@ -58,22 +57,24 @@ public class Pdp {
     private List<Entreprise> sousTraitants;
 
 
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ObjectAnswered> risques;
 
-    private List<Map<Integer>> risques;
 
-
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ObjectAnswered> dispositifs;
 
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ObjectAnswered> permits;
 
-    @ManyToMany
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ObjectAnsweredEntreprises> analyseDeRisques;
 
     @ManyToOne
     private Localisation localisation;
 
-    @ManyToMany
-    private List<ObjectAnswered> permits;
+
 
 
     @ManyToMany

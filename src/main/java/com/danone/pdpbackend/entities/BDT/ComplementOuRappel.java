@@ -2,17 +2,15 @@ package com.danone.pdpbackend.entities.BDT;
 
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
-@Entity(name = "ComplementOuRappel")
-public class ComplementOuRappel {
+import java.io.Serializable;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @ManyToOne
-    private BDT bdt;
-
+@Getter
+@Setter
+@Embeddable
+public class ComplementOuRappel implements Serializable {
     private String complement;
     private Boolean respect;
 }

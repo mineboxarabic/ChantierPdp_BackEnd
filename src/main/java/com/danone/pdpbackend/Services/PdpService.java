@@ -40,4 +40,5 @@ public interface PdpService {
     ObjectAnswered removeObjectAnswered(Long permitId, Long id, ObjectAnsweredObjects objectAnsweredObject);
     ObjectAnswered addObjectAnswered(Long pdpId, Long id, ObjectAnsweredObjects objectAnsweredObject);
 
+    ObjectAnsweredEntreprises removeAnalyse(Long pdpId, Long analyseId);
 }

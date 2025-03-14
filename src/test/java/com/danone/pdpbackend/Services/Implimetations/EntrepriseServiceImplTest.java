@@ -2,14 +2,9 @@ package com.danone.pdpbackend.Services.Implimetations;
 
 import com.danone.pdpbackend.Services.EntrepriseService;
 import com.danone.pdpbackend.Services.UserService;
-import com.danone.pdpbackend.dto.EntrepriseDTO;
-import com.danone.pdpbackend.entities.AppUser;
-import com.danone.pdpbackend.entities.Entreprise;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class EntrepriseServiceImplTest {
