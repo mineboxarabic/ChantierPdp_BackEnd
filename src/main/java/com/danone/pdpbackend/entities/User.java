@@ -1,8 +1,7 @@
 package com.danone.pdpbackend.entities;
 
-
 import com.danone.pdpbackend.Utils.Roles;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+// No Jackson annotations needed
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,20 +18,20 @@ import java.util.List;
 @Builder
 public class User implements UserDetails {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto-increment primary key
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Enumerated(EnumType.STRING)
-    private Roles role;
+    //@Enumerated(EnumType.STRING)
+    //private Roles role = Roles.WORKER;
     private String fonction;
     private String notel;
     private String email;
     private String username;
     private String password;
 
-    @JsonDeserialize(contentAs = SimpleGrantedAuthority.class)
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+       // return List.of(new SimpleGrantedAuthority(role.name()));
+        return List.of();
     }
 
     @Override

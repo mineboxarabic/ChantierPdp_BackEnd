@@ -1,6 +1,7 @@
 package com.danone.pdpbackend.Services.Implimetations;
 
 import com.danone.pdpbackend.Repo.ChantierRepo;
+import com.danone.pdpbackend.Repo.EntrepriseRepo;
 import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.entities.Chantier;
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +16,11 @@ import java.util.Optional;
 public class ChantierServiceImpl implements ChantierService {
 
     private final ChantierRepo chantierRepo;
+    private final EntrepriseRepo entrepriseRepo;
 
-    public ChantierServiceImpl(ChantierRepo chantierRepo) {
+    public ChantierServiceImpl(ChantierRepo chantierRepo, EntrepriseRepo entrepriseRepo) {
         this.chantierRepo = chantierRepo;
+        this.entrepriseRepo = entrepriseRepo;
     }
 
     @Override
@@ -39,10 +42,19 @@ public class ChantierServiceImpl implements ChantierService {
         if (updatedChantier.getDescription() != null) existingChantier.setDescription(updatedChantier.getDescription());
 
         */
+
+        if(updatedChantier.getEntrepriseUtilisatrice() != null){
+            Long entrepriseUtilisatriceId = updatedChantier.getEntrepriseUtilisatrice().getId();
+
+            existingChantier.setEntrepriseUtilisatrice(entrepriseRepo.findEntrepriseById(entrepriseUtilisatriceId));
+        }
+
         for(Field field : updatedChantier.getClass().getDeclaredFields()){
             field.setAccessible(true);
+
             try {
                 Object value = field.get(updatedChantier);
+
                 if(value != null){
                     field.set(existingChantier, value);
                 }

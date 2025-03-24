@@ -44,7 +44,7 @@ public class UsersServiceImpl implements UserService {
         if(appUser.getEmail() != null) user.setEmail(appUser.getEmail());
         if(appUser.getPassword() != null) user.setPassword(appUser.getPassword());
         if(appUser.getFonction() != null) user.setFonction(appUser.getFonction());
-        if(appUser.getRole() != null) user.setRole(appUser.getRole());
+       // if(appUser.getRole() != null) user.setRole(appUser.getRole());
         if(appUser.getNotel() != null) user.setNotel(appUser.getNotel());
 
         return usersRepo.save(user);

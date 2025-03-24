@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 public class MedecinDuTravailleEE {
 
-   String nom;
-   String noTel;
+   String nomDeMedecin;
+   String noTelDeMedcin;
 
 }

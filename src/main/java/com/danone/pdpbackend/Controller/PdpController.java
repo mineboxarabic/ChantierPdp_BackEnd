@@ -58,7 +58,7 @@ public class PdpController {
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<Pdp>> savePdp(@PathVariable Long id, @RequestBody Pdp pdp)
     {
-        log.info("Updating pdp with id: {}", pdp.getOperation());
+        log.info("Updating pdp with id: {}", pdp.getChantier().getOperation());
         Pdp pdpUpdated = pdpService.updatePdp(pdp, id);
         return ResponseEntity.ok(new ApiResponse<>(pdpUpdated, "Pdp updated successfully"));
     }

@@ -9,12 +9,12 @@ public class EntrepriseMapper {
     public static EntrepriseDTO toDTO(Entreprise entreprise) {
         EntrepriseDTO entrepriseDto = EntrepriseDTO.builder()
                 .nom(entreprise.getNom())
-                .fonction(entreprise.getFonction())
+               // .fonction(entreprise.getFonction())
                 .numTel(entreprise.getNumTel())
-                .referentPdp(entreprise.getReferentPdp())
-                .responsableChantier(entreprise.getResponsableChantier())
+             //   .referentPdp(entreprise.getReferentPdp())
+            //    .responsableChantier(entreprise.getResponsableChantier())
                 .raisonSociale(entreprise.getRaisonSociale())
-                .isUtilisatrise(entreprise.getIsUtilisatrice())
+                //.isUtilisatrise(entreprise.getIsUtilisatrice())
                 .build();
         return entrepriseDto;
     }

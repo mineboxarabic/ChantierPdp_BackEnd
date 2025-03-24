@@ -69,15 +69,15 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         }
 
         if (entrepriseutilisatrice.getNom() != null) entreprise.setNom(entrepriseutilisatrice.getNom());
-        if (entrepriseutilisatrice.getFonction() != null) entreprise.setFonction(entrepriseutilisatrice.getFonction());
+       // if (entrepriseutilisatrice.getFonction() != null) entreprise.setFonction(entrepriseutilisatrice.getFonction());
         if (entrepriseutilisatrice.getNumTel() != null) entreprise.setNumTel(entrepriseutilisatrice.getNumTel());
-        if (entrepriseutilisatrice.getReferentPdp() != null) entreprise.setReferentPdp(entrepriseutilisatrice.getReferentPdp());
-        if (entrepriseutilisatrice.getResponsableChantier() != null) entreprise.setResponsableChantier(entrepriseutilisatrice.getResponsableChantier());
+       // if (entrepriseutilisatrice.getReferentPdp() != null) entreprise.setReferentPdp(entrepriseutilisatrice.getReferentPdp());
+       // if (entrepriseutilisatrice.getResponsableChantier() != null) entreprise.setResponsableChantier(entrepriseutilisatrice.getResponsableChantier());
         if (entrepriseutilisatrice.getRaisonSociale() != null) entreprise.setRaisonSociale(entrepriseutilisatrice.getRaisonSociale());
         if(entrepriseutilisatrice.getImage() != null) {
             entreprise.setImage(entrepriseutilisatrice.getImage());
         }
-        if(entrepriseutilisatrice.getIsUtilisatrice() != null) entreprise.setIsUtilisatrice(entrepriseutilisatrice.getIsUtilisatrice());
+       // if(entrepriseutilisatrice.getIsUtilisatrice() != null) entreprise.setIsUtilisatrice(entrepriseutilisatrice.getIsUtilisatrice());
 
         entrepriseRepo.save(entreprise);
         return entreprise;
@@ -93,10 +93,10 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         }
 
         if (entrepriseDTO.getNom() != null)         entreprise.setNom(entrepriseDTO.getNom());
-        if (entrepriseDTO.getFonction() != null)    entreprise.setFonction(entrepriseDTO.getFonction());
+      //  if (entrepriseDTO.getFonction() != null)    entreprise.setFonction(entrepriseDTO.getFonction());
         if (entrepriseDTO.getNumTel() != null)      entreprise.setNumTel(entrepriseDTO.getNumTel());
-        if (entrepriseDTO.getReferentPdp() != null) entreprise.setReferentPdp(entrepriseDTO.getReferentPdp());
-        if (entrepriseDTO.getResponsableChantier() != null) entreprise.setResponsableChantier(entrepriseDTO.getResponsableChantier());
+        //if (entrepriseDTO.getReferentPdp() != null) entreprise.setReferentPdp(entrepriseDTO.getReferentPdp());
+      //  if (entrepriseDTO.getResponsableChantier() != null) entreprise.setResponsableChantier(entrepriseDTO.getResponsableChantier());
         if (entrepriseDTO.getRaisonSociale() != null) entreprise.setRaisonSociale(entrepriseDTO.getRaisonSociale());
         entrepriseRepo.save(entreprise);
         return entreprise;

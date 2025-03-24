@@ -98,7 +98,7 @@ public class PdpServiceImpl implements PdpService {
         //Get the disposifs that are in existing pdp and not in updated pdp
 
 
-        updateEntrepriseUtilisatrice(updatedPdp, existingPdp);
+        //updateEntrepriseUtilisatrice(updatedPdp, existingPdp);
         updateObjectAnsweredList(updatedPdp.getRisques(),existingPdp.getRisques(), objectAnswerRepo);
         updateObjectAnsweredList(updatedPdp.getDispositifs(),existingPdp.getDispositifs(), objectAnswerRepo);
         updateAnalyseDeRisques(updatedPdp);
@@ -110,16 +110,6 @@ public class PdpServiceImpl implements PdpService {
         return existingPdp;
     }
 
-    private void updateEntrepriseUtilisatrice(Pdp updatedPdp, Pdp existingPdp) {
-        if (updatedPdp.getEntrepriseutilisatrice() != null) {
-            existingPdp.setEntrepriseutilisatrice(
-                    entrepriseService.updateEntreprise(
-                            updatedPdp.getEntrepriseutilisatrice(),
-                            updatedPdp.getEntrepriseutilisatrice().getId()
-                    )
-            );
-        }
-    }
 
     private void updateObjectAnsweredList(List<ObjectAnswered> updatedList,List<ObjectAnswered> existingList, ObjectAnswerRepo repo) {
 
@@ -193,29 +183,29 @@ public class PdpServiceImpl implements PdpService {
         //Put all the fields from pdp into pdpEntity with for loop
         //log.info("Creating pdp with id " + (pdpRepo.findMaxId() + 1));
        // pdpEntity.setId((long) (pdpRepo.findMaxId() + 1));
-        pdpEntity.setOperation(pdp.getOperation());
+ /*       pdpEntity.setOperation(pdp.getOperation());
         pdpEntity.setLieuintervention(pdp.getLieuintervention());
         pdpEntity.setDatedebuttravaux(pdp.getDatedebuttravaux());
         pdpEntity.setDatefintravaux(pdp.getDatefintravaux());
         pdpEntity.setEffectifmaxisurchantier(pdp.getEffectifmaxisurchantier());
         pdpEntity.setNombreinterimaires(pdp.getNombreinterimaires());
-
+*/
         pdpEntity.setHoraireDeTravail(pdp.getHoraireDeTravail());
 
-        pdpEntity.setHorairesdetail(pdp.getHorairesdetail());
+       // pdpEntity.setHorairesdetail(pdp.getHorairesdetail());
         pdpEntity.setIcpdate(pdp.getIcpdate());
        // pdpEntity.setEntrepriseexterieure(pdp.getEntrepriseexterieure());
         //pdpEntity.setEntrepriseutilisatrice(entreprise);
-        pdpEntity.setMedecintravaileu(pdp.getMedecintravaileu());
-        pdpEntity.setMedecintravailee(pdp.getMedecintravailee());
+       // pdpEntity.setMedecintravaileu(pdp.getMedecintravaileu());
+      //  pdpEntity.setMedecintravailee(pdp.getMedecintravailee());
         pdpEntity.setDatePrevenirCSSCT(pdp.getDateprevenircssct());
         pdpEntity.setDatePrev(pdp.getDateprev());
-        pdpEntity.setLocation(pdp.getLocation());
+      //  pdpEntity.setLocation(pdp.getLocation());
 
         pdpEntity.setDateInspection(pdp.getDateInspection());
         pdpEntity.setEntrepriseDInspection(pdp.getEntrepriseDInspection());
-        pdpEntity.setEntrepriseutilisatrice(pdp.getEntrepriseetutilisatrise());
-        pdpEntity.setEntrepriseexterieure(pdp.getEntrepriseexterieure());
+     //   pdpEntity.setEntrepriseutilisatrice(pdp.getEntrepriseetutilisatrise());
+     //   pdpEntity.setEntrepriseexterieure(pdp.getEntrepriseexterieure());
 
         return pdpRepo.save(pdpEntity);
     }

@@ -18,43 +18,28 @@ public class Pdp {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String operation;
-    private String lieuintervention;
-    private Date datedebuttravaux;
-    private Date datefintravaux;
 
+
+    @ManyToOne
+    private Chantier chantier; // ✅ PDP is always linked to a chantier
+
+    @ManyToOne
+    private Entreprise entrepriseExterieure; // ✅ PDP is linked to an EE (Entreprise Extérieure)
 
 
     private Date dateInspection;
+    private Date icpdate;
+    private String horairesDetails;
+
+
     @OneToOne
     private Entreprise entrepriseDInspection;
-
-
-    private Integer effectifmaxisurchantier;
-    private Integer nombreinterimaires;
 
     @Embedded
     private HoraireDeTravaille horaireDeTravail;
 
-    private String horairesdetail;
-    private Date icpdate;
-
-    @ManyToMany
-    private List<Entreprise> entrepriseexterieure;
-
-    @ManyToOne
-    private Entreprise entrepriseutilisatrice;
-
     @Embedded
     private MisesEnDisposition misesEnDisposition;
-
-    @Embedded
-    private MedecinDuTravailleEE medecinDuTravailleEE;
-    private String medecintravaileu;
-    private String medecintravailee;
-
-    @ManyToMany
-    private List<Entreprise> sousTraitants;
 
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -71,16 +56,12 @@ public class Pdp {
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ObjectAnsweredEntreprises> analyseDeRisques;
 
-    @ManyToOne
-    private Localisation localisation;
+
+    @OneToMany(mappedBy = "pdp", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Worker> signatures; // ✅ List of workers who signed the PDP
 
 
+    private Date datePrevenirCSSCT; // ✅ Notification date for CSSCT (if required)
+    private Date datePrev; // ✅ Planned date for something (depends on business rules)
 
-
-    @ManyToMany
-    private List<Signature> signatures;
-
-    private Date datePrevenirCSSCT;
-    private Date datePrev;
-    private String location;
 }
