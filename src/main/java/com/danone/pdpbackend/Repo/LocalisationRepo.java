@@ -14,7 +14,7 @@ public interface LocalisationRepo extends Repository<Localisation, Long> {
     //Crud
     Localisation save(Localisation localisation);
     Optional<Localisation> findById(Long id);
-    boolean deleteById(Long id);
+    void deleteById(Long id);
     List<Localisation> findAll();
 
     @Query("SELECT MAX(id) FROM localisation")

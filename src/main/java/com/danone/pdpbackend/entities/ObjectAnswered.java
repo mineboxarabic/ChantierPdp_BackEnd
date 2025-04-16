@@ -13,17 +13,13 @@ public class ObjectAnswered {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    Risque risque;
+    Long risque_id;
 
-    @ManyToOne
-    Dispositif dispositif;
+    Long dispositif_id;
 
-    @ManyToOne
-    Permit permit;
+    Long permit_id;
 
-    @ManyToOne
-    AuditSecu auditSecu;
+    Long auditSecu_id;
 
     Boolean answer;
 

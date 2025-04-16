@@ -3,11 +3,13 @@ package com.danone.pdpbackend.Services.Implimetations;
 import com.danone.pdpbackend.Repo.PermitRepo;
 import com.danone.pdpbackend.Services.PermitService;
 import com.danone.pdpbackend.entities.Permit;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
 import java.util.List;
 
+@Slf4j
 @Service
 public class PermitServiceImpl implements PermitService {
 
@@ -50,7 +52,14 @@ public class PermitServiceImpl implements PermitService {
 
     @Override
     public boolean deletePermit(Long id) {
-        return permitRepo.deleteById(id);
+        log.info("Deleting permit with id: " + id);
+        permitRepo.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public List<Permit> getPermitsByIds(List<Long> ids) {
+        return permitRepo.findPermitByIdIn(ids);
     }
 
 

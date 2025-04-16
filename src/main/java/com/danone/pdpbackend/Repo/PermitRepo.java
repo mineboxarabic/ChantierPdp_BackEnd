@@ -4,6 +4,7 @@ import com.danone.pdpbackend.entities.Permit;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @org.springframework.stereotype.Repository
@@ -15,5 +16,7 @@ public interface PermitRepo extends Repository<Permit, Long> {
 
     Permit save(Permit permit);
 
-    boolean deleteById(Long id);
+    void deleteById(Long id);
+
+    List<Permit> findPermitByIdIn(Collection<Long> ids);
 }

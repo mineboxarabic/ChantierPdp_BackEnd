@@ -16,4 +16,6 @@ public interface DispositifService {
     Dispositif updateDispositif(Long id, Dispositif dispositifDetails);
 
     boolean deleteDispositif(Long id);
+
+    List<Dispositif> getDispositifsByIds(List<Long> ids);
 }

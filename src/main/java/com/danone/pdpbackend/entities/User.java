@@ -2,6 +2,7 @@ package com.danone.pdpbackend.entities;
 
 import com.danone.pdpbackend.Utils.Roles;
 // No Jackson annotations needed
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -27,6 +28,10 @@ public class User implements UserDetails {
     private String email;
     private String username;
     private String password;
+
+    @OneToMany(mappedBy = "donneurDOrdre")
+    @JsonIgnore
+    private List<Chantier> chantiers;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -12,5 +12,13 @@ public class Signature {
 
     private String nom;
 
+    private String prenom;
+
+    private String docType; //Pdp, Permit, BDT,
+    private Long docId;
+
+
+
+    @Embedded
     private ImageModel signature;
 }

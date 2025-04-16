@@ -1,4 +1,4 @@
-package com.danone.pdpbackend.dto;
+package com.danone.pdpbackend.entities.dto;
 
 import com.danone.pdpbackend.entities.User;
 import lombok.Builder;

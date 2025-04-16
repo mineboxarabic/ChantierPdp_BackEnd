@@ -14,4 +14,6 @@ public interface RisqueService {
     Risque updateRisque(Long id, Risque risqueDetails);
 
     Boolean deleteRisque(Long id);
+
+    List<Risque> getRisquesByIds(List<Long> ids);
 }

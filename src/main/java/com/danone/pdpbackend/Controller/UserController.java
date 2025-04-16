@@ -3,7 +3,7 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.UserService;
 import com.danone.pdpbackend.Utils.ApiResponse;
-import com.danone.pdpbackend.dto.UsersRegisterData;
+import com.danone.pdpbackend.entities.dto.UsersRegisterData;
 import com.danone.pdpbackend.entities.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -81,7 +81,15 @@ public class UserController {
         return new ResponseEntity<>("User Not Found", HttpStatus.NOT_FOUND);
    }
 
-    
+
+   @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable Long id){
+        User user = userService.findById(id);
+        if(user == null){
+            return new ResponseEntity<>(new ApiResponse<>(user,"User Not Found"), HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(new ApiResponse<>(user, "User Fetched Successfully"), HttpStatus.OK);
+   }
 
 
 

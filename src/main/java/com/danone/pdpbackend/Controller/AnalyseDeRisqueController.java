@@ -2,7 +2,7 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.AnalyseDeRisqueService;
 import com.danone.pdpbackend.Utils.ApiResponse;
-import com.danone.pdpbackend.dto.AnalyseDeRisqueDTO;
+import com.danone.pdpbackend.entities.dto.AnalyseDeRisqueDTO;
 import com.danone.pdpbackend.entities.AnalyseDeRisque;
 import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
 import lombok.extern.slf4j.Slf4j;

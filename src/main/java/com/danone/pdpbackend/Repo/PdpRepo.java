@@ -4,6 +4,7 @@ import com.danone.pdpbackend.entities.Pdp;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,4 +24,6 @@ public interface PdpRepo extends Repository<Pdp, Integer> {
     int findMaxId();
 
     void deleteById(Long id);
+
+    List<Pdp> findPdpsByIdIn(Collection<Long> ids);
 }

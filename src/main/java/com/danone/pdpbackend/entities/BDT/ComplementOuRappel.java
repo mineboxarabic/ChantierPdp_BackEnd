@@ -9,7 +9,6 @@ import java.io.Serializable;
 
 @Getter
 @Setter
-@Embeddable
 public class ComplementOuRappel implements Serializable {
     private String complement;
     private Boolean respect;

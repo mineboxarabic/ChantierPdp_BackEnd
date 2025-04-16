@@ -3,8 +3,9 @@ package com.danone.pdpbackend.Services.Implimetations;
 import com.danone.pdpbackend.Repo.EntrepriseRepo;
 import com.danone.pdpbackend.Services.EntrepriseService;
 import com.danone.pdpbackend.Utils.EntrepriseMapper;
-import com.danone.pdpbackend.dto.EntrepriseDTO;
+import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
 import com.danone.pdpbackend.entities.Entreprise;
+import com.danone.pdpbackend.entities.Worker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -22,11 +23,7 @@ public class EntrepriseServiceImpl implements EntrepriseService {
 
     @Override
     public void create(Entreprise entreprise) {
-
-
-
-        log.info("Last id: {}", entrepriseRepo.findMaxId());
-        entreprise.setId(entrepriseRepo.findMaxId() + 1L);
+        //entreprise.setId(entrepriseRepo.findMaxId() + 1L);
         entrepriseRepo.save(entreprise);
     }
 
@@ -43,8 +40,14 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     }
 
     @Override
-    public Entreprise findEntrepriseById(Long id) {
-        return entrepriseRepo.findEntrepriseById(id);
+    public Entreprise getEntrepriseById(Long id) {
+        try {
+            return entrepriseRepo.findEntrepriseById(id);
+
+        }catch (Exception e) {
+            log.error("Error fetching entreprise: {}", e.getMessage());
+            return null;
+        }
     }
 
     @Override
@@ -115,5 +118,27 @@ public class EntrepriseServiceImpl implements EntrepriseService {
         }
         entrepriseRepo.delete(entreprise);
         return true;
+    }
+
+    @Override
+    public List<Entreprise> getEntreprisesByIds(List<Long> entrepriseIds) {
+        //return entrepriseRepo.findAllById(entrepriseIds);
+        try{
+            List<Entreprise> entreprises = entrepriseRepo.findEntreprisesByIdIn(entrepriseIds);
+            return entreprises;
+
+        }catch (Exception e) {
+            log.error("Error fetching entreprises: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    @Override
+    public List<Worker> getWorkersByEntreprise(Long entrepriseId) {
+        Entreprise entreprise = entrepriseRepo.findEntrepriseById(entrepriseId);
+        if (entreprise == null) {
+            throw new IllegalArgumentException("Entreprise with id " + entrepriseId + " not found");
+        }
+        return entreprise.getWorkers();
     }
 }

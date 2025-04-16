@@ -72,4 +72,14 @@ public class RisqueServiceImpl implements RisqueService {
             return true;
         }
     }
+
+    @Override
+    public List<Risque> getRisquesByIds(List<Long> ids) {
+        List<Risque> risques = risqueRepo.findRisqueByIdIn(ids);
+        if (risques.isEmpty()) {
+            return null;
+        } else {
+            return risques;
+        }
+    }
 }

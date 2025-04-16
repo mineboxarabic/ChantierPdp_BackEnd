@@ -1,16 +1,12 @@
 package com.danone.pdpbackend.Services.Implimetations;
 
-import com.danone.pdpbackend.Repo.BDTRepo;
-import com.danone.pdpbackend.Repo.ObjectAnswerRepo;
-import com.danone.pdpbackend.Repo.RisqueRepo;
-import com.danone.pdpbackend.Repo.AuditSecuRepo;
+import com.danone.pdpbackend.Repo.*;
 import com.danone.pdpbackend.Services.BDTService;
+import com.danone.pdpbackend.Services.DispositifService;
+import com.danone.pdpbackend.Services.RisqueService;
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import com.danone.pdpbackend.entities.BDT.BDT;
 import com.danone.pdpbackend.entities.ObjectAnswered;
-import com.danone.pdpbackend.entities.Pdp;
-import com.danone.pdpbackend.entities.Risque;
-import com.danone.pdpbackend.entities.AuditSecu;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -23,12 +19,18 @@ public class BDTServiceImpl implements BDTService {
     private final RisqueRepo risqueRepo;
     private final AuditSecuRepo auditSecuRepo;
     private final ObjectAnswerRepo objectAnswerRepo;
+    private final RisqueService risqueService;
+    private final DispositifService dispositifService;
+    private final PermitRepo permitRepo;
 
-    public BDTServiceImpl(BDTRepo bdtRepo, RisqueRepo risqueRepo, AuditSecuRepo auditSecuRepo, ObjectAnswerRepo objectAnswerRepo) {
+    public BDTServiceImpl(BDTRepo bdtRepo, RisqueRepo risqueRepo, AuditSecuRepo auditSecuRepo, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService, DispositifService dispositifService, PermitRepo permitRepo) {
         this.bdtRepo = bdtRepo;
         this.risqueRepo = risqueRepo;
         this.auditSecuRepo = auditSecuRepo;
         this.objectAnswerRepo = objectAnswerRepo;
+        this.risqueService = risqueService;
+        this.dispositifService = dispositifService;
+        this.permitRepo = permitRepo;
     }
 
     @Override
@@ -37,8 +39,13 @@ public class BDTServiceImpl implements BDTService {
     }
 
     @Override
-    public BDT getBDT(Long id) {
+    public BDT getBDTById(Long id) {
         return bdtRepo.findById(id).orElse(null);
+    }
+
+    @Override
+    public List<BDT> getBDTsByIds(List<Long> id) {
+        return bdtRepo.findAllById(id);
     }
 
     @Override
@@ -67,7 +74,7 @@ public class BDTServiceImpl implements BDTService {
 
     @Override
     public ObjectAnswered removeObjectAnswered(Long bdtId, Long id, ObjectAnsweredObjects objectAnsweredObject) {
-        BDT bdt = getBDT(bdtId);
+        BDT bdt = getBDTById(bdtId);
         ObjectAnswered objectAnswered = objectAnswerRepo.findById(id);
 
         if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
@@ -82,19 +89,18 @@ public class BDTServiceImpl implements BDTService {
 
     @Override
     public ObjectAnswered addObjectAnswered(Long bdtId, Long id, ObjectAnsweredObjects objectAnsweredObject) {
-        BDT bdt = getBDT(bdtId);
-        ObjectAnswered objectAnswered = objectAnswerRepo.findById(id);
+       BDT bdt = getBDTById(bdtId);
+        ObjectAnswered objectAnswered = new ObjectAnswered();
+        objectAnswered.setAnswer(false);
+        objectAnswered = objectAnswerRepo.save(objectAnswered);
 
-        if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE)
-        {
+        if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
+            objectAnswered.setRisque_id(risqueRepo.findRisqueById(id).getId());
             bdt.getRisques().add(objectAnswered);
-        }
-        else if(objectAnsweredObject == ObjectAnsweredObjects.AUDIT)
-        {
+        } else if(objectAnsweredObject == ObjectAnsweredObjects.AUDIT){
+            objectAnswered.setAuditSecu_id(auditSecuRepo.findAuditSecuById(id).getId());
             bdt.getAuditSecu().add(objectAnswered);
         }
-
-        objectAnswerRepo.delete(objectAnswered);
         bdtRepo.save(bdt);
         return objectAnswered;
     }

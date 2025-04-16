@@ -1,4 +1,4 @@
-package com.danone.pdpbackend.dto;
+package com.danone.pdpbackend.entities.dto;
 
 public class UsersRegisterData {
     public String name;

@@ -3,8 +3,9 @@ package com.danone.pdpbackend.Controller;
 import com.danone.pdpbackend.Services.EntrepriseService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.EntrepriseMapper;
-import com.danone.pdpbackend.dto.EntrepriseDTO;
+import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
 import com.danone.pdpbackend.entities.Entreprise;
+import com.danone.pdpbackend.entities.Worker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +51,7 @@ public class EntrepriseController {
     @GetMapping("/{id}")
     public ResponseEntity<EntrepriseDTO> getEntreprise(@PathVariable Long id)
     {
-        Entreprise entreprise = entrepriseService.findEntrepriseById(id);
+        Entreprise entreprise = entrepriseService.getEntrepriseById(id);
 
         if( entreprise == null){
             return ResponseEntity.badRequest().body(null).notFound().build();
@@ -62,7 +63,7 @@ public class EntrepriseController {
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<Entreprise>> updateEntreprise(@PathVariable Long id, @RequestBody Entreprise entrepriseDto)
     {
-        Entreprise entreprise = entrepriseService.findEntrepriseById(id);
+        Entreprise entreprise = entrepriseService.getEntrepriseById(id);
         if(entreprise == null){
             return ResponseEntity.badRequest().body(null).notFound().build();
         }
@@ -78,6 +79,23 @@ public class EntrepriseController {
             return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Entreprise not found"));
         }
         return ResponseEntity.ok(new ApiResponse<>(null, "Entreprise deleted successfully"));
+    }
+
+
+    @PostMapping("/multiple")
+    public ResponseEntity<ApiResponse<List<Entreprise>>> createMultiple(@RequestBody List<Long> entreprise_ids)
+    {
+        List<Entreprise> entreprises = entrepriseService.getEntreprisesByIds(entreprise_ids);
+        return ResponseEntity.ok(new ApiResponse<>(entreprises, "Entreprises saved successfully"));
+    }
+
+
+    //    const getWorkersByEntreprise = async (entrepriseId: number): Promise<Worker[]> => {
+
+    @GetMapping("/{entrepriseId}/workers")
+    public ResponseEntity<ApiResponse<List<Worker>>> getWorkersByEntreprise(@PathVariable Long entrepriseId)
+    {
+        return ResponseEntity.ok(new ApiResponse<>(entrepriseService.getWorkersByEntreprise(entrepriseId), "Workers fetched successfully"));
     }
 
 }

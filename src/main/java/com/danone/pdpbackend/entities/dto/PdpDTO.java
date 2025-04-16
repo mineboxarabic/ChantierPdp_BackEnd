@@ -1,67 +1,41 @@
-package com.danone.pdpbackend.entities;
+package com.danone.pdpbackend.entities.dto;
 
 
 import com.danone.pdpbackend.Utils.HoraireDeTravaille;
-import com.danone.pdpbackend.Utils.MedecinDuTravailleEE;
 import com.danone.pdpbackend.Utils.MisesEnDisposition;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.danone.pdpbackend.entities.Entreprise;
+import com.danone.pdpbackend.entities.ObjectAnswered;
+import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
+import com.danone.pdpbackend.entities.Worker;
 import jakarta.persistence.*;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.Date;
 import java.util.List;
 
-@Entity(name = "pdp")
-@Getter
-@Setter
-public class Pdp {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@Data
+public class PdpDTO {
     private Long id;
-
-
     private Long chantier; // ✅ PDP is always linked to a chantier
-
-    @ManyToOne
-    private Entreprise entrepriseExterieure; // ✅ PDP is linked to an EE (Entreprise Extérieure)
-
-
+    private Long entrepriseExterieure; // ✅ PDP is linked to an EE (Entreprise Extérieure)
     private Date dateInspection;
     private Date icpdate;
     private Date datePrevenirCSSCT; // ✅ Notification date for CSSCT (if required)
     private Date datePrev; // ✅ Planned date for something (depends on business rules)
 
     private String horairesDetails;
+    private Long entrepriseDInspection;
 
-
-    @OneToOne
-    private Entreprise entrepriseDInspection;
-
-    @Embedded
     private HoraireDeTravaille horaireDeTravail;
-
-    @Embedded
     private MisesEnDisposition misesEnDisposition;
 
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ObjectAnswered> risques;
-
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ObjectAnswered> dispositifs;
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ObjectAnswered> permits;
-
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ObjectAnsweredEntreprises> analyseDeRisques;
 
-
-
-    @OneToMany
-    private List<Worker> signatures; // ✅ List of workers who signed the PDP
+    private List<Long> signatures; // ✅ List of workers who signed the PDP
 
 }

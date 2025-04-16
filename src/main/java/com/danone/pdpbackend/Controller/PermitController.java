@@ -2,6 +2,7 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.PermitService;
 import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.entities.Dispositif;
 import com.danone.pdpbackend.entities.Permit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,4 +57,12 @@ public class PermitController {
         return ResponseEntity.ok(new ApiResponse<>(true, "Permit deleted"));
     }
 
+
+
+    //Get from a list of ids
+    @PostMapping("/list")
+    public ResponseEntity<ApiResponse<List<Permit>>> getPermitsByIds(@RequestBody List<Long> ids) {
+        List<Permit> permits = permitService.getPermitsByIds(ids);
+        return ResponseEntity.ok(new ApiResponse<>(permits, "Permit fetched"));
+    }
 }

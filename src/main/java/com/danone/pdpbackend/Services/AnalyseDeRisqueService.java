@@ -1,6 +1,6 @@
 package com.danone.pdpbackend.Services;
 
-import com.danone.pdpbackend.dto.AnalyseDeRisqueDTO;
+import com.danone.pdpbackend.entities.dto.AnalyseDeRisqueDTO;
 import com.danone.pdpbackend.entities.AnalyseDeRisque;
 import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
 

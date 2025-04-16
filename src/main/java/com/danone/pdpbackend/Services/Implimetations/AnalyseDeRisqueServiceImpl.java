@@ -5,13 +5,12 @@ import com.danone.pdpbackend.Repo.AnalyseDeRisqueRepo;
 import com.danone.pdpbackend.Repo.ObjectAnswerEntreprisesRepo;
 import com.danone.pdpbackend.Repo.RisqueRepo;
 import com.danone.pdpbackend.Services.AnalyseDeRisqueService;
-import com.danone.pdpbackend.dto.AnalyseDeRisqueDTO;
+import com.danone.pdpbackend.entities.dto.AnalyseDeRisqueDTO;
 import com.danone.pdpbackend.entities.AnalyseDeRisque;
 import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
 import com.danone.pdpbackend.entities.Risque;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.lang.reflect.Field;
 import java.util.List;

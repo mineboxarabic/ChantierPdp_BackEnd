@@ -6,8 +6,6 @@ import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import com.danone.pdpbackend.entities.BDT.BDT;
 import com.danone.pdpbackend.entities.ObjectAnswered;
-import com.danone.pdpbackend.entities.Risque;
-import com.danone.pdpbackend.entities.AuditSecu;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +36,7 @@ public class BdtController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<BDT>> getBDT(@PathVariable Long id) {
-        BDT bdt = bdtService.getBDT(id);
+        BDT bdt = bdtService.getBDTById(id);
         if (bdt == null) {
             return ResponseEntity.status(404).body(new ApiResponse<>(null, "BDT not found"));
         }

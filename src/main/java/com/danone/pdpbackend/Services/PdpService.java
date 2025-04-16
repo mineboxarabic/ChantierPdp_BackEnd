@@ -1,10 +1,10 @@
 package com.danone.pdpbackend.Services;
 
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
-import com.danone.pdpbackend.dto.PdpUpdateDTO;
 import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.ObjectAnswered;
+import com.danone.pdpbackend.entities.Worker;
 
 import java.util.List;
 
@@ -17,7 +17,7 @@ public interface PdpService {
 
   //  Pdp updatePdp(Pdp updatedPdp, Long id);
 
-    Pdp createPdp(PdpUpdateDTO pdp);
+    Pdp createPdp(Pdp pdp);
 
     Pdp getPdp(Long id);
 
@@ -41,4 +41,10 @@ public interface PdpService {
     ObjectAnswered addObjectAnswered(Long pdpId, Long id, ObjectAnsweredObjects objectAnsweredObject);
 
     ObjectAnsweredEntreprises removeAnalyse(Long pdpId, Long analyseId);
+
+    List<Worker> findWorkersByPdp(Long pdpId);
+
+    List<Pdp> getPDPsByIds(List<Long> pdps);
+
+    List<ObjectAnswered> getObjectAnsweredByPdpId(Long pdpId, ObjectAnsweredObjects objectType);
 }

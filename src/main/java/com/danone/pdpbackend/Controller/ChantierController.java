@@ -2,7 +2,10 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.Utils.mappers.ChantierMapper;
 import com.danone.pdpbackend.entities.Chantier;
+import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.dto.ChantierDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,37 +18,40 @@ import java.util.List;
 public class ChantierController {
 
     private final ChantierService chantierService;
+    private final ChantierMapper chantierMapper;
 
-    public ChantierController(ChantierService chantierService) {
+    public ChantierController(ChantierService chantierService, ChantierMapper chantierMapper, ChantierMapper chantierMapper1) {
         this.chantierService = chantierService;
+        this.chantierMapper = chantierMapper1;
     }
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<Chantier>>> getAllChantiers() {
-        return ResponseEntity.ok(new ApiResponse<>(chantierService.getAllChantiers(), "Chantiers fetched successfully"));
+    public ResponseEntity<ApiResponse<List<ChantierDTO>>> getAllChantiers() {
+        return ResponseEntity.ok(new ApiResponse<>(chantierService.getAllChantiers().stream().map(chantierMapper::toDTO).toList()
+                , "Chantiers fetched successfully"));
     }
 
     @PostMapping("/")
-    public ResponseEntity<ApiResponse<Chantier>> saveChantier(@RequestBody Chantier chantier) {
-        Chantier createdChantier = chantierService.createChantier(chantier);
-        return ResponseEntity.ok(new ApiResponse<>(createdChantier, "Chantier saved successfully"));
+    public ResponseEntity<ApiResponse<ChantierDTO>> saveChantier(@RequestBody ChantierDTO chantierDTO) {
+        Chantier createdChantier = chantierService.createChantier(chantierMapper.toEntity(chantierDTO));
+        return ResponseEntity.ok(new ApiResponse<>(chantierMapper.toDTO(createdChantier), "Chantier saved successfully"));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Chantier>> getChantier(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ChantierDTO>> getChantier(@PathVariable Long id) {
         Chantier chantier = chantierService.getChantier(id);
         if (chantier == null) {
             return ResponseEntity.status(404)
                     .body(new ApiResponse<>(null, "Chantier not found"));
         }
-        return ResponseEntity.ok(new ApiResponse<>(chantier, "Chantier fetched successfully"));
+        return ResponseEntity.ok(new ApiResponse<>(chantierMapper.toDTO(chantier), "Chantier fetched successfully"));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ApiResponse<Chantier>> updateChantier(@PathVariable Long id, @RequestBody Chantier chantier) {
+    public ResponseEntity<ApiResponse<ChantierDTO>> updateChantier(@PathVariable Long id, @RequestBody ChantierDTO chantierDTO) {
         log.info("Updating chantier with id: {}", id);
-        Chantier updatedChantier = chantierService.updateChantier(chantier, id);
-        return ResponseEntity.ok(new ApiResponse<>(updatedChantier, "Chantier updated successfully"));
+        Chantier updatedChantier = chantierService.updateChantier(chantierMapper.toEntity(chantierDTO), id);
+        return ResponseEntity.ok(new ApiResponse<>(chantierMapper.toDTO(updatedChantier), "Chantier updated successfully"));
     }
 
     @DeleteMapping("/{id}")
@@ -62,7 +68,13 @@ public class ChantierController {
     }
 
     @GetMapping("/recent")
-    public ResponseEntity<ApiResponse<List<Chantier>>> getRecent() {
-        return ResponseEntity.ok(new ApiResponse<>(chantierService.getRecent(), "Recent chantiers fetched successfully"));
+    public ResponseEntity<ApiResponse<List<ChantierDTO>>> getRecent() {
+        return ResponseEntity.ok(new ApiResponse<>(chantierService.getRecent().stream().map(chantierMapper::toDTO).toList(), "Recent chantiers fetched successfully"));
+    }
+
+    //        return fetch(`api/chantier/${chantierId}/workers`, 'GET', null, [
+    @GetMapping("/{chantierId}/workers")
+    public ResponseEntity<ApiResponse<List<Worker>>> getWorkersByChantier(@PathVariable Long chantierId) {
+        return ResponseEntity.ok(new ApiResponse<>(chantierService.getWorkersByChantier(chantierId), "Workers fetched successfully"));
     }
 }

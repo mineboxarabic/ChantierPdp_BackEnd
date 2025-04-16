@@ -1,16 +1,8 @@
 package com.danone.pdpbackend.Services.Implimetations;
 
 import com.danone.pdpbackend.Repo.PdpRepo;
-import com.danone.pdpbackend.dto.PdpUpdateDTO;
-import com.danone.pdpbackend.entities.Pdp;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import java.util.Date;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class PdpServiceImplTest {

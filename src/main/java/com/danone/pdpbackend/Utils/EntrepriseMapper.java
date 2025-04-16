@@ -1,6 +1,6 @@
 package com.danone.pdpbackend.Utils;
 
-import com.danone.pdpbackend.dto.EntrepriseDTO;
+import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
 import com.danone.pdpbackend.entities.Entreprise;
 
 import java.lang.reflect.Field;

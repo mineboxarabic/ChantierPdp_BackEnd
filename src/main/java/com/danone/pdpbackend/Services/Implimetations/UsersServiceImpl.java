@@ -1,8 +1,10 @@
 package com.danone.pdpbackend.Services.Implimetations;
 
-import com.danone.pdpbackend.dto.UsersRegisterData;
+import com.danone.pdpbackend.Repo.ChantierRepo;
+import com.danone.pdpbackend.entities.dto.UsersRegisterData;
 import com.danone.pdpbackend.Repo.UsersRepo;
 import com.danone.pdpbackend.Services.UserService;
+import com.danone.pdpbackend.entities.Chantier;
 import com.danone.pdpbackend.entities.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,10 +14,12 @@ import java.util.List;
 @Slf4j
 @Service
 public class UsersServiceImpl implements UserService {
+    private final ChantierRepo chantierRepo;
     UsersRepo usersRepo;
 
-    public UsersServiceImpl(UsersRepo usersRepo) {
+    public UsersServiceImpl(UsersRepo usersRepo, ChantierRepo chantierRepo) {
         this.usersRepo = usersRepo;
+        this.chantierRepo = chantierRepo;
     }
 
     @Override
@@ -53,9 +57,18 @@ public class UsersServiceImpl implements UserService {
     @Override
     public boolean deleteUser(Long id) {
         User user = usersRepo.findAllById(id).get(0);
+        List<Chantier> chantiers = chantierRepo.findAllByDonneurDOrdre(user);
         if(user == null){
             return false;
         }
+
+
+        for(Chantier chantier : chantiers){
+            chantier.setDonneurDOrdre(null);
+            chantierRepo.save(chantier);
+        }
+
+
         usersRepo.deleteById(id);
         return true;
     }
@@ -79,5 +92,10 @@ public class UsersServiceImpl implements UserService {
     @Override
     public User findByEmail(String email) {
         return usersRepo.findByEmail(email);
+    }
+
+    @Override
+    public User findById(Long id) {
+        return usersRepo.findAllById(id).get(0);
     }
 }

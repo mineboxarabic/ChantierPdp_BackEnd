@@ -2,16 +2,13 @@ package com.danone.pdpbackend.Services.Implimetations;
 
 
 import com.danone.pdpbackend.Repo.*;
-import com.danone.pdpbackend.Services.DispositifService;
-import com.danone.pdpbackend.Services.EntrepriseService;
-import com.danone.pdpbackend.Services.PdpService;
+import com.danone.pdpbackend.Services.*;
 
-import com.danone.pdpbackend.Services.RisqueService;
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
-import com.danone.pdpbackend.dto.PdpUpdateDTO;
 import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.ObjectAnswered;
+import com.danone.pdpbackend.entities.Worker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +21,8 @@ import java.util.Optional;
 public class PdpServiceImpl implements PdpService {
     private final AnalyseDeRisqueRepo analyseDeRisqueRepo;
     private final PermitRepo permitRepo;
+    private final ChantierRepo chantierRepo;
+    private final ChantierService chantierService;
     PdpRepo pdpRepo;
     EntrepriseService entrepriseService;
     private final ObjectAnswerRepo objectAnswerRepo;
@@ -31,7 +30,7 @@ public class PdpServiceImpl implements PdpService {
     private final DispositifService dispositifService;
     private final ObjectAnswerEntreprisesRepo objectAnswerEntreprisesRepo;
 
-    public PdpServiceImpl(PdpRepo pdpRepo, EntrepriseService entrepriseService, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService, DispositifService dispositifService, ObjectAnswerEntreprisesRepo objectAnswerEntreprisesRepo, AnalyseDeRisqueRepo analyseDeRisqueRepo, PermitRepo permitRepo) {
+    public PdpServiceImpl(PdpRepo pdpRepo, EntrepriseService entrepriseService, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService, DispositifService dispositifService, ObjectAnswerEntreprisesRepo objectAnswerEntreprisesRepo, AnalyseDeRisqueRepo analyseDeRisqueRepo, PermitRepo permitRepo, ChantierRepo chantierRepo, ChantierService chantierService) {
         this.pdpRepo = pdpRepo;
         this.entrepriseService = entrepriseService;
         this.objectAnswerRepo = objectAnswerRepo;
@@ -40,6 +39,8 @@ public class PdpServiceImpl implements PdpService {
         this.objectAnswerEntreprisesRepo = objectAnswerEntreprisesRepo;
         this.analyseDeRisqueRepo = analyseDeRisqueRepo;
         this.permitRepo = permitRepo;
+        this.chantierRepo = chantierRepo;
+        this.chantierService = chantierService;
     }
 
     public List<Pdp> getAllPdp() {
@@ -177,19 +178,19 @@ public class PdpServiceImpl implements PdpService {
 
 
     @Override
-    public Pdp createPdp(PdpUpdateDTO pdp) {
+    public Pdp createPdp(Pdp pdp) {
         Pdp pdpEntity = new Pdp();
 
-        //Put all the fields from pdp into pdpEntity with for loop
+ /*       //Put all the fields from pdp into pdpEntity with for loop
         //log.info("Creating pdp with id " + (pdpRepo.findMaxId() + 1));
        // pdpEntity.setId((long) (pdpRepo.findMaxId() + 1));
- /*       pdpEntity.setOperation(pdp.getOperation());
+ *//*       pdpEntity.setOperation(pdp.getOperation());
         pdpEntity.setLieuintervention(pdp.getLieuintervention());
         pdpEntity.setDatedebuttravaux(pdp.getDatedebuttravaux());
         pdpEntity.setDatefintravaux(pdp.getDatefintravaux());
         pdpEntity.setEffectifmaxisurchantier(pdp.getEffectifmaxisurchantier());
         pdpEntity.setNombreinterimaires(pdp.getNombreinterimaires());
-*/
+*//*
         pdpEntity.setHoraireDeTravail(pdp.getHoraireDeTravail());
 
        // pdpEntity.setHorairesdetail(pdp.getHorairesdetail());
@@ -206,8 +207,70 @@ public class PdpServiceImpl implements PdpService {
         pdpEntity.setEntrepriseDInspection(pdp.getEntrepriseDInspection());
      //   pdpEntity.setEntrepriseutilisatrice(pdp.getEntrepriseetutilisatrise());
      //   pdpEntity.setEntrepriseexterieure(pdp.getEntrepriseexterieure());
+        */
 
-        return pdpRepo.save(pdpEntity);
+        for (Field field : pdpEntity.getClass().getDeclaredFields()) {
+            try {
+                if (field.getName().equals("id")) {
+                    continue;
+                }
+                Field fieldDto = pdp.getClass().getDeclaredField(field.getName());
+                //if the field is id we don't want to set it
+
+                if("id".equals(field.getName())){
+                    continue;
+                }
+
+                if("risques".equals(field.getName()) || "dispositifs".equals(field.getName()) || "permits".equals(field.getName()) || "analyseDeRisques".equals(field.getName())){
+                    continue;
+                }
+
+
+                field.setAccessible(true);
+                fieldDto.setAccessible(true);
+                field.set(pdpEntity, fieldDto.get(pdp));
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                e.printStackTrace();
+            }
+        }
+       Pdp pdp1 = pdpRepo.save(pdpEntity);
+        if(pdpEntity.getChantier() != null){
+          //  pdpEntity.setChantier(chantierRepo.getChantierById(pdpEntity.getChantier().getId()));
+         chantierService.addPdpToChantier(pdpEntity.getChantier(), pdpEntity);
+        }
+
+        //We add all the objectAnswered to the pdp
+        if(pdp.getRisques() != null){
+            for (ObjectAnswered objectAnswered : pdp.getRisques()) {
+                objectAnswered = objectAnswerRepo.save(objectAnswered);
+                if(pdp1.getRisques() != null) pdp1.getRisques().add(objectAnswered);
+            }
+        }
+
+        if(pdp.getDispositifs() != null){
+            for (ObjectAnswered objectAnswered : pdp.getDispositifs()) {
+                objectAnswered = objectAnswerRepo.save(objectAnswered);
+                if(pdp1.getRisques() != null) pdp1.getDispositifs().add(objectAnswered);
+            }
+        }
+
+        if(pdp.getPermits() != null){
+            for (ObjectAnswered objectAnswered : pdp.getPermits()) {
+                objectAnswered = objectAnswerRepo.save(objectAnswered);
+                if(pdp1.getRisques() != null) pdp1.getPermits().add(objectAnswered);
+            }
+        }
+
+        if(pdp.getAnalyseDeRisques() != null){
+            for (ObjectAnsweredEntreprises objectAnsweredEntreprises : pdp.getAnalyseDeRisques()) {
+                objectAnsweredEntreprises = objectAnswerEntreprisesRepo.save(objectAnsweredEntreprises);
+                if(pdp1.getRisques() != null) pdp1.getAnalyseDeRisques().add(objectAnsweredEntreprises);
+            }
+        }
+
+        pdpRepo.save(pdp1);
+
+        return pdp1;
     }
 
     @Override
@@ -255,12 +318,12 @@ public class PdpServiceImpl implements PdpService {
         objectAnswered.setAnswer(false);
 
         if("Risque".equals(type)){
-            objectAnswered.setRisque(risqueService.getRisqueById(risqueId));
+            objectAnswered.setRisque_id(risqueService.getRisqueById(risqueId).getId());
         } else if ("Dispositif".equals(type)){
-            objectAnswered.setDispositif(dispositifService.getDispositifById(risqueId));
+            objectAnswered.setDispositif_id(dispositifService.getDispositifById(risqueId).getId());
         }
         else if ("Permit".equals(type)){
-            objectAnswered.setPermit(permitRepo.findPermitById(risqueId));
+            objectAnswered.setPermit_id(permitRepo.findPermitById(risqueId).getId());
         }
 
 
@@ -356,13 +419,13 @@ public class PdpServiceImpl implements PdpService {
         objectAnswered.setAnswer(false);
 
         if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
-            objectAnswered.setRisque(risqueService.getRisqueById(id));
+            objectAnswered.setRisque_id(risqueService.getRisqueById(id).getId());
             pdp.getRisques().add(objectAnswered);
         } else if(objectAnsweredObject == ObjectAnsweredObjects.DISPOSITIF){
-            objectAnswered.setDispositif(dispositifService.getDispositifById(id));
+            objectAnswered.setDispositif_id(dispositifService.getDispositifById(id).getId());
             pdp.getDispositifs().add(objectAnswered);
         } else if(objectAnsweredObject == ObjectAnsweredObjects.PERMIT){
-            objectAnswered.setPermit(permitRepo.findPermitById(id));
+            objectAnswered.setPermit_id(permitRepo.findPermitById(id).getId());
             pdp.getPermits().add(objectAnswered);
         }
 
@@ -383,6 +446,29 @@ public class PdpServiceImpl implements PdpService {
         objectAnswerEntreprisesRepo.deleteById(analyseId);
 
         return objectAnsweredEntreprises;
+    }
+
+    @Override
+    public List<Worker> findWorkersByPdp(Long pdpId) {
+        return pdpRepo.findById(pdpId).get().getSignatures();
+    }
+
+    @Override
+    public List<Pdp> getPDPsByIds(List<Long> pdps) {
+        return pdpRepo.findPdpsByIdIn(pdps);
+    }
+
+    @Override
+    public List<ObjectAnswered> getObjectAnsweredByPdpId(Long pdpId, ObjectAnsweredObjects objectType) {
+        Pdp pdp = getPdp(pdpId);
+        if(objectType == ObjectAnsweredObjects.RISQUE){
+            return pdp.getRisques();
+        } else if(objectType == ObjectAnsweredObjects.DISPOSITIF){
+            return pdp.getDispositifs();
+        } else if(objectType == ObjectAnsweredObjects.PERMIT){
+            return pdp.getPermits();
+        }
+        return null;
     }
 
 

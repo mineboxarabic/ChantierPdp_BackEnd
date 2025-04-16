@@ -1,6 +1,7 @@
 package com.danone.pdpbackend.Repo;
 
 import com.danone.pdpbackend.entities.Chantier;
+import com.danone.pdpbackend.entities.User;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -22,4 +23,8 @@ public interface ChantierRepo extends Repository<Chantier, Integer> {
     int findMaxId();
 
     void deleteById(Long id);
+
+    List<Chantier> getChantierById(Long id);
+
+    List<Chantier> findAllByDonneurDOrdre(User user);
 }

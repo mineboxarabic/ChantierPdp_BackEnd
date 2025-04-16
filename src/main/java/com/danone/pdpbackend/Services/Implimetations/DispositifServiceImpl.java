@@ -42,5 +42,10 @@ public class DispositifServiceImpl implements DispositifService {
         return dispositifRepo.deleteById(id);
     }
 
+    @Override
+    public List<Dispositif> getDispositifsByIds(List<Long> ids) {
+        return dispositifRepo.findDispositifByIdIn(ids);
+    }
+
 
 }

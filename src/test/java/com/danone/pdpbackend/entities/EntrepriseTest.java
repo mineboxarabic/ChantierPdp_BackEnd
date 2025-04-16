@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -39,7 +38,7 @@ class EntrepriseTest {
         entrepriseService.createEntreprise(entreprise);
 
         // Assert
-        Entreprise entreprise1 = entrepriseService.findEntrepriseById(entrepriseService.findMaxId());
+        Entreprise entreprise1 = entrepriseService.getEntrepriseById(entrepriseService.findMaxId());
         assertNotNull(entreprise1, "Entreprise should not be null after creation.");
         assertEquals("Danone", entreprise1.getNom(), "Entreprise name should match the provided name.");
     }
@@ -60,7 +59,7 @@ class EntrepriseTest {
 
         //Assert
         for (Entreprise entreprise : entreprises) {
-            byte[] image1 = entrepriseService.findEntrepriseById(entreprise.getId()).getImage();
+            byte[] image1 = entrepriseService.getEntrepriseById(entreprise.getId()).getImage();
             assertArrayEquals(image, image1);
         }
 
@@ -84,7 +83,7 @@ class EntrepriseTest {
 
         //Assert
         for (Entreprise entreprise : entreprises) {
-            byte[] image1 = entrepriseService.findEntrepriseById(entreprise.getId()).getImage();
+            byte[] image1 = entrepriseService.getEntrepriseById(entreprise.getId()).getImage();
             assertNull(image1);
         }
 

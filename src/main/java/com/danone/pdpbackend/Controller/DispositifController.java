@@ -4,6 +4,7 @@ import com.danone.pdpbackend.Services.DispositifService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.entities.Dispositif;
 import com.danone.pdpbackend.entities.Dispositif;
+import com.danone.pdpbackend.entities.Risque;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +50,14 @@ public class DispositifController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok(new ApiResponse<>(true, "Dispositif deleted"));
+    }
+
+
+    //Get Risques from a list of ids
+    @PostMapping("/list")
+    public ResponseEntity<ApiResponse<List<Dispositif>>> getDispositifsByIds(@RequestBody List<Long> ids) {
+        List<Dispositif> dispositifs = dispositifService.getDispositifsByIds(ids);
+        return ResponseEntity.ok(new ApiResponse<>(dispositifs, "Risques fetched"));
     }
 
 }

@@ -14,4 +14,5 @@ public interface PermitService {
 
     boolean deletePermit(Long id);
 
+    List<Permit> getPermitsByIds(List<Long> ids);
 }

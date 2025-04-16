@@ -1,11 +1,10 @@
 package com.danone.pdpbackend.entities;
 
 
-import com.danone.pdpbackend.dto.AnalyseDeRisqueDTO;
+import com.danone.pdpbackend.entities.dto.AnalyseDeRisqueDTO;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +17,7 @@ public class AnalyseDeRisque{
     private Long id;
     private String deroulementDesTaches;
     private String moyensUtilises;
-    @OneToOne
+    @ManyToOne
     private Risque risque;
     private String mesuresDePrevention;
     private Boolean entrepriseExterieure;

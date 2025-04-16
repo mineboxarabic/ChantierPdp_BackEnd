@@ -48,4 +48,11 @@ public class RisqueController {
         }
         return ResponseEntity.ok(new ApiResponse<>(true, "Risque deleted"));
     }
+
+    //Get Risques from a list of ids
+    @PostMapping("/list")
+    public ResponseEntity<ApiResponse<List<Risque>>> getRisquesByIds(@RequestBody List<Long> ids) {
+        List<Risque> risques = risqueService.getRisquesByIds(ids);
+        return ResponseEntity.ok(new ApiResponse<>(risques, "Risques fetched"));
+    }
 }

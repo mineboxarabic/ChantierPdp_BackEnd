@@ -4,6 +4,8 @@ import com.danone.pdpbackend.Repo.ChantierRepo;
 import com.danone.pdpbackend.Repo.EntrepriseRepo;
 import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.entities.Chantier;
+import com.danone.pdpbackend.entities.Pdp;
+import com.danone.pdpbackend.entities.Worker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -45,9 +47,10 @@ public class ChantierServiceImpl implements ChantierService {
 
         if(updatedChantier.getEntrepriseUtilisatrice() != null){
             Long entrepriseUtilisatriceId = updatedChantier.getEntrepriseUtilisatrice().getId();
-
             existingChantier.setEntrepriseUtilisatrice(entrepriseRepo.findEntrepriseById(entrepriseUtilisatriceId));
         }
+
+        if(updatedChantier.getNbHeurs() != null) updatedChantier.setIsAnnuelle(updatedChantier.getNbHeurs() >= 400);
 
         for(Field field : updatedChantier.getClass().getDeclaredFields()){
             field.setAccessible(true);
@@ -96,5 +99,20 @@ public class ChantierServiceImpl implements ChantierService {
     public List<Chantier> getRecent() {
         List<Chantier> chantiers = chantierRepo.findAll();
         return chantiers.size() <= 10 ? chantiers : chantiers.subList(chantiers.size() - 10, chantiers.size());
+    }
+
+    @Override
+    public void addPdpToChantier(Long chantierId, Pdp pdp) {
+        Chantier chantier = chantierRepo.findById(chantierId)
+                .orElseThrow(() -> new IllegalArgumentException("Chantier with id " + chantierId + " not found"));
+        chantier.getPdps().add(pdp);
+        chantierRepo.save(chantier);
+    }
+
+    @Override
+    public List<Worker> getWorkersByChantier(Long chantierId) {
+        Chantier chantier = chantierRepo.findById(chantierId)
+                .orElseThrow(() -> new IllegalArgumentException("Chantier with id " + chantierId + " not found"));
+        return chantier.getWorkers();
     }
 }
