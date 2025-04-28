@@ -27,19 +27,19 @@ public class ChantierController {
 
     @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<ChantierDTO>>> getAllChantiers() {
-        return ResponseEntity.ok(new ApiResponse<>(chantierService.getAllChantiers().stream().map(chantierMapper::toDTO).toList()
+        return ResponseEntity.ok(new ApiResponse<>(chantierService.getAll().stream().map(chantierMapper::toDTO).toList()
                 , "Chantiers fetched successfully"));
     }
 
     @PostMapping("/")
     public ResponseEntity<ApiResponse<ChantierDTO>> saveChantier(@RequestBody ChantierDTO chantierDTO) {
-        Chantier createdChantier = chantierService.createChantier(chantierMapper.toEntity(chantierDTO));
+        Chantier createdChantier = chantierService.create(chantierMapper.toEntity(chantierDTO));
         return ResponseEntity.ok(new ApiResponse<>(chantierMapper.toDTO(createdChantier), "Chantier saved successfully"));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ChantierDTO>> getChantier(@PathVariable Long id) {
-        Chantier chantier = chantierService.getChantier(id);
+        Chantier chantier = chantierService.getById(id);
         if (chantier == null) {
             return ResponseEntity.status(404)
                     .body(new ApiResponse<>(null, "Chantier not found"));
@@ -50,13 +50,13 @@ public class ChantierController {
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<ChantierDTO>> updateChantier(@PathVariable Long id, @RequestBody ChantierDTO chantierDTO) {
         log.info("Updating chantier with id: {}", id);
-        Chantier updatedChantier = chantierService.updateChantier(chantierMapper.toEntity(chantierDTO), id);
+        Chantier updatedChantier = chantierService.update( id,chantierMapper.toEntity(chantierDTO));
         return ResponseEntity.ok(new ApiResponse<>(chantierMapper.toDTO(updatedChantier), "Chantier updated successfully"));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deleteChantier(@PathVariable Long id) {
-        if (!chantierService.deleteChantier(id)) {
+        if (!chantierService.delete(id)) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Chantier not found"));
         }
         return ResponseEntity.ok(new ApiResponse<>(null, "Chantier deleted successfully"));

@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -31,10 +32,7 @@ public class PdpDTO {
     private HoraireDeTravaille horaireDeTravail;
     private MisesEnDisposition misesEnDisposition;
 
-    private List<ObjectAnswered> risques;
-    private List<ObjectAnswered> dispositifs;
-    private List<ObjectAnswered> permits;
-    private List<ObjectAnsweredEntreprises> analyseDeRisques;
+    private List<ObjectAnsweredDTO> relations = new ArrayList<>();
 
     private List<Long> signatures; // ✅ List of workers who signed the PDP
 

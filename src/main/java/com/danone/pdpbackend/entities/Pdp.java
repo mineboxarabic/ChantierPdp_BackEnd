@@ -8,7 +8,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Where;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -27,10 +29,10 @@ public class Pdp {
     private Entreprise entrepriseExterieure; // ✅ PDP is linked to an EE (Entreprise Extérieure)
 
 
-    private Date dateInspection;
-    private Date icpdate;
-    private Date datePrevenirCSSCT; // ✅ Notification date for CSSCT (if required)
-    private Date datePrev; // ✅ Planned date for something (depends on business rules)
+    private Date dateInspection = new Date();
+    private Date icpdate = new Date();
+    private Date datePrevenirCSSCT = new Date(); // ✅ Notification date for CSSCT (if required)
+    private Date datePrev = new Date();// ✅ Planned date for something (depends on business rules)
 
     private String horairesDetails;
 
@@ -45,23 +47,10 @@ public class Pdp {
     private MisesEnDisposition misesEnDisposition;
 
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ObjectAnswered> risques;
-
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ObjectAnswered> dispositifs;
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ObjectAnswered> permits;
-
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ObjectAnsweredEntreprises> analyseDeRisques;
-
-
+    @OneToMany(mappedBy = "pdp", cascade = CascadeType.ALL)
+    private List<ObjectAnswered> relations = new ArrayList<>();
 
     @OneToMany
-    private List<Worker> signatures; // ✅ List of workers who signed the PDP
+    private List<Worker> signatures = new ArrayList<>();// ✅ List of workers who signed the PDP
 
 }

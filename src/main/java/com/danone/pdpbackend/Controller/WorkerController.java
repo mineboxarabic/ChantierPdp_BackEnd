@@ -21,11 +21,11 @@ public class WorkerController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<Worker>>> getAllWorkers() {
         //return new ApiResponse<>(risqueService.getAllRisques(), "Risques fetched");
-        return ResponseEntity.ok(new ApiResponse<>(workerService.findAll(), "Workers fetched"));
+        return ResponseEntity.ok(new ApiResponse<>(workerService.getAll(), "Workers fetched"));
     }
     @PostMapping
     public ResponseEntity<ApiResponse<Worker>> createWorker(@RequestBody Worker worker) {
-        return ResponseEntity.ok(new ApiResponse<>(workerService.save(worker), "Worker created"));
+        return ResponseEntity.ok(new ApiResponse<>(workerService.create(worker), "Worker created"));
     }
 
     @PatchMapping("/{id}")
@@ -45,7 +45,7 @@ public class WorkerController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Worker>> getWorkerById(@PathVariable Long id) {
-        return ResponseEntity.ok(new ApiResponse<>(workerService.findById(id), "Worker fetched"));
+        return ResponseEntity.ok(new ApiResponse<>(workerService.getById(id), "Worker fetched"));
     }
 
 

@@ -26,12 +26,11 @@ public class ChantierServiceImpl implements ChantierService {
     }
 
     @Override
-    public List<Chantier> getAllChantiers() {
+    public List<Chantier> getAll() {
         return chantierRepo.findAll();
     }
 
-    @Override
-    public Chantier updateChantier(Chantier updatedChantier, Long id) {
+    public Chantier update(Long id, Chantier updatedChantier) {
         Chantier existingChantier = chantierRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Chantier with id " + id + " not found"));
 
@@ -70,24 +69,33 @@ public class ChantierServiceImpl implements ChantierService {
     }
 
     @Override
-    public Chantier createChantier(Chantier chantier) {
+    public Chantier create(Chantier chantier) {
         return chantierRepo.save(chantier);
     }
 
     @Override
-    public Chantier getChantier(Long id) {
+    public Chantier getById(Long id) {
         return chantierRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Chantier with id " + id + " not found"));
     }
 
     @Override
-    public boolean deleteChantier(Long id) {
+    public Boolean delete(Long id) {
         Optional<Chantier> chantierOpt = chantierRepo.findById(id);
         if (chantierOpt.isEmpty()) {
             return false;
         }
         chantierRepo.deleteById(id);
         return true;
+    }
+
+    @Override
+    public List<Chantier> getByIds(List<Long> ids) {
+        List<Chantier> chantiers = chantierRepo.findChantiersByIdIn(ids);
+        if (chantiers.isEmpty()) {
+            throw new IllegalArgumentException("No chantiers found with the provided ids");
+        }
+        return chantiers;
     }
 
     @Override

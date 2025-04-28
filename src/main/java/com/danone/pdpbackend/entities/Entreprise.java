@@ -12,6 +12,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -48,13 +49,13 @@ public class Entreprise {
 
     @OneToMany(mappedBy = "entrepriseExterieure", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Pdp> pdps; // ✅ If this entreprise is an EE, it has PDPs
+    private List<Pdp> pdps = new ArrayList<>(); // ✅ If this entreprise is an EE, it has PDPs
 
     @OneToMany(mappedBy = "entrepriseExterieure", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<BDT> bdts; // ✅ If this entreprise is an EE, it has BDTs
+    private List<BDT> bdts = new ArrayList<>();// ✅ If this entreprise is an EE, it has BDTs
 
-    @OneToMany(mappedBy = "entreprise", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Worker> workers; // ✅ Workers employed by this entreprise
+    @OneToMany(mappedBy = "entreprise", cascade = CascadeType.ALL)
+    private List<Worker> workers = new ArrayList<>();
 
 }

@@ -27,4 +27,6 @@ public interface ChantierRepo extends Repository<Chantier, Integer> {
     List<Chantier> getChantierById(Long id);
 
     List<Chantier> findAllByDonneurDOrdre(User user);
+
+    List<Chantier> findChantiersByIdIn(List<Long> ids);
 }

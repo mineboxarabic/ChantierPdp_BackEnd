@@ -1,50 +1,36 @@
 package com.danone.pdpbackend.Services;
 
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
-import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.ObjectAnswered;
 import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.dto.PdpDTO;
 
 import java.util.List;
 
-public interface PdpService {
-
-
-    List<Pdp> getAllPdp();
-
-    Pdp updatePdp(Pdp pdp, Long id);
+public interface PdpService extends Service<Pdp>{
+    Pdp update(Long id, Pdp pdp);
 
   //  Pdp updatePdp(Pdp updatedPdp, Long id);
 
-    Pdp createPdp(Pdp pdp);
-
-    Pdp getPdp(Long id);
-
-    boolean deletePdp(Long id);
+    Pdp create(Pdp pdp);
 
     Long getLastId();
 
     List<Pdp> getRecent();
 
-    ObjectAnswered addRisqueToPdp(Long pdpId, Long risqueId);
-
-    ObjectAnswered addDispositifToPdp(Long pdpId, Long dispositifId);
-
-    ObjectAnsweredEntreprises addAnalyseToPdp(Long pdpId, Long analyseId);
-
-    ObjectAnswered addPermitToPdp(Long pdpId, Long permitId);
-
-    ObjectAnswered removePermitFromPdp(Long pdpId, Long permitId);
-
-    ObjectAnswered removeObjectAnswered(Long permitId, Long id, ObjectAnsweredObjects objectAnsweredObject);
-    ObjectAnswered addObjectAnswered(Long pdpId, Long id, ObjectAnsweredObjects objectAnsweredObject);
-
-    ObjectAnsweredEntreprises removeAnalyse(Long pdpId, Long analyseId);
-
     List<Worker> findWorkersByPdp(Long pdpId);
 
-    List<Pdp> getPDPsByIds(List<Long> pdps);
+    List<Pdp> getByIds(List<Long> pdps);
 
     List<ObjectAnswered> getObjectAnsweredByPdpId(Long pdpId, ObjectAnsweredObjects objectType);
+
+    /*//ObjectAnswereds
+    ObjectAnswered addObjectAnswered(Long pdpId,  ObjectAnswered objectAnswered, ObjectAnsweredObjects objectAnsweredObject);
+    ObjectAnswered removeObjectAnswered(Long pdpId, Long id, ObjectAnsweredObjects objectAnsweredObject);
+    List<ObjectAnswered> addMultipleObjectsToPdp(Long pdpId, List<ObjectAnswered> objectAnswereds, ObjectAnsweredObjects objectType);
+*/
+    Pdp saveOrUpdatePdp(PdpDTO dto);
+
+  //  List<ObjectAnswered> removeMultipleObjectsFromPdp(Long pdpId, List<Long> ids, ObjectAnsweredObjects objectAnsweredObject);
 }

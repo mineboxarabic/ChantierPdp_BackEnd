@@ -20,17 +20,17 @@ public class WorkerServiceImpl implements WorkerService {
     }
 
     @Override
-    public Worker save(Worker worker) {
+    public Worker create(Worker worker) {
         return workerRepo.save(worker);
     }
 
     @Override
-    public List<Worker> findAll() {
+    public List<Worker> getAll() {
         return workerRepo.findAllBy();
     }
 
     @Override
-    public Worker findById(Long id) {
+    public Worker getById(Long id) {
         return workerRepo.findById(id);
     }
 
@@ -41,8 +41,14 @@ public class WorkerServiceImpl implements WorkerService {
 
 
     @Override
-    public void delete(Long id) {
+    public Boolean delete(Long id) {
         workerRepo.deleteById(id);
+        return true;
+    }
+
+    @Override
+    public List<Worker> getByIds(List<Long> ids) {
+        return workerRepo.findWorkersByIdIn(ids);
     }
 
     @Override

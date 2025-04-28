@@ -22,4 +22,8 @@ public interface ObjectAnswerRepo extends Repository<ObjectAnswered, Long> {
     void flush();
 
     void delete(ObjectAnswered objectAnswered);
+
+    List<ObjectAnswered> save(List<ObjectAnswered> list);
+
+    List<ObjectAnswered> findObjectAnsweredByIdIn(List<Long> ids);
 }

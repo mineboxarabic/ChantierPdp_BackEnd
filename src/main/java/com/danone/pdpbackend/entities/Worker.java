@@ -32,7 +32,7 @@ public class Worker {
 
     @ManyToMany
     @JsonIgnore
-    private List<Pdp> pdp;
+    private List<Pdp> pdps;
 
     @ManyToMany
     private List<Signature> signatures;

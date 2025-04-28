@@ -2,9 +2,7 @@ package com.danone.pdpbackend.entities;
 
 
 import com.danone.pdpbackend.entities.dto.AnalyseDeRisqueDTO;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,21 +11,21 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AnalyseDeRisque{
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long id;
     private String deroulementDesTaches;
     private String moyensUtilises;
+
     @ManyToOne
     private Risque risque;
+
     private String mesuresDePrevention;
-    private Boolean entrepriseExterieure;
-    private Boolean entrepriseUtilisatrice;
+
 
     public void buildAnalyseDeRisque(AnalyseDeRisqueDTO analyseDeRisqueDTO) {
         this.deroulementDesTaches = analyseDeRisqueDTO.getDeroulementDesTaches();
         this.moyensUtilises = analyseDeRisqueDTO.getMoyensUtilises();
         this.mesuresDePrevention = analyseDeRisqueDTO.getMesuresDePrevention();
-        this.entrepriseExterieure = analyseDeRisqueDTO.getEntrepriseExterieure();
-        this.entrepriseUtilisatrice = analyseDeRisqueDTO.getEntrepriseUtilisatrice();
     }
 }

@@ -1,27 +1,35 @@
 package com.danone.pdpbackend.entities;
 
+import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity(name = "object_answered")
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ObjectAnswered {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    Long risque_id;
+    @ManyToOne
+    @JoinColumn(name = "pdp_id", nullable = false)
+    private Pdp pdp;
 
-    Long dispositif_id;
+    @Enumerated(EnumType.STRING)
+    private ObjectAnsweredObjects objectType; // "Srisque", "dispositif", "permit", ...
 
-    Long permit_id;
+    private Long objectId;
 
-    Long auditSecu_id;
-
+    //Answers
     Boolean answer;
+
+    Boolean ee;
+
+    Boolean eu;
 
 
 }

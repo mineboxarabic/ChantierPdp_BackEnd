@@ -17,23 +17,22 @@ public class LocalisationServiceImpl implements LocalisationService {
     }
 
     @Override
-    public List<Localisation> getAllLocalisations() {
+    public List<Localisation> getAll() {
         return localisationRepo.findAll();
     }
 
     @Override
-    public Localisation getLocalisationById(Long id) {
+    public Localisation getById(Long id) {
         return localisationRepo.findById(id).orElse(null);
     }
 
     @Override
-    public Localisation createLocalisation(Localisation localisation) {
-        localisation.setId(localisationRepo.findMaxId() + 1L);
+    public Localisation create(Localisation localisation) {
         return localisationRepo.save(localisation);
     }
 
     @Override
-    public Localisation updateLocalisation(Long id, Localisation localisationDetails) {
+    public Localisation update(Long id, Localisation localisationDetails) {
         Optional<Localisation> localisationOptional = localisationRepo.findById(id);
         if (localisationOptional.isEmpty()) {
             return null;
@@ -48,11 +47,16 @@ public class LocalisationServiceImpl implements LocalisationService {
     }
 
     @Override
-    public Boolean deleteLocalisation(Long id) {
+    public Boolean delete(Long id) {
         if (!localisationRepo.existsById(id)) {
             return false;
         }
         localisationRepo.deleteById(id);
         return true;
+    }
+
+    @Override
+    public List<Localisation> getByIds(List<Long> ids) {
+        return localisationRepo.findLocalisationsByIdIn(ids);
     }
 }

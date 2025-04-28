@@ -23,4 +23,6 @@ public interface LocalisationRepo extends Repository<Localisation, Long> {
     Localisation findLocalisationById(Long id);
 
     boolean existsById(Long id);
+
+    List<Localisation> findLocalisationsByIdIn(List<Long> ids);
 }

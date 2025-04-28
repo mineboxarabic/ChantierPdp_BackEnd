@@ -15,7 +15,9 @@ public interface AnalyseDeRisqueRepo extends Repository<AnalyseDeRisque, Long> {
     @Query("SELECT MAX(id) FROM analyse_de_risque")
     Long findMaxId();
     AnalyseDeRisque save(AnalyseDeRisque analyseDeRisque);
-    boolean deleteById(Long id);
+    void deleteById(Long id); // Change return type to void
 
     AnalyseDeRisque findAnalyseDeRisqueById(Long id);
+
+    Boolean existsById(Long id);
 }

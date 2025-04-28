@@ -12,7 +12,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Component
-public class ChantierMapper {
+public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
     //From DTO to Entity
 
     @Autowired
@@ -37,79 +37,8 @@ public class ChantierMapper {
     }
 
 
-    public Chantier toEntity(ChantierDTO chantierDTO) {
-        if (chantierDTO == null) {
-            return null;
-        }
-
-        Chantier chantier = new Chantier();
-
-        chantier.setId(chantierDTO.getId());
-        chantier.setNom(chantierDTO.getNom());
-        chantier.setOperation(chantierDTO.getOperation());
-        chantier.setDateDebut(chantierDTO.getDateDebut());
-        chantier.setDateFin(chantierDTO.getDateFin());
-        chantier.setNbHeurs(chantierDTO.getNbHeurs());
-        chantier.setIsAnnuelle(chantierDTO.getIsAnnuelle());
-        chantier.setEffectifMaxiSurChantier(chantierDTO.getEffectifMaxiSurChantier());
-        chantier.setNombreInterimaires(chantierDTO.getNombreInterimaires());
-
-        // Handle collection with null check
-        if (chantierDTO.getEntrepriseExterieurs() != null) {
-            chantier.setEntrepriseExterieurs(entrepriseService.getEntreprisesByIds(chantierDTO.getEntrepriseExterieurs()));
-        } else {
-            chantier.setEntrepriseExterieurs(Collections.emptyList());
-        }
-
-        // Handle references with null checks
-        if (chantierDTO.getEntrepriseUtilisatrice() != null) {
-            chantier.setEntrepriseUtilisatrice(entrepriseService.getEntrepriseById(chantierDTO.getEntrepriseUtilisatrice()));
-        }
-
-        if (chantierDTO.getLocalisation() != null) {
-            chantier.setLocalisation(localisationService.getLocalisationById(chantierDTO.getLocalisation()));
-        }
-
-        if (chantierDTO.getDonneurDOrdre() != null) {
-            chantier.setDonneurDOrdre(userService.getUserById(chantierDTO.getDonneurDOrdre()));
-        }
-
-        // Handle collections with null checks
-        if (chantierDTO.getBdts() != null) {
-            chantier.setBdts(bdtService.getBDTsByIds(chantierDTO.getBdts()));
-        } else {
-            chantier.setBdts(Collections.emptyList());
-        }
-
-        if (chantierDTO.getPdps() != null) {
-            chantier.setPdps(pdpService.getPDPsByIds(chantierDTO.getPdps()));
-        } else {
-            chantier.setPdps(Collections.emptyList());
-        }
-
-        if (chantierDTO.getWorkerSelections() != null) {
-            chantier.setWorkerSelections(workerSelectionService.getWorkerSelectionsByIds(chantierDTO.getWorkerSelections()));
-        } else {
-            chantier.setWorkerSelections(Collections.emptyList());
-        }
-
-        if (chantierDTO.getWorkers() != null) {
-            chantier.setWorkers(workerService.getWorkersByIds(chantierDTO.getWorkers()));
-        } else {
-            chantier.setWorkers(Collections.emptyList());
-        }
-
-        return chantier;
-    }
-
-
-    //From Entity to DTO
-    public ChantierDTO toDTO(Chantier chantier) {
-        if (chantier == null) {
-            return null;
-        }
-
-        ChantierDTO chantierDTO = new ChantierDTO();
+    @Override
+    public void setDTOFields(ChantierDTO chantierDTO, Chantier chantier) {
         chantierDTO.setId(chantier.getId());
         chantierDTO.setNom(chantier.getNom());
         chantierDTO.setOperation(chantier.getOperation());
@@ -180,6 +109,125 @@ public class ChantierMapper {
             chantierDTO.setWorkers(Collections.emptyList());
         }
 
+
+    }
+
+    @Override
+    public void setEntityFields(ChantierDTO chantierDTO, Chantier chantier) {
+
+        chantier.setId(chantierDTO.getId());
+        chantier.setNom(chantierDTO.getNom());
+        chantier.setOperation(chantierDTO.getOperation());
+        chantier.setDateDebut(chantierDTO.getDateDebut());
+        chantier.setDateFin(chantierDTO.getDateFin());
+        chantier.setNbHeurs(chantierDTO.getNbHeurs());
+        chantier.setIsAnnuelle(chantierDTO.getIsAnnuelle());
+        chantier.setEffectifMaxiSurChantier(chantierDTO.getEffectifMaxiSurChantier());
+        chantier.setNombreInterimaires(chantierDTO.getNombreInterimaires());
+
+        // Handle collection with null check
+        if (chantierDTO.getEntrepriseExterieurs() != null) {
+            chantier.setEntrepriseExterieurs(entrepriseService.getByIds(chantierDTO.getEntrepriseExterieurs()));
+        } else {
+            chantier.setEntrepriseExterieurs(Collections.emptyList());
+        }
+
+        // Handle references with null checks
+        if (chantierDTO.getEntrepriseUtilisatrice() != null) {
+            chantier.setEntrepriseUtilisatrice(entrepriseService.getById(chantierDTO.getEntrepriseUtilisatrice()));
+        }
+
+        if (chantierDTO.getLocalisation() != null) {
+            chantier.setLocalisation(localisationService.getById(chantierDTO.getLocalisation()));
+        }
+
+        if (chantierDTO.getDonneurDOrdre() != null) {
+            chantier.setDonneurDOrdre(userService.getUserById(chantierDTO.getDonneurDOrdre()));
+        }
+
+        // Handle collections with null checks
+        if (chantierDTO.getBdts() != null) {
+            chantier.setBdts(bdtService.getBDTsByIds(chantierDTO.getBdts()));
+        } else {
+            chantier.setBdts(Collections.emptyList());
+        }
+
+        if (chantierDTO.getPdps() != null) {
+            chantier.setPdps(pdpService.getByIds(chantierDTO.getPdps()));
+        } else {
+            chantier.setPdps(Collections.emptyList());
+        }
+
+        if (chantierDTO.getWorkerSelections() != null) {
+            chantier.setWorkerSelections(workerSelectionService.getWorkerSelectionsByIds(chantierDTO.getWorkerSelections()));
+        } else {
+            chantier.setWorkerSelections(Collections.emptyList());
+        }
+
+        if (chantierDTO.getWorkers() != null) {
+            chantier.setWorkers(workerService.getWorkersByIds(chantierDTO.getWorkers()));
+        } else {
+            chantier.setWorkers(Collections.emptyList());
+        }
+
+    }
+
+    public Chantier toEntity(ChantierDTO chantierDTO) {
+        if (chantierDTO == null) {
+            return null;
+        }
+        Chantier chantier = new Chantier();
+        setEntityFields(chantierDTO, chantier);
+        return chantier;
+    }
+
+
+    //From Entity to DTO
+    public ChantierDTO toDTO(Chantier chantier) {
+        if (chantier == null) {
+            return null;
+        }
+
+        ChantierDTO chantierDTO = new ChantierDTO();
+        setDTOFields(chantierDTO, chantier);
         return chantierDTO;
     }
+
+    @Override
+    public List<Chantier> toEntityList(List<ChantierDTO> chantierDTOS) {
+        return chantierDTOS.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ChantierDTO> toDTOList(List<Chantier> chantiers) {
+        return chantiers.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Chantier updateEntityFromDTO(Chantier chantier, ChantierDTO chantierDTO) {
+        if(chantierDTO == null) {
+            return chantier;
+        }
+        setEntityFields(chantierDTO, chantier);
+        // Handle collection with null check
+
+        return chantier;
+
+    }
+
+    @Override
+    public ChantierDTO updateDTOFromEntity(ChantierDTO chantierDTO, Chantier chantier) {
+        if(chantier == null) {
+            return chantierDTO;
+        }
+        setDTOFields(chantierDTO, chantier);
+
+        return chantierDTO;
+    }
+
+
 }

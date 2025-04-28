@@ -8,5 +8,5 @@ public enum ObjectAnsweredObjects {
     DISPOSITIF,
     PERMIT,
     AUDIT,
-
+    ANALYSE_DE_RISQUE
 }

@@ -2,7 +2,6 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.EntrepriseService;
 import com.danone.pdpbackend.Utils.ApiResponse;
-import com.danone.pdpbackend.Utils.EntrepriseMapper;
 import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
 import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Worker;
@@ -19,31 +18,32 @@ import java.util.List;
 public class EntrepriseController {
 
 
+    private final com.danone.pdpbackend.Utils.mappers.EntrepriseMapper entrepriseMapper;
     EntrepriseService entrepriseService;
 
 
     @Autowired
-    public EntrepriseController(EntrepriseService entrepriseService) {
+    public EntrepriseController(EntrepriseService entrepriseService, com.danone.pdpbackend.Utils.mappers.EntrepriseMapper entrepriseMapper) {
         this.entrepriseService = entrepriseService;
+        this.entrepriseMapper = entrepriseMapper;
     }
 
     //CRUD
 
 
     @GetMapping("")
-    public ResponseEntity<ApiResponse<List<Entreprise>>> fetchAll(){
-        return ResponseEntity.ok(new ApiResponse<>(entrepriseService.findAll(),"Entreprises fetched successfully"));
+    public ResponseEntity<ApiResponse<List<EntrepriseDTO>>> fetchAll(){
+        return ResponseEntity.ok(new ApiResponse<>(entrepriseMapper.toDTOList(entrepriseService.getAll()),"Entreprises fetched successfully"));
     }
 
 
 
     //Create
     @PostMapping("")
-    public ResponseEntity<String> create(@RequestBody Entreprise entreprise)
+    public ResponseEntity<ApiResponse<EntrepriseDTO>> create(@RequestBody EntrepriseDTO entrepriseDTO)
     {
-        entrepriseService.create(entreprise);
-        return ResponseEntity.ok("Entreprise saved successfully");
-
+        Entreprise createdEntreprise = entrepriseService.create(entrepriseMapper.toEntity(entrepriseDTO));
+        return ResponseEntity.ok(new ApiResponse<>(entrepriseMapper.toDTO(createdEntreprise), "Entreprise created successfully"));
     }
 
 
@@ -51,31 +51,31 @@ public class EntrepriseController {
     @GetMapping("/{id}")
     public ResponseEntity<EntrepriseDTO> getEntreprise(@PathVariable Long id)
     {
-        Entreprise entreprise = entrepriseService.getEntrepriseById(id);
+        Entreprise entreprise = entrepriseService.getById(id);
 
         if( entreprise == null){
             return ResponseEntity.badRequest().body(null).notFound().build();
         }
-        return ResponseEntity.ok(EntrepriseMapper.toDTO(entreprise));
+        return ResponseEntity.ok(entrepriseMapper.toDTO(entreprise));
     }
 
     //Update
     @PatchMapping("/{id}")
-    public ResponseEntity<ApiResponse<Entreprise>> updateEntreprise(@PathVariable Long id, @RequestBody Entreprise entrepriseDto)
+    public ResponseEntity<ApiResponse<EntrepriseDTO>> updateEntreprise(@PathVariable Long id, @RequestBody EntrepriseDTO entrepriseDto)
     {
-        Entreprise entreprise = entrepriseService.getEntrepriseById(id);
+        Entreprise entreprise = entrepriseService.getById(id);
         if(entreprise == null){
             return ResponseEntity.badRequest().body(null).notFound().build();
         }
-        entrepriseService.updateEntreprise(entrepriseDto, id);
-        return ResponseEntity.ok(new ApiResponse<>(entreprise, "Entreprise updated successfully"));
+        Entreprise updatedEntreprise = entrepriseService.update(id, entrepriseMapper.updateEntityFromDTO(entreprise, entrepriseDto));
+        return ResponseEntity.ok(new ApiResponse<>(entrepriseMapper.toDTO(updatedEntreprise), "Entreprise updated successfully"));
     }
 
     //Delete
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Boolean>> deleteEntreprise(@PathVariable Long id)
     {
-        if(!entrepriseService.deleteEntreprise(id)){
+        if(!entrepriseService.delete(id)){
             return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Entreprise not found"));
         }
         return ResponseEntity.ok(new ApiResponse<>(null, "Entreprise deleted successfully"));
@@ -85,7 +85,7 @@ public class EntrepriseController {
     @PostMapping("/multiple")
     public ResponseEntity<ApiResponse<List<Entreprise>>> createMultiple(@RequestBody List<Long> entreprise_ids)
     {
-        List<Entreprise> entreprises = entrepriseService.getEntreprisesByIds(entreprise_ids);
+        List<Entreprise> entreprises = entrepriseService.getByIds(entreprise_ids);
         return ResponseEntity.ok(new ApiResponse<>(entreprises, "Entreprises saved successfully"));
     }
 

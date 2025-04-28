@@ -34,26 +34,26 @@ public class PdpController {
     @GetMapping("/all")
     public  ResponseEntity<ApiResponse<List<PdpDTO>>> getAllPdp()
     {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.getAllPdp().stream().map(pdpMapper::toDto).toList(),"Pdps fetched successfully"));
+        return ResponseEntity.ok(new ApiResponse<>(pdpService.getAll().stream().map(pdpMapper::toDTO).toList(),"Pdps fetched successfully"));
     }
 
     //Create
     @PostMapping("/")
     public ResponseEntity<ApiResponse<PdpDTO>> savePdp(@RequestBody PdpDTO pdpDTO) {
-        Pdp createdPdp = pdpService.createPdp(pdpMapper.toEntity(pdpDTO));
-        return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDto(createdPdp), "Pdp saved successfully"));
+        Pdp createdPdp = pdpService.saveOrUpdatePdp(pdpDTO);
+        return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(createdPdp), "Pdp saved successfully"));
     }
 
 
     //Read
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PdpDTO>> getPdp(@PathVariable Long id) {
-        Pdp pdp = pdpService.getPdp(id);
+        Pdp pdp = pdpService.getById(id);
         if (pdp == null) {
             return ResponseEntity.status(404)
                     .body(new ApiResponse<>(null, "Pdp not found"));
         }
-        return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDto(pdp), "Pdp fetched successfully"));
+        return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(pdp), "Pdp fetched successfully"));
     }
 
 
@@ -61,8 +61,8 @@ public class PdpController {
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<PdpDTO>> savePdp(@PathVariable Long id, @RequestBody PdpDTO pdpDTO)
     {
-        Pdp pdpUpdated = pdpService.updatePdp(pdpMapper.toEntity(pdpDTO), id);
-        return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDto(pdpUpdated), "Pdp updated successfully"));
+        Pdp pdpUpdated = pdpService.update(id, pdpMapper.toEntity(pdpDTO));
+        return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(pdpUpdated), "Pdp updated successfully"));
     }
 
 
@@ -71,7 +71,7 @@ public class PdpController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deletePdp(@PathVariable Long id)
     {
-        if(!pdpService.deletePdp(id)){
+        if(!pdpService.delete(id)){
             return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Pdp not found"));
         }
         return ResponseEntity.ok(new ApiResponse<>(null, "Pdp deleted successfully"));
@@ -92,58 +92,6 @@ public class PdpController {
         return ResponseEntity.ok(new ApiResponse<>(pdpService.getRecent(), "Recent pdps fetched successfully"));
     }
 
-    //api/pdp/' + pdpId + '/risque/' + risqueId, 'POST',
-    @PostMapping("/{pdpId}/risque/{risqueId}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> addRisqueToPdp(@PathVariable Long pdpId, @PathVariable Long risqueId)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.addObjectAnswered(pdpId, risqueId, ObjectAnsweredObjects.RISQUE), "Risque added to pdp successfully"));
-    }
-
-    @PostMapping("/{pdpId}/dispositif/{dispositifId}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> addDispositifToPdp(@PathVariable Long pdpId, @PathVariable Long dispositifId)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.addObjectAnswered(pdpId, dispositifId, ObjectAnsweredObjects.DISPOSITIF), "Dispositif added to pdp successfully"));
-    }
-
-    //etch('api/pdp/' + pdpId + '/analyse/' + analyseId, 'POST', null,
-    @PostMapping("/{pdpId}/analyse/{analyseId}")
-    public ResponseEntity<ApiResponse<ObjectAnsweredEntreprises>> addAnalyseToPdp(@PathVariable Long pdpId, @PathVariable Long analyseId)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.addAnalyseToPdp(pdpId, analyseId), "Analyse added to pdp successfully"));
-    }
-
-//        return fetch('api/pdp/' + pdpId + '/permit/' + permitId, 'POST', null,
-
-    @PostMapping("/{pdpId}/permit/{permitId}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> addPermitToPdp(@PathVariable Long pdpId, @PathVariable Long permitId)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.addObjectAnswered(pdpId, permitId, ObjectAnsweredObjects.PERMIT), "Permit added to pdp successfully"));
-    }
-
-
-    //return fetch('api/pdp/' + pdpId + '/permit/' + permitId, 'DELETE', null,
-    @DeleteMapping("/{pdpId}/permit/{permitId}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> removePermitFromPdp(@PathVariable Long pdpId, @PathVariable Long permitId)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.removeObjectAnswered(pdpId, permitId, ObjectAnsweredObjects.PERMIT), "Permit removed from pdp successfully"));
-    }
-
-
-
-    @PostMapping("/{pdpId}/object/{objectId}/type/{objectType}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> addObjectToPdp(@PathVariable Long pdpId, @PathVariable Long objectId, @PathVariable ObjectAnsweredObjects objectType)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.addObjectAnswered(pdpId, objectId,objectType), "Object added to pdp successfully"));
-    }
-
-
-    //return fetch('api/pdp/' + pdpId + '/permit/' + permitId, 'DELETE', null,
-    @DeleteMapping("/{pdpId}/object/{objectId}/type/{objectType}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> removeObjectFromPdp(@PathVariable Long pdpId, @PathVariable Long objectId, @PathVariable ObjectAnsweredObjects objectType)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.removeObjectAnswered(pdpId, objectId,objectType), "Object removed from pdp successfully"));
-    }
-
 
     @PostMapping("/sign/{pdpId}")
     public ResponseEntity<ApiResponse<String>> signPdp(@PathVariable Long pdpId)
@@ -155,16 +103,9 @@ public class PdpController {
     @GetMapping("/exist/{id}")
     public ResponseEntity<ApiResponse<Boolean>> existPdp(@PathVariable Long id)
     {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.getPdp(id) != null, "Pdp exist"));
+        return ResponseEntity.ok(new ApiResponse<>(pdpService.getById(id) != null, "Pdp exist"));
     }
 
-
-    //        return fetch('api/pdp/' + pdpId + '/analyse/' + analyseId, 'DELETE', null,
-    @DeleteMapping("/{pdpId}/analyse/{analyseId}")
-    public ResponseEntity<ApiResponse<ObjectAnsweredEntreprises>> removeAnalyseFromPdp(@PathVariable Long pdpId, @PathVariable Long analyseId)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.removeAnalyse(pdpId, analyseId), "Analyse removed from pdp successfully"));
-    }
 
     //        return fetch(`api/pdp/${pdpId}/workers`, 'GET', null, [
     @GetMapping("/pdp/{pdpId}/workers")
@@ -173,13 +114,37 @@ public class PdpController {
     }
 
 
+/*    //ObjectAnswered
+    @PostMapping("/{pdpId}/object-answred/{objectId}/type/{objectType}")
+    public ResponseEntity<ApiResponse<ObjectAnswered>> addObjectToPdp(@PathVariable Long pdpId, @RequestBody ObjectAnswered objectAnswered, @PathVariable ObjectAnsweredObjects objectType)
+    {
+        return ResponseEntity.ok(new ApiResponse<>(pdpService.addObjectAnswered(pdpId, objectAnswered,objectType), "Object added to pdp successfully"));
+    }
+
+    @DeleteMapping("/{pdpId}/object-answered/{objectId}/type/{objectType}")
+    public ResponseEntity<ApiResponse<ObjectAnswered>> removeObjectFromPdp(@PathVariable Long pdpId, @PathVariable Long objectId, @PathVariable ObjectAnsweredObjects objectType)
+    {
+        return ResponseEntity.ok(new ApiResponse<>(pdpService.removeObjectAnswered(pdpId, objectId,objectType), "Object removed from pdp successfully"));
+    }
+
+    @PostMapping("/{pdpId}/object-answered/multiple/type/{objectType}")
+    public ResponseEntity<ApiResponse<List<ObjectAnswered>>> addMultipleObjectsToPdp(@PathVariable Long pdpId, @RequestBody List<ObjectAnswered> objectAnswereds, @PathVariable ObjectAnsweredObjects objectType){
+        return ResponseEntity.ok(new ApiResponse<>(pdpService.addMultipleObjectsToPdp(pdpId, objectAnswereds, objectType), "Multiple objects are linked"));
+    }*/
+
 
     //Make a get to get teh risques of a pdp
-
-    @GetMapping("/{pdpId}/objectAnswered/{objectType}")
+    @GetMapping("/{pdpId}/object-answered/{objectType}")
     public ResponseEntity<ApiResponse<List<ObjectAnswered>>> getObjectAnsweredByPdpId(@PathVariable Long pdpId, @PathVariable ObjectAnsweredObjects objectType) {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.getObjectAnsweredByPdpId(pdpId, objectType), "Risques fetched"));
+        return ResponseEntity.ok(new ApiResponse<>(pdpService.getObjectAnsweredByPdpId(pdpId, objectType), "items fetched"));
     }
+
+  /*  @DeleteMapping("/{pdpId}/object-answered/multiple/type/{objectType}")
+    public ResponseEntity<ApiResponse<List<ObjectAnswered>>> removeMultipleObjectsFromPdp(@PathVariable Long pdpId, @RequestBody List<Long> objectIds, @PathVariable ObjectAnsweredObjects objectType)
+    {
+        log.info("It's in the remove", objectIds);
+        return ResponseEntity.ok(new ApiResponse<>(pdpService.removeMultipleObjectsFromPdp(pdpId, objectIds,objectType), "feij"));
+    }*/
 
 }
 

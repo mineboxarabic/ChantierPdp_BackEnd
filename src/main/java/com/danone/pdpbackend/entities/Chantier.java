@@ -52,8 +52,8 @@ public class Chantier {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "chantier")
     private List<BDT> bdts;
 
-    @OneToMany
-    private List<Pdp> pdps;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "chantier")
+    private List<Pdp> pdps = new ArrayList<>();
 
     // Replace the direct many-to-many with the join entity
     @OneToMany(mappedBy = "chantier", cascade = CascadeType.ALL)

@@ -45,7 +45,7 @@ public class BDTServiceImpl implements BDTService {
 
     @Override
     public List<BDT> getBDTsByIds(List<Long> id) {
-        return bdtRepo.findAllById(id);
+        return bdtRepo.findBDTsByIdIn(id);
     }
 
     @Override
@@ -95,10 +95,8 @@ public class BDTServiceImpl implements BDTService {
         objectAnswered = objectAnswerRepo.save(objectAnswered);
 
         if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
-            objectAnswered.setRisque_id(risqueRepo.findRisqueById(id).getId());
             bdt.getRisques().add(objectAnswered);
         } else if(objectAnsweredObject == ObjectAnsweredObjects.AUDIT){
-            objectAnswered.setAuditSecu_id(auditSecuRepo.findAuditSecuById(id).getId());
             bdt.getAuditSecu().add(objectAnswered);
         }
         bdtRepo.save(bdt);

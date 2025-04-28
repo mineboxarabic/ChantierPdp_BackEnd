@@ -7,19 +7,7 @@ import com.danone.pdpbackend.entities.dto.ChantierDTO;
 
 import java.util.List;
 
-public interface ChantierService {
-
-    List<Chantier> getAllChantiers();
-
-    Chantier updateChantier(Chantier chantier, Long id);
-
-    Chantier createChantier(Chantier chantier);
-
-    Chantier getChantier(Long id);
-
-
-
-    boolean deleteChantier(Long id);
+public interface ChantierService extends Service<Chantier> {
 
     Long getLastId();
 

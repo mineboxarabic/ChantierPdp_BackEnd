@@ -27,7 +27,7 @@ class UserControllerTest {
     @Test
     void createUser_shouldReturnCreatedStatus_whenValidUserProvided() throws Exception {
         User validUser = new User();
-        validUser.setName("John Doe");
+        validUser.setUsername("John Doe");
 
         doNothing().when(userService).createUser(Mockito.any(User.class));
 

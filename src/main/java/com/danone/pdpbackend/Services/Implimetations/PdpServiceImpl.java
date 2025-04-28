@@ -5,14 +5,16 @@ import com.danone.pdpbackend.Repo.*;
 import com.danone.pdpbackend.Services.*;
 
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
-import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
+import com.danone.pdpbackend.Utils.mappers.PdpMapper;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.ObjectAnswered;
 import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.dto.PdpDTO;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +25,7 @@ public class PdpServiceImpl implements PdpService {
     private final PermitRepo permitRepo;
     private final ChantierRepo chantierRepo;
     private final ChantierService chantierService;
+    private final PdpMapper pdpMapper;
     PdpRepo pdpRepo;
     EntrepriseService entrepriseService;
     private final ObjectAnswerRepo objectAnswerRepo;
@@ -30,7 +33,7 @@ public class PdpServiceImpl implements PdpService {
     private final DispositifService dispositifService;
     private final ObjectAnswerEntreprisesRepo objectAnswerEntreprisesRepo;
 
-    public PdpServiceImpl(PdpRepo pdpRepo, EntrepriseService entrepriseService, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService, DispositifService dispositifService, ObjectAnswerEntreprisesRepo objectAnswerEntreprisesRepo, AnalyseDeRisqueRepo analyseDeRisqueRepo, PermitRepo permitRepo, ChantierRepo chantierRepo, ChantierService chantierService) {
+    public PdpServiceImpl(PdpRepo pdpRepo, EntrepriseService entrepriseService, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService, DispositifService dispositifService, ObjectAnswerEntreprisesRepo objectAnswerEntreprisesRepo, AnalyseDeRisqueRepo analyseDeRisqueRepo, PermitRepo permitRepo, ChantierRepo chantierRepo, ChantierService chantierService, PdpMapper pdpMapper) {
         this.pdpRepo = pdpRepo;
         this.entrepriseService = entrepriseService;
         this.objectAnswerRepo = objectAnswerRepo;
@@ -41,240 +44,79 @@ public class PdpServiceImpl implements PdpService {
         this.permitRepo = permitRepo;
         this.chantierRepo = chantierRepo;
         this.chantierService = chantierService;
+        this.pdpMapper = pdpMapper;
     }
 
-    public List<Pdp> getAllPdp() {
+    public List<Pdp> getAll() {
         return pdpRepo.findAll();
     }
 
-/*    @Override
-    public Pdp updatePdp(Pdp updatedPdp, Long id) {
-        Optional<Pdp> existingPdpOpt = pdpRepo.findById(id);
+    private List<ObjectAnswered> mergeObjectAnswered(List<ObjectAnswered> incoming, List<ObjectAnswered> existing, Long pdpId) {
+        List<ObjectAnswered> result = new ArrayList<>();
 
-        if (existingPdpOpt.isEmpty()) {
-            throw new IllegalArgumentException("Pdp with id " + id + " not found");
+
+        for (ObjectAnswered obj : incoming) {
+            if (obj.getId() == null) {
+                // New object to add
+                result.add(objectAnswerRepo.save(obj));
+            }
+            else {
+                // Existing object to update or delete
+                ObjectAnswered existingObj = objectAnswerRepo.findById(obj.getId());
+                if (existingObj != null) {
+                    if (obj.getAnswer() == null) {
+                        // Delete object if answer is null
+                        objectAnswerRepo.delete(existingObj);
+                        // Don't add to result
+                    } else {
+                        // Update object
+                        existingObj.setAnswer(obj.getAnswer());
+                        existingObj.setEe(obj.getEe());
+                        existingObj.setEu(obj.getEu());
+                        existingObj.setObjectType(obj.getObjectType());
+                        result.add(objectAnswerRepo.save(existingObj));
+                    }
+                }
+            }
         }
 
-        Pdp existingPdp = existingPdpOpt.get();
-
-        //pdpMapper.updatePdpFromDto(updatedPdp, existingPdp);
-
-        // Update fields only if they are non-null
-        if (updatedPdp.getOperation() != null) existingPdp.setOperation(updatedPdp.getOperation());
-        if (updatedPdp.getLieuintervention() != null) existingPdp.setLieuintervention(updatedPdp.getLieuintervention());
-        if (updatedPdp.getDatedebuttravaux() != null) existingPdp.setDatedebuttravaux(updatedPdp.getDatedebuttravaux());
-        if (updatedPdp.getDatefintravaux() != null) existingPdp.setDatefintravaux(updatedPdp.getDatefintravaux());
-        if (updatedPdp.getEffectifmaxisurchantier() != null) existingPdp.setEffectifmaxisurchantier(updatedPdp.getEffectifmaxisurchantier());
-        if (updatedPdp.getNombreinterimaires() != null) existingPdp.setNombreinterimaires(updatedPdp.getNombreinterimaires());
-        if (updatedPdp.getHoraireDeTravail() != null) existingPdp.setHoraireDeTravail(updatedPdp.getHoraireDeTravail());
-        if (updatedPdp.getHorairesdetail() != null) existingPdp.setHorairesdetail(updatedPdp.getHorairesdetail());
-        if (updatedPdp.getIcpdate() != null) existingPdp.setIcpdate(updatedPdp.getIcpdate());
-        if (updatedPdp.getEntrepriseexterieure() != null) existingPdp.setEntrepriseexterieure(updatedPdp.getEntrepriseexterieure());
-
-        if (updatedPdp.getEntrepriseDInspection() != null) existingPdp.setEntrepriseDInspection(updatedPdp.getEntrepriseDInspection());
-        if(updatedPdp.getDateInspection() != null) existingPdp.setDateInspection(updatedPdp.getDateInspection());
-
-        if(updatedPdp.getEntrepriseutilisatrice() != null) existingPdp.setEntrepriseutilisatrice(entrepriseService.updateEntreprise(updatedPdp.getEntrepriseutilisatrice(), updatedPdp.getEntrepriseutilisatrice().getId()));
-
-
-        if (updatedPdp.getMisesEnDisposition() != null) existingPdp.setMisesEnDisposition(updatedPdp.getMisesEnDisposition());
-        if (updatedPdp.getMedecintravaileu() != null) existingPdp.setMedecintravaileu(updatedPdp.getMedecintravaileu());
-        if (updatedPdp.getMedecintravailee() != null) existingPdp.setMedecintravailee(updatedPdp.getMedecintravailee());
-        if (updatedPdp.getDateprevenircssct() != null) existingPdp.setDateprevenircssct(updatedPdp.getDateprevenircssct());
-        if (updatedPdp.getDateprev() != null) existingPdp.setDateprev(updatedPdp.getDateprev());
-        if (updatedPdp.getLocation() != null) existingPdp.setLocation(updatedPdp.getLocation());
-
-
-
-        pdpRepo.save(existingPdp);
-        return existingPdp;
-    }*/
-
-
+        return result;
+    }
     @Override
-    public Pdp updatePdp(Pdp updatedPdp, Long id) {
-        Pdp existingPdp = pdpRepo.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Pdp with id " + id + " not found"));
-
-        //Get the disposifs that are in existing pdp and not in updated pdp
-
-
-        //updateEntrepriseUtilisatrice(updatedPdp, existingPdp);
-        updateObjectAnsweredList(updatedPdp.getRisques(),existingPdp.getRisques(), objectAnswerRepo);
-        updateObjectAnsweredList(updatedPdp.getDispositifs(),existingPdp.getDispositifs(), objectAnswerRepo);
-        updateAnalyseDeRisques(updatedPdp);
-        updateObjectAnsweredList(updatedPdp.getPermits(),existingPdp.getPermits(), objectAnswerRepo);
-
-        updateSimpleFields(updatedPdp, existingPdp);
-
-        pdpRepo.save(existingPdp);
-        return existingPdp;
-    }
-
-
-    private void updateObjectAnsweredList(List<ObjectAnswered> updatedList,List<ObjectAnswered> existingList, ObjectAnswerRepo repo) {
-
-
-        //We have three cases either we add new objects of objectAnswered or we update the existing ones, or we delete the ones that are not in the updated list
-
-        //First we add the new objects
-/*        for (ObjectAnswered item : updatedList) {
-            if (item.getId() == null) {
-                item = repo.save(item);
-                existingList.add(item);
-            }
-        }*/
-
-        //Then we update the existing ones
-        for (ObjectAnswered item : updatedList) {
-            if (item.getId() != null) {
-                ObjectAnswered existingItem = repo.findById(item.getId());
-                existingItem.setAnswer(item.getAnswer());
-                repo.save(existingItem);
-            }
+    @Transactional
+    public Pdp update(Long id, Pdp updatedPdp) {
+        if (updatedPdp.getId() != null && !updatedPdp.getId().equals(id)) {
+            throw new IllegalArgumentException("Path ID and PDP ID must match");
         }
 
-        //Finally we delete the ones that are not in the updated list
-/*
-        for (ObjectAnswered item : existingList) {
-            if (!updatedList.contains(item)) {
-                repo.delete(item);
-            }
+        Pdp existingPdp = getById(id);
+
+        // ********* RISQUES *********
+        existingPdp.setRelations(mergeObjectAnswered(updatedPdp.getRelations(), existingPdp.getRelations(), id));
+
+        // Update other fields if needed
+        // For example, if chantier has changed
+        if (updatedPdp.getChantier() != null) {
+            chantierService.addPdpToChantier(updatedPdp.getChantier(), existingPdp);
         }
-*/
 
-
+        return pdpRepo.save(existingPdp);
     }
-
-    private void updateAnalyseDeRisques(Pdp updatedPdp) {
-        if (updatedPdp.getAnalyseDeRisques() != null) {
-            for (ObjectAnsweredEntreprises item : updatedPdp.getAnalyseDeRisques()) {
-                ObjectAnsweredEntreprises existingItem = objectAnswerEntreprisesRepo.findById(item.getId());
-                existingItem.setEE(item.getEE());
-                existingItem.setEU(item.getEU());
-                objectAnswerEntreprisesRepo.save(existingItem);
-            }
-        }
-    }
-
-    private void updateSimpleFields(Pdp updatedPdp, Pdp existingPdp) {
-        for (Field field : Pdp.class.getDeclaredFields()) {
-            field.setAccessible(true);
-            try {
-                Object newValue = field.get(updatedPdp);
-                if (newValue != null && !isSpecialField(field.getName())) {
-                    field.set(existingPdp, newValue);
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException("Error updating field: " + field.getName(), e);
-            }
-        }
-    }
-
-    private boolean isSpecialField(String fieldName) {
-        return List.of("entrepriseutilisatrice", "risques", "dispositifs", "analyseDeRisques", "permits").contains(fieldName);
-    }
-
-
-
     @Override
-    public Pdp createPdp(Pdp pdp) {
-        Pdp pdpEntity = new Pdp();
+    public Pdp create(Pdp pdp) {
+        Pdp pdp1 = pdpRepo.save(pdp);
 
- /*       //Put all the fields from pdp into pdpEntity with for loop
-        //log.info("Creating pdp with id " + (pdpRepo.findMaxId() + 1));
-       // pdpEntity.setId((long) (pdpRepo.findMaxId() + 1));
- *//*       pdpEntity.setOperation(pdp.getOperation());
-        pdpEntity.setLieuintervention(pdp.getLieuintervention());
-        pdpEntity.setDatedebuttravaux(pdp.getDatedebuttravaux());
-        pdpEntity.setDatefintravaux(pdp.getDatefintravaux());
-        pdpEntity.setEffectifmaxisurchantier(pdp.getEffectifmaxisurchantier());
-        pdpEntity.setNombreinterimaires(pdp.getNombreinterimaires());
-*//*
-        pdpEntity.setHoraireDeTravail(pdp.getHoraireDeTravail());
-
-       // pdpEntity.setHorairesdetail(pdp.getHorairesdetail());
-        pdpEntity.setIcpdate(pdp.getIcpdate());
-       // pdpEntity.setEntrepriseexterieure(pdp.getEntrepriseexterieure());
-        //pdpEntity.setEntrepriseutilisatrice(entreprise);
-       // pdpEntity.setMedecintravaileu(pdp.getMedecintravaileu());
-      //  pdpEntity.setMedecintravailee(pdp.getMedecintravailee());
-        pdpEntity.setDatePrevenirCSSCT(pdp.getDateprevenircssct());
-        pdpEntity.setDatePrev(pdp.getDateprev());
-      //  pdpEntity.setLocation(pdp.getLocation());
-
-        pdpEntity.setDateInspection(pdp.getDateInspection());
-        pdpEntity.setEntrepriseDInspection(pdp.getEntrepriseDInspection());
-     //   pdpEntity.setEntrepriseutilisatrice(pdp.getEntrepriseetutilisatrise());
-     //   pdpEntity.setEntrepriseexterieure(pdp.getEntrepriseexterieure());
-        */
-
-        for (Field field : pdpEntity.getClass().getDeclaredFields()) {
-            try {
-                if (field.getName().equals("id")) {
-                    continue;
-                }
-                Field fieldDto = pdp.getClass().getDeclaredField(field.getName());
-                //if the field is id we don't want to set it
-
-                if("id".equals(field.getName())){
-                    continue;
-                }
-
-                if("risques".equals(field.getName()) || "dispositifs".equals(field.getName()) || "permits".equals(field.getName()) || "analyseDeRisques".equals(field.getName())){
-                    continue;
-                }
-
-
-                field.setAccessible(true);
-                fieldDto.setAccessible(true);
-                field.set(pdpEntity, fieldDto.get(pdp));
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                e.printStackTrace();
-            }
+        if(pdp.getChantier() != null)
+        {
+         chantierService.addPdpToChantier(pdp.getChantier(), pdp);
         }
-       Pdp pdp1 = pdpRepo.save(pdpEntity);
-        if(pdpEntity.getChantier() != null){
-          //  pdpEntity.setChantier(chantierRepo.getChantierById(pdpEntity.getChantier().getId()));
-         chantierService.addPdpToChantier(pdpEntity.getChantier(), pdpEntity);
-        }
-
-        //We add all the objectAnswered to the pdp
-        if(pdp.getRisques() != null){
-            for (ObjectAnswered objectAnswered : pdp.getRisques()) {
-                objectAnswered = objectAnswerRepo.save(objectAnswered);
-                if(pdp1.getRisques() != null) pdp1.getRisques().add(objectAnswered);
-            }
-        }
-
-        if(pdp.getDispositifs() != null){
-            for (ObjectAnswered objectAnswered : pdp.getDispositifs()) {
-                objectAnswered = objectAnswerRepo.save(objectAnswered);
-                if(pdp1.getRisques() != null) pdp1.getDispositifs().add(objectAnswered);
-            }
-        }
-
-        if(pdp.getPermits() != null){
-            for (ObjectAnswered objectAnswered : pdp.getPermits()) {
-                objectAnswered = objectAnswerRepo.save(objectAnswered);
-                if(pdp1.getRisques() != null) pdp1.getPermits().add(objectAnswered);
-            }
-        }
-
-        if(pdp.getAnalyseDeRisques() != null){
-            for (ObjectAnsweredEntreprises objectAnsweredEntreprises : pdp.getAnalyseDeRisques()) {
-                objectAnsweredEntreprises = objectAnswerEntreprisesRepo.save(objectAnsweredEntreprises);
-                if(pdp1.getRisques() != null) pdp1.getAnalyseDeRisques().add(objectAnsweredEntreprises);
-            }
-        }
-
         pdpRepo.save(pdp1);
 
         return pdp1;
     }
 
     @Override
-    public Pdp getPdp(Long id) {
+    public Pdp getById(Long id) {
         Optional<Pdp> pdpOpt = pdpRepo.findById(id);
 
         if (pdpOpt.isEmpty()) {
@@ -285,7 +127,7 @@ public class PdpServiceImpl implements PdpService {
     }
 
     @Override
-    public boolean deletePdp(Long id) {
+    public Boolean delete(Long id) {
         Optional<Pdp> pdpOpt = pdpRepo.findById(id);
 
         if (pdpOpt.isEmpty()) {
@@ -300,7 +142,10 @@ public class PdpServiceImpl implements PdpService {
     public Long getLastId() {
         return (long) pdpRepo.findMaxId();
     }
-
+    @Override
+    public List<Pdp> getByIds(List<Long> pdps) {
+        return pdpRepo.findPdpsByIdIn(pdps);
+    }
     @Override
     public List<Pdp> getRecent() {
         List<Pdp> pdps = pdpRepo.findAll();
@@ -313,88 +158,42 @@ public class PdpServiceImpl implements PdpService {
 
     }
 
-    public ObjectAnswered saveNewObjectAnswer(Long pdpId, Long risqueId, String type) {
-        ObjectAnswered objectAnswered = new ObjectAnswered();
-        objectAnswered.setAnswer(false);
+    @Override
+    public List<Worker> findWorkersByPdp(Long pdpId) {
+        return pdpRepo.findById(pdpId).get().getSignatures();
+    }
 
-        if("Risque".equals(type)){
-            objectAnswered.setRisque_id(risqueService.getRisqueById(risqueId).getId());
-        } else if ("Dispositif".equals(type)){
-            objectAnswered.setDispositif_id(dispositifService.getDispositifById(risqueId).getId());
+    @Override
+    public List<ObjectAnswered> getObjectAnsweredByPdpId(Long pdpId, ObjectAnsweredObjects objectType) {
+        Pdp pdp = getById(pdpId);
+        return pdp.getRelations();
+    }
+
+    /*
+
+    @Override
+    @Transactional
+    public ObjectAnswered addObjectAnswered(Long pdpId,  ObjectAnswered objectAnswered, ObjectAnsweredObjects objectAnsweredObject) {
+        Pdp pdp = getById(pdpId);
+        if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
+            pdp.getRisques().add(objectAnswered);
+        } else if(objectAnsweredObject == ObjectAnsweredObjects.DISPOSITIF){
+            pdp.getDispositifs().add(objectAnswered);
+        } else if(objectAnsweredObject == ObjectAnsweredObjects.PERMIT){
+            pdp.getPermits().add(objectAnswered);
         }
-        else if ("Permit".equals(type)){
-            objectAnswered.setPermit_id(permitRepo.findPermitById(risqueId).getId());
-        }
-
-
 
         objectAnswered = objectAnswerRepo.save(objectAnswered);
-
-        return objectAnswered;
-    }
-
-    @Override
-    public ObjectAnswered addRisqueToPdp(Long pdpId, Long risqueId) {
-        Pdp pdp = getPdp(pdpId);
-        ObjectAnswered objectAnswered = saveNewObjectAnswer(pdpId, risqueId, "Risque");
-        objectAnswered = objectAnswerRepo.save(objectAnswered);
-        pdp.getRisques().add(objectAnswered);
         pdpRepo.save(pdp);
         return objectAnswered;
     }
 
     @Override
-    public ObjectAnswered addDispositifToPdp(Long pdpId, Long dispositifId) {
-        Pdp pdp = getPdp(pdpId);
-        ObjectAnswered objectAnswered = saveNewObjectAnswer(pdpId, dispositifId,"Dispositif");
-        objectAnswered = objectAnswerRepo.save(objectAnswered);
-        //pdp.getDispositifs().add(objectAnswered);
-        pdpRepo.save(pdp);
-        return objectAnswered;
-    }
-
-    @Override
-    public ObjectAnsweredEntreprises addAnalyseToPdp(Long pdpId, Long analyseId) {
-        Pdp pdp = getPdp(pdpId);
-
-        ObjectAnsweredEntreprises objectAnsweredEntreprises = new ObjectAnsweredEntreprises();
-        objectAnsweredEntreprises.setEU(false);
-        objectAnsweredEntreprises.setEE(false);
-        objectAnsweredEntreprises.setAnalyseDeRisque(analyseDeRisqueRepo.findAnalyseDeRisqueById(analyseId));
-
-        objectAnsweredEntreprises = objectAnswerEntreprisesRepo.save(objectAnsweredEntreprises);
-
-        pdp.getAnalyseDeRisques().add(objectAnsweredEntreprises);
-        pdpRepo.save(pdp);
-        return objectAnsweredEntreprises;
-    }
-
-    @Override
-    public ObjectAnswered addPermitToPdp(Long pdpId, Long permitId) {
-
-        Pdp pdp = getPdp(pdpId);
-
-        ObjectAnswered objectAnswered = saveNewObjectAnswer(pdpId, permitId, "Permit");
-        objectAnswered = objectAnswerRepo.save(objectAnswered);
-        pdp.getPermits().add(objectAnswered);
-        pdpRepo.save(pdp);
-        return objectAnswered;
-    }
-
-    @Override
-    public ObjectAnswered removePermitFromPdp(Long pdpId, Long permitId) {
-        Pdp pdp = getPdp(pdpId);
-        ObjectAnswered objectAnswered = objectAnswerRepo.findById(permitId);
-        pdp.getPermits().remove(objectAnswered);
-        pdpRepo.save(pdp);
-        objectAnswerRepo.delete(objectAnswered);
-        return objectAnswered;
-    }
-
-    @Override
+    @Transactional
     public ObjectAnswered removeObjectAnswered(Long pdpId, Long id, ObjectAnsweredObjects objectAnsweredObject) {
-
-        Pdp pdp = getPdp(pdpId);
+        // First remove it from the Pdp
+        // Then remove it from the DB
+        Pdp pdp = getById(pdpId);
         ObjectAnswered objectAnswered = objectAnswerRepo.findById(id);
 
         if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
@@ -405,71 +204,76 @@ public class PdpServiceImpl implements PdpService {
             pdp.getPermits().remove(objectAnswered);
         }
 
-
         objectAnswerRepo.delete(objectAnswered);
         pdpRepo.save(pdp);
         return objectAnswered;
 
     }
 
-    @Override
-    public ObjectAnswered addObjectAnswered(Long pdpId, Long id, ObjectAnsweredObjects objectAnsweredObject) {
-        Pdp pdp = getPdp(pdpId);
-        ObjectAnswered objectAnswered = new ObjectAnswered();
-        objectAnswered.setAnswer(false);
 
-        if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
-            objectAnswered.setRisque_id(risqueService.getRisqueById(id).getId());
-            pdp.getRisques().add(objectAnswered);
-        } else if(objectAnsweredObject == ObjectAnsweredObjects.DISPOSITIF){
-            objectAnswered.setDispositif_id(dispositifService.getDispositifById(id).getId());
-            pdp.getDispositifs().add(objectAnswered);
-        } else if(objectAnsweredObject == ObjectAnsweredObjects.PERMIT){
-            objectAnswered.setPermit_id(permitRepo.findPermitById(id).getId());
-            pdp.getPermits().add(objectAnswered);
+
+    @Override
+    @Transactional
+    public List<ObjectAnswered> addMultipleObjectsToPdp(Long pdpId, List<ObjectAnswered> objectAnswereds, ObjectAnsweredObjects objectType) {
+        Pdp pdp = getById(pdpId);
+
+        for(ObjectAnswered objectAnswered : objectAnswereds){
+            if(objectType == ObjectAnsweredObjects.RISQUE){
+                pdp.getRisques().add(objectAnswered);
+            } else if(objectType == ObjectAnsweredObjects.DISPOSITIF){
+                pdp.getDispositifs().add(objectAnswered);
+            } else if(objectType == ObjectAnsweredObjects.PERMIT){
+                pdp.getPermits().add(objectAnswered);
+            }
         }
 
-        objectAnswered = objectAnswerRepo.save(objectAnswered);
         pdpRepo.save(pdp);
-        return objectAnswered;
+        return objectAnswereds;
     }
+*/
 
     @Override
-    public ObjectAnsweredEntreprises removeAnalyse(Long pdpId, Long analyseId) {
-        Pdp pdp = getPdp(pdpId);
-        ObjectAnsweredEntreprises objectAnsweredEntreprises = objectAnswerEntreprisesRepo.findById(analyseId);
+    @Transactional
+    public Pdp saveOrUpdatePdp(PdpDTO dto) {
+        Pdp pdp;
 
+        if (dto.getId() != null) {
+            pdp = getById(dto.getId());
+            if (pdp == null) {
+                throw new RuntimeException("Pdp not found with ID: " + dto.getId());
+            }
 
-        pdp.getAnalyseDeRisques().remove(objectAnsweredEntreprises);
-        pdpRepo.save(pdp);
-
-        objectAnswerEntreprisesRepo.deleteById(analyseId);
-
-        return objectAnsweredEntreprises;
-    }
-
-    @Override
-    public List<Worker> findWorkersByPdp(Long pdpId) {
-        return pdpRepo.findById(pdpId).get().getSignatures();
-    }
-
-    @Override
-    public List<Pdp> getPDPsByIds(List<Long> pdps) {
-        return pdpRepo.findPdpsByIdIn(pdps);
-    }
-
-    @Override
-    public List<ObjectAnswered> getObjectAnsweredByPdpId(Long pdpId, ObjectAnsweredObjects objectType) {
-        Pdp pdp = getPdp(pdpId);
-        if(objectType == ObjectAnsweredObjects.RISQUE){
-            return pdp.getRisques();
-        } else if(objectType == ObjectAnsweredObjects.DISPOSITIF){
-            return pdp.getDispositifs();
-        } else if(objectType == ObjectAnsweredObjects.PERMIT){
-            return pdp.getPermits();
+            pdpMapper.updateEntityFromDTO(pdp, dto);
+        } else {
+            pdp = pdpMapper.toEntity(dto);
         }
-        return null;
+
+        return pdpRepo.save(pdp);
     }
 
+  /*  @Override
+    public List<ObjectAnswered> removeMultipleObjectsFromPdp(Long pdpId, List<Long> ids, ObjectAnsweredObjects objectAnsweredObject) {
+        // First remove it from the Pdp
+        // Then remove it from the DB
+        Pdp pdp = getById(pdpId);
+        List<ObjectAnswered> objectAnswereds = objectAnswerRepo.findObjectAnsweredByIdIn(ids);
 
+        List<ObjectAnswered> deletedAnswereds = new ArrayList<>();
+        for(ObjectAnswered objectAnswered : objectAnswereds){
+            if(objectAnsweredObject == ObjectAnsweredObjects.RISQUE){
+                pdp.getRisques().remove(objectAnswered);
+            } else if(objectAnsweredObject == ObjectAnsweredObjects.DISPOSITIF){
+                pdp.getDispositifs().remove(objectAnswered);
+            } else if(objectAnsweredObject == ObjectAnsweredObjects.PERMIT){
+                pdp.getPermits().remove(objectAnswered);
+            }
+            deletedAnswereds.add(objectAnswered);
+            objectAnswerRepo.delete(objectAnswered);
+        }
+        pdpRepo.save(pdp);
+
+        return deletedAnswereds;
+    }
+
+*/
 }

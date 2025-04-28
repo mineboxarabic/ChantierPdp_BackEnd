@@ -25,4 +25,6 @@ public interface RisqueRepo extends Repository<Risque,Long> {
         void deleteById(Long id);
 
         List<Risque> findRisqueByIdIn(Collection<Long> ids);
+
+        Long count();
 }
