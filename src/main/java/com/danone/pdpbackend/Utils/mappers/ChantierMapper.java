@@ -2,10 +2,12 @@ package com.danone.pdpbackend.Utils.mappers;
 
 import com.danone.pdpbackend.Services.*;
 import com.danone.pdpbackend.entities.*;
-import com.danone.pdpbackend.entities.BDT.BDT;
+import com.danone.pdpbackend.entities.BDT.Bdt;
 import com.danone.pdpbackend.entities.dto.ChantierDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -48,6 +50,8 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
         chantierDTO.setIsAnnuelle(chantier.getIsAnnuelle());
         chantierDTO.setEffectifMaxiSurChantier(chantier.getEffectifMaxiSurChantier());
         chantierDTO.setNombreInterimaires(chantier.getNombreInterimaires());
+        chantierDTO.setStatus(chantier.getStatus());
+        chantierDTO.setTravauxDangereux(chantier.getTravauxDangereux());
 
         // Handle collection with null check and filtering
         if (chantier.getEntrepriseExterieurs() != null) {
@@ -76,7 +80,7 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
         if (chantier.getBdts() != null) {
             chantierDTO.setBdts(chantier.getBdts().stream()
                     .filter(Objects::nonNull)
-                    .map(BDT::getId)
+                    .map(Bdt::getId)
                     .collect(Collectors.toList()));
         } else {
             chantierDTO.setBdts(Collections.emptyList());
@@ -124,7 +128,8 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
         chantier.setIsAnnuelle(chantierDTO.getIsAnnuelle());
         chantier.setEffectifMaxiSurChantier(chantierDTO.getEffectifMaxiSurChantier());
         chantier.setNombreInterimaires(chantierDTO.getNombreInterimaires());
-
+        chantier.setStatus(chantierDTO.getStatus());
+        chantier.setTravauxDangereux(chantierDTO.getTravauxDangereux());
         // Handle collection with null check
         if (chantierDTO.getEntrepriseExterieurs() != null) {
             chantier.setEntrepriseExterieurs(entrepriseService.getByIds(chantierDTO.getEntrepriseExterieurs()));
@@ -147,27 +152,28 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
 
         // Handle collections with null checks
         if (chantierDTO.getBdts() != null) {
-            chantier.setBdts(bdtService.getBDTsByIds(chantierDTO.getBdts()));
+            List<Bdt> bdts = bdtService.getByIds(chantierDTO.getBdts());
+            chantier.setBdts(bdts);
         } else {
-            chantier.setBdts(Collections.emptyList());
+            chantier.setBdts(new ArrayList<>());
         }
 
         if (chantierDTO.getPdps() != null) {
             chantier.setPdps(pdpService.getByIds(chantierDTO.getPdps()));
         } else {
-            chantier.setPdps(Collections.emptyList());
+            chantier.setPdps(new ArrayList<>());
         }
 
         if (chantierDTO.getWorkerSelections() != null) {
             chantier.setWorkerSelections(workerSelectionService.getWorkerSelectionsByIds(chantierDTO.getWorkerSelections()));
         } else {
-            chantier.setWorkerSelections(Collections.emptyList());
+            chantier.setWorkerSelections(new ArrayList<>());
         }
 
         if (chantierDTO.getWorkers() != null) {
             chantier.setWorkers(workerService.getWorkersByIds(chantierDTO.getWorkers()));
         } else {
-            chantier.setWorkers(Collections.emptyList());
+            chantier.setWorkers(new ArrayList<>());
         }
 
     }

@@ -1,22 +1,31 @@
 package com.danone.pdpbackend.Services;
 
-import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
-import com.danone.pdpbackend.entities.BDT.BDT;
-import com.danone.pdpbackend.entities.ObjectAnswered;
+import com.danone.pdpbackend.Utils.DocumentStatus;
+import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Signature;
+import jakarta.transaction.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
-public interface BDTService {
-    List<BDT> getAllBDT();
+public interface BDTService extends Service<Bdt> {
+    @Transactional
+    Bdt findOrCreateBdtForDate(Long chantierId, LocalDate date /*, Optional<BdtInitialData> initialData */);
 
-    BDT getBDTById(Long id);
+    Optional<Bdt> findBdtForChantierAndDate(Long chantierId, LocalDate date);
 
-    List<BDT> getBDTsByIds(List<Long> id);
+    DocumentStatus calculateBdtStatus(Long id);
 
-    BDT createBDT(BDT bdt);
-    BDT updateBDT(Long id, BDT bdt);
-    boolean deleteBDT(Long id);
-    ObjectAnswered removeObjectAnswered(Long permitId, Long id, ObjectAnsweredObjects objectAnsweredObject);
-    ObjectAnswered addObjectAnswered(Long pdpId, Long id, ObjectAnsweredObjects objectAnsweredObject);
+    @Transactional
+    Bdt updateAndSaveBdtStatus(Long bdtId);
 
+    @Transactional
+    default Bdt addSignature(Long bdtId, Signature signature, String type) {
+        return null;
+    }
+
+    Optional<Bdt> findByChantierIdAndDate(Long id, LocalDate today);
+
+    List<Bdt> findByChantierId(Long chantierId);
 }

@@ -29,4 +29,10 @@ public interface ChantierRepo extends Repository<Chantier, Integer> {
     List<Chantier> findAllByDonneurDOrdre(User user);
 
     List<Chantier> findChantiersByIdIn(List<Long> ids);
+
+    List<Chantier> findByNom(String nom);
+
+
+    boolean existsById(Long id);
+
 }

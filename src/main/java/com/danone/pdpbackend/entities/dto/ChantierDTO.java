@@ -1,14 +1,8 @@
 package com.danone.pdpbackend.entities.dto;
 
 
-import com.danone.pdpbackend.entities.BDT.BDT;
-import com.danone.pdpbackend.entities.*;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import com.danone.pdpbackend.Utils.ChantierStatus;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,4 +27,6 @@ public class ChantierDTO {
     private List<Long> pdps;
     private List<Long> workerSelections = new ArrayList<>();
     private List<Long> workers;
+    private ChantierStatus status;
+    private Boolean travauxDangereux = false;
 }

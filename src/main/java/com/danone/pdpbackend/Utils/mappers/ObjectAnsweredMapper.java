@@ -1,6 +1,8 @@
 package com.danone.pdpbackend.Utils.mappers;
 
+import com.danone.pdpbackend.Repo.BDTRepo;
 import com.danone.pdpbackend.Repo.PdpRepo;
+import com.danone.pdpbackend.entities.BDT.Bdt;
 import com.danone.pdpbackend.entities.ObjectAnswered;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
@@ -10,9 +12,11 @@ import java.util.List;
 @Component
 public class ObjectAnsweredMapper implements Mapper<ObjectAnsweredDTO, ObjectAnswered>{
     private final PdpRepo pdpRepo;
+    private final BDTRepo bdtRepo;
 
-    public ObjectAnsweredMapper(PdpRepo pdpRepo) {
+    public ObjectAnsweredMapper(PdpRepo pdpRepo, BDTRepo bdtRepo) {
         this.pdpRepo = pdpRepo;
+        this.bdtRepo = bdtRepo;
     }
 
     @Override
@@ -22,6 +26,7 @@ public class ObjectAnsweredMapper implements Mapper<ObjectAnsweredDTO, ObjectAns
         }
         //objectAnsweredDTO.setId(objectAnswered.getId());
         objectAnsweredDTO.setPdp(objectAnswered.getPdp().getId());
+        objectAnsweredDTO.setBdt(objectAnswered.getBdt().getId());
         objectAnsweredDTO.setObjectType(objectAnswered.getObjectType());
         objectAnsweredDTO.setObjectId(objectAnswered.getObjectId());
         objectAnsweredDTO.setAnswer(objectAnswered.getAnswer());
@@ -37,6 +42,12 @@ public class ObjectAnsweredMapper implements Mapper<ObjectAnsweredDTO, ObjectAns
             Pdp pdp = pdpRepo.findById(objectAnsweredDTO.getPdp())
                     .orElseThrow(() -> new IllegalArgumentException("PDP not found"));
             objectAnswered.setPdp(pdp);
+        }
+
+        if (objectAnsweredDTO.getBdt() != null && objectAnswered.getBdt() == null) {
+            // Assuming you have a method to find BDT by ID
+             Bdt bdt = bdtRepo.findById(objectAnsweredDTO.getBdt()).orElseThrow(() -> new IllegalArgumentException("BDT not found"));
+             objectAnswered.setBdt(bdt);
         }
 
         objectAnswered.setObjectType(objectAnsweredDTO.getObjectType());

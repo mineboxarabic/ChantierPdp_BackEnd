@@ -3,12 +3,6 @@ package com.danone.pdpbackend.entities.dto;
 import com.danone.pdpbackend.Utils.EntrepriseType;
 import com.danone.pdpbackend.Utils.Image.ImageModel;
 import com.danone.pdpbackend.Utils.MedecinDuTravailleEE;
-import com.danone.pdpbackend.entities.BDT.BDT;
-import com.danone.pdpbackend.entities.Pdp;
-import com.danone.pdpbackend.entities.User;
-import com.danone.pdpbackend.entities.Worker;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;

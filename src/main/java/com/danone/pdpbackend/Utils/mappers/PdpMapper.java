@@ -91,7 +91,9 @@ public class PdpMapper implements Mapper<PdpDTO, Pdp> {
     @Override
     public void setDTOFields(PdpDTO pdpDTO, Pdp pdp) {
         // Map basic properties
-        pdpDTO.setId(pdp.getId());
+
+        if(pdp.getId() != null) pdpDTO.setId(pdp.getId());
+
         pdpDTO.setChantier(pdp.getChantier());
         pdpDTO.setDateInspection(pdp.getDateInspection());
         pdpDTO.setIcpdate(pdp.getIcpdate());
@@ -120,7 +122,10 @@ public class PdpMapper implements Mapper<PdpDTO, Pdp> {
     @Override
     public void setEntityFields(PdpDTO pdpDTO, Pdp pdp) {
         // Basic fields
-        pdp.setId(pdpDTO.getId());
+
+        if(pdpDTO.getId() != null) pdp.setId(pdpDTO.getId());
+
+
         pdp.setChantier(pdpDTO.getChantier());
         pdp.setDateInspection(pdpDTO.getDateInspection());
         pdp.setIcpdate(pdpDTO.getIcpdate());

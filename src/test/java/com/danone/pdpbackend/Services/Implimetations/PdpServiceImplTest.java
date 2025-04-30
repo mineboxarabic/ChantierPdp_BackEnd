@@ -1,263 +1,312 @@
 package com.danone.pdpbackend.Services.Implimetations;
 
-import com.danone.pdpbackend.Repo.*;
+import com.danone.pdpbackend.Repo.ObjectAnswerRepo;
+import com.danone.pdpbackend.Repo.PdpRepo;
 import com.danone.pdpbackend.Services.*;
-import com.danone.pdpbackend.Utils.HoraireDeTravaille;
-import com.danone.pdpbackend.Utils.MisesEnDisposition;
-import com.danone.pdpbackend.entities.Entreprise;
+import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
+import com.danone.pdpbackend.Utils.mappers.ObjectAnsweredMapper; // Assuming you have this mapper
+import com.danone.pdpbackend.Utils.mappers.PdpMapper;
 import com.danone.pdpbackend.entities.ObjectAnswered;
 import com.danone.pdpbackend.entities.Pdp;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
+import com.danone.pdpbackend.entities.dto.PdpDTO;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(MockitoExtension.class) // Use Mockito extension for JUnit 5
 class PdpServiceImplTest {
 
-    private static final Logger log = LoggerFactory.getLogger(PdpServiceImplTest.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    // Mocks for all dependencies of PdpServiceImpl
+    @Mock private PdpRepo pdpRepo;
+    @Mock private EntrepriseService entrepriseService; // Assuming interface
+    @Mock private ObjectAnswerRepo objectAnswerRepo;
+    @Mock private RisqueService risqueService; // Assuming interface
+    @Mock private DispositifService dispositifService; // Assuming interface
+    @Mock private ChantierService chantierService; // Assuming interface
+    @Mock private PdpMapper pdpMapper; // Mock the mapper
+    @Mock private ObjectAnsweredMapper objectAnsweredMapper; // Mock if used within PdpService methods
 
-    @Mock
-    private PdpRepo pdpRepo;
+    // Inject mocks into the service instance
+    @InjectMocks private PdpServiceImpl pdpService;
 
-    @Mock
-    private ChantierService chantierService;
+    private Pdp pdp1;
+    private Pdp pdp2;
+    private PdpDTO pdpDTO1;
+    private ObjectAnswered relation1;
+    private ObjectAnswered relation2_updated;
+    private ObjectAnswered relation3_new;
+    private ObjectAnsweredDTO relationDTO1;
 
-    @Mock
-    private EntrepriseService entrepriseService;
-
-    @Mock
-    private ObjectAnswerRepo objectAnswerRepo;
-
-    @Mock
-    private RisqueService risqueService;
-
-    @Mock
-    private DispositifService dispositifService;
-
-    @Mock
-    private ObjectAnswerEntreprisesRepo objectAnswerEntreprisesRepo;
-
-    @Mock
-    private AnalyseDeRisqueRepo analyseDeRisqueRepo;
-
-    @Mock
-    private PermitRepo permitRepo;
-
-    @Mock
-    private ChantierRepo chantierRepo;
-
-    @InjectMocks
-    private PdpServiceImpl pdpService;
-
-    private Pdp testPdp;
 
     @BeforeEach
     void setUp() {
-        // Create test data
-        testPdp = new Pdp();
-        testPdp.setChantier(100L);
-        testPdp.setDateInspection(new Date());
-        testPdp.setIcpdate(new Date());
-        testPdp.setDatePrevenirCSSCT(new Date());
-        testPdp.setDatePrev(new Date());
-        testPdp.setHorairesDetails("9:00 - 17:00");
+        // Initialize common test objects
+        pdp1 = new Pdp();
+        pdp1.setId(1L);
+        pdp1.setChantier(100L);
+        pdp1.setRelations(new ArrayList<>()); // Initialize collections
+        pdp1.setSignatures(new ArrayList<>());
 
-/*        // Initialize empty lists
-        testPdp.setRisques(new ArrayList<>());
-        testPdp.setDispositifs(new ArrayList<>());
-        testPdp.setPermits(new ArrayList<>());
-        testPdp.setAnalyseDeRisques(new ArrayList<>());*/
-        testPdp.setRelations(new ArrayList<>());
-        testPdp.setSignatures(new ArrayList<>());
-    }
-/*
-    @Test
-    void createPdp_withValidData_returnsCreatedPdp() throws JsonProcessingException {
-        // Given
-        Pdp savedPdp = new Pdp();
-        savedPdp.setId(1L); // Simulating DB generated ID
-        savedPdp.setChantier(testPdp.getChantier());
-        savedPdp.setRisques(new ArrayList<>());
-        savedPdp.setDispositifs(new ArrayList<>());
-        savedPdp.setPermits(new ArrayList<>());
+        pdp2 = new Pdp();
+        pdp2.setId(2L);
+        pdp2.setChantier(101L);
+        pdp2.setRelations(new ArrayList<>());
+        pdp2.setSignatures(new ArrayList<>());
 
-        when(pdpRepo.save(any(Pdp.class))).thenReturn(savedPdp);
+        pdpDTO1 = new PdpDTO();
+        pdpDTO1.setId(1L);
+        pdpDTO1.setChantier(100L);
+        pdpDTO1.setRelations(new ArrayList<>());
+        pdpDTO1.setSignatures(new ArrayList<>());
 
-        // When
-        Pdp result = pdpService.create(testPdp);
+        relation1 = ObjectAnswered.builder().id(10L).pdp(pdp1).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build();
+        relation2_updated = ObjectAnswered.builder().id(11L).pdp(pdp1).objectId(2L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build(); // Will be "updated"
+        relation3_new = ObjectAnswered.builder().id(null).pdp(pdp1).objectId(3L).objectType(ObjectAnsweredObjects.RISQUE).answer(false).build(); // New
 
-        // Then
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals(100L, result.getChantier());
-        String json = objectMapper.writeValueAsString(result);
-        log.info("Here is the created Pdp {}", json);
+        relationDTO1 = ObjectAnsweredDTO.builder().id(10L).pdp(1L).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build();
 
-        // Verify that save was called twice and chantier service was called
-        verify(pdpRepo, times(2)).save(any(Pdp.class));
-        verify(chantierService, times(1)).addPdpToChantier(eq(100L), any(Pdp.class));
     }
 
     @Test
-    void createPdp_withValidDataAndWithRisques_returnsCreatedPdp() throws JsonProcessingException {
-        // Given
-        // Create test ObjectAnswered for risques
-        ObjectAnswered risque1 = new ObjectAnswered();
-        risque1.setRisque_id(1L);
-        risque1.setAnswer(true);
+    void getAll_shouldReturnListOfPdps() {
+        // Arrange
+        when(pdpRepo.findAll()).thenReturn(Arrays.asList(pdp1, pdp2));
 
-        ObjectAnswered risque2 = new ObjectAnswered();
-        risque2.setRisque_id(2L);
-        risque2.setAnswer(false);
+        // Act
+        List<Pdp> result = pdpService.getAll();
 
-        // Add risques to test PDP
-        testPdp.getRisques().add(risque1);
-        testPdp.getRisques().add(risque2);
-
-        // Create the expected saved PDP
-        Pdp savedPdp = new Pdp();
-        savedPdp.setId(1L);
-        savedPdp.setChantier(testPdp.getChantier());
-        savedPdp.setRisques(new ArrayList<>(testPdp.getRisques()));
-        savedPdp.setDispositifs(new ArrayList<>());
-        savedPdp.setPermits(new ArrayList<>());
-
-        when(pdpRepo.save(any(Pdp.class))).thenReturn(savedPdp);
-
-        // When
-        Pdp result = pdpService.create(testPdp);
-
-        // Then
+        // Assert
         assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals(100L, result.getChantier());
-        assertNotNull(result.getRisques());
-
-        assertEquals(2, result.getRisques().size());
-        assertEquals(1L, result.getRisques().get(0).getRisque_id());
-        assertEquals(2L, result.getRisques().get(1).getRisque_id());
-
-        String json = objectMapper.writeValueAsString(result.getRisques());
-        log.info("Here is the created Pdp with risques {}", json);
-
-        verify(pdpRepo, times(2)).save(any(Pdp.class));
-        verify(chantierService, times(1)).addPdpToChantier(eq(100L), any(Pdp.class));
+        assertEquals(2, result.size());
+        verify(pdpRepo, times(1)).findAll();
     }
 
     @Test
-    void createPdp_withAllTypesOfObjectAnswered_returnsCreatedPdp() throws JsonProcessingException {
-        // Given
-        // Create test ObjectAnswered for risques
-        ObjectAnswered risque = new ObjectAnswered();
-        risque.setRisque_id(1L);
-        risque.setAnswer(true);
-        testPdp.getRisques().add(risque);
+    void getById_whenPdpExists_shouldReturnPdp() {
+        // Arrange
+        when(pdpRepo.findById(1L)).thenReturn(Optional.of(pdp1));
 
-        // Create test ObjectAnswered for dispositifs
-        ObjectAnswered dispositif = new ObjectAnswered();
-        dispositif.setDispositif_id(1L);
-        dispositif.setAnswer(false);
-        testPdp.getDispositifs().add(dispositif);
+        // Act
+        Pdp result = pdpService.getById(1L);
 
-        // Create test ObjectAnswered for permits
-        ObjectAnswered permit = new ObjectAnswered();
-        permit.setPermit_id(1L);
-        permit.setAnswer(true);
-        testPdp.getPermits().add(permit);
-
-        // Create test ObjectAnswered for analyse de risques
-        ObjectAnswered analyseDeRisque = new ObjectAnswered();
-        analyseDeRisque.setAnalyseDeRisque_id(1L);
-        analyseDeRisque.setEE(true);
-        analyseDeRisque.setEU(false);
-        testPdp.getAnalyseDeRisques().add(analyseDeRisque);
-
-        // Create the expected saved PDP
-        Pdp savedPdp = new Pdp();
-        savedPdp.setId(1L);
-        savedPdp.setChantier(testPdp.getChantier());
-        savedPdp.setRisques(new ArrayList<>(testPdp.getRisques()));
-        savedPdp.setDispositifs(new ArrayList<>(testPdp.getDispositifs()));
-        savedPdp.setPermits(new ArrayList<>(testPdp.getPermits()));
-        savedPdp.setAnalyseDeRisques(new ArrayList<>(testPdp.getAnalyseDeRisques()));
-
-        when(pdpRepo.save(any(Pdp.class))).thenReturn(savedPdp);
-
-        // When
-        Pdp result = pdpService.create(testPdp);
-
-        // Then
+        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertEquals(100L, result.getChantier());
-
-        // Verify risques
-        assertNotNull(result.getRisques());
-        assertEquals(1, result.getRisques().size());
-        assertEquals(1L, result.getRisques().get(0).getRisque_id());
-
-        // Verify dispositifs
-        assertNotNull(result.getDispositifs());
-        assertEquals(1, result.getDispositifs().size());
-        assertEquals(1L, result.getDispositifs().get(0).getDispositif_id());
-
-        // Verify permits
-        assertNotNull(result.getPermits());
-        assertEquals(1, result.getPermits().size());
-        assertEquals(1L, result.getPermits().get(0).getPermit_id());
-
-        // Verify analyse de risques
-        assertNotNull(result.getAnalyseDeRisques());
-        assertEquals(1, result.getAnalyseDeRisques().size());
-        assertEquals(1L, result.getAnalyseDeRisques().get(0).getAnalyseDeRisque_id());
-        assertEquals(true, result.getAnalyseDeRisques().get(0).getEE());
-        assertEquals(false, result.getAnalyseDeRisques().get(0).getEU());
-
-        String json = objectMapper.writeValueAsString(result);
-        log.info("Here is the created Pdp with all types of ObjectAnswered {}", json);
-
-        verify(pdpRepo, times(2)).save(any(Pdp.class));
-        verify(chantierService, times(1)).addPdpToChantier(eq(100L), any(Pdp.class));
+        verify(pdpRepo, times(1)).findById(1L);
     }
 
     @Test
-    void createPdp_withNullChantier_doesNotCallChantierService() {
-        // Given
-        testPdp.setChantier(null);
+    void getById_whenPdpNotExists_shouldThrowException() {
+        // Arrange
+        when(pdpRepo.findById(99L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            pdpService.getById(99L);
+        });
+        assertEquals("Pdp with id 99 not found", exception.getMessage());
+        verify(pdpRepo, times(1)).findById(99L);
+    }
+
+    @Test
+    void saveOrUpdatePdp_whenCreatingNew_shouldMapAndSave() {
+        // Arrange
+        PdpDTO newDto = new PdpDTO(); // Assume ID is null for creation
+        newDto.setChantier(102L);
+        newDto.setRelations(new ArrayList<>()); // Start empty
+        newDto.setSignatures(new ArrayList<>());
+
+        Pdp pdpFromMapper = new Pdp();
+        pdpFromMapper.setChantier(102L);
+        pdpFromMapper.setRelations(new ArrayList<>());
+        pdpFromMapper.setSignatures(new ArrayList<>());
 
         Pdp savedPdp = new Pdp();
-        savedPdp.setId(1L);
-        savedPdp.setRisques(new ArrayList<>());
-        savedPdp.setDispositifs(new ArrayList<>());
-        savedPdp.setPermits(new ArrayList<>());
+        savedPdp.setId(3L); // ID assigned after save
+        savedPdp.setChantier(102L);
+        savedPdp.setRelations(new ArrayList<>());
+        savedPdp.setSignatures(new ArrayList<>());
 
+        when(pdpMapper.toEntity(any(PdpDTO.class))).thenReturn(pdpFromMapper);
         when(pdpRepo.save(any(Pdp.class))).thenReturn(savedPdp);
 
-        // When
-        Pdp result = pdpService.create(testPdp);
+        // Act
+        Pdp result = pdpService.saveOrUpdatePdp(newDto);
 
-        // Then
+        // Assert
+        assertNotNull(result);
+        assertEquals(3L, result.getId());
+        verify(pdpMapper, times(1)).toEntity(newDto);
+        verify(pdpRepo, times(1)).save(pdpFromMapper);
+        // Verify updateEntityFromDTO was NOT called
+        verify(pdpMapper, never()).updateEntityFromDTO(any(Pdp.class), any(PdpDTO.class));
+    }
+
+    @Test
+    void saveOrUpdatePdp_whenUpdating_shouldFetchMapAndUpdate() {
+        // Arrange
+        // pdpDTO1 has ID=1L
+        Pdp existingPdp = pdp1; // Use pdp1 from setup which has ID=1L
+
+        when(pdpRepo.findById(1L)).thenReturn(Optional.of(existingPdp));
+        // Simulate mapper updating the existing entity in place
+        // We don't strictly need to mock the internals of updateEntityFromDTO,
+        // just that it's called and the result is saved.
+        when(pdpRepo.save(any(Pdp.class))).thenReturn(existingPdp); // Assume save returns the updated entity
+
+        // Act
+        Pdp result = pdpService.saveOrUpdatePdp(pdpDTO1);
+
+        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        assertNull(result.getChantier());
+        // Verify the update path was taken
+        verify(pdpRepo, times(1)).findById(1L);
+        verify(pdpMapper, times(1)).updateEntityFromDTO(eq(existingPdp), eq(pdpDTO1));
+        verify(pdpRepo, times(1)).save(existingPdp);
+        // Verify toEntity was NOT called
+        verify(pdpMapper, never()).toEntity(any(PdpDTO.class));
+    }
 
-        verify(pdpRepo, times(2)).save(any(Pdp.class));
-        verify(chantierService, never()).addPdpToChantier(anyLong(), any(Pdp.class));
-    }*/
+
+    @Test
+    void update_shouldMergeRelations() {
+        // Arrange
+        Pdp existingPdp = new Pdp();
+        existingPdp.setId(1L);
+        existingPdp.setRelations(new ArrayList<>(List.of(relation1))); // Starts with relation1
+
+        ObjectAnswered incomingRelation1_updated = ObjectAnswered.builder().id(10L).pdp(null).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(false).build(); // Update answer
+        ObjectAnswered incomingRelation2_toDelete = ObjectAnswered.builder().id(11L).pdp(null).objectId(2L).objectType(ObjectAnsweredObjects.RISQUE).answer(null).build(); // Delete this one (has existing ID but null answer)
+        ObjectAnswered incomingRelation3_new = ObjectAnswered.builder().id(null).pdp(null).objectId(3L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build(); // Add this one
+
+        Pdp updatedPdpInput = new Pdp(); // This is the input to the service's update method
+        updatedPdpInput.setId(1L);
+        updatedPdpInput.setRelations(Arrays.asList(incomingRelation1_updated, incomingRelation2_toDelete, incomingRelation3_new));
+
+        // Mocking repository calls within the merge logic
+        when(pdpRepo.findById(1L)).thenReturn(Optional.of(existingPdp));
+        when(objectAnswerRepo.findById(10L)).thenReturn(relation1); // Found existing relation1
+        when(objectAnswerRepo.findById(11L)).thenReturn(relation2_updated); // Found existing relation2
+        // For the new relation3, save will be called
+        when(objectAnswerRepo.save(any(ObjectAnswered.class))).thenAnswer(invocation -> {
+            ObjectAnswered arg = invocation.getArgument(0);
+            if(arg.getId() == null) arg.setId(12L); // Simulate ID generation for new item
+            return arg; // Return the saved item (potentially with ID)
+        });
+
+        when(pdpRepo.save(any(Pdp.class))).thenReturn(existingPdp); // Mock saving the final PDP
+
+
+        // Act
+        Pdp result = pdpService.update(1L, updatedPdpInput);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(2, result.getRelations().size(), "Should have 2 relations after merge (updated 1, added 1, deleted 1)");
+
+        // Verify relation1 was updated (answer is false)
+        ObjectAnswered finalRelation1 = result.getRelations().stream().filter(r -> r.getId() == 10L).findFirst().orElse(null);
+        assertNotNull(finalRelation1);
+        assertEquals(false, finalRelation1.getAnswer());
+
+        // Verify relation3 was added (ID assigned by mock)
+        ObjectAnswered finalRelation3 = result.getRelations().stream().filter(r -> r.getId() == 12L).findFirst().orElse(null);
+        assertNotNull(finalRelation3);
+        assertEquals(true, finalRelation3.getAnswer());
+        assertEquals(3L, finalRelation3.getObjectId());
+
+
+        // Verify interactions
+        verify(pdpRepo, times(1)).findById(1L);
+        verify(objectAnswerRepo, times(1)).findById(10L); // Checked existing r1
+        verify(objectAnswerRepo, times(1)).findById(11L); // Checked existing r2
+        verify(objectAnswerRepo, times(2)).save(any(ObjectAnswered.class)); // Saved updated r1 and new r3
+        verify(objectAnswerRepo, times(1)).delete(any(ObjectAnswered.class)); // Deleted r2
+        verify(pdpRepo, times(1)).save(existingPdp); // Saved the parent PDP
+    }
+
+
+    @Test
+    void delete_whenPdpExists_shouldDeleteAndReturnTrue() {
+        // Arrange
+        when(pdpRepo.findById(1L)).thenReturn(Optional.of(pdp1));
+        doNothing().when(pdpRepo).deleteById(1L); // Mock void method
+
+        // Act
+        Boolean result = pdpService.delete(1L);
+
+        // Assert
+        assertTrue(result);
+        verify(pdpRepo, times(1)).findById(1L);
+        verify(pdpRepo, times(1)).deleteById(1L);
+    }
+
+    @Test
+    void delete_whenPdpNotExists_shouldReturnFalse() {
+        // Arrange
+        when(pdpRepo.findById(99L)).thenReturn(Optional.empty());
+
+        // Act
+        Boolean result = pdpService.delete(99L);
+
+        // Assert
+        assertFalse(result);
+        verify(pdpRepo, times(1)).findById(99L);
+        verify(pdpRepo, never()).deleteById(anyLong()); // Verify delete was not called
+    }
+
+    @Test
+    void findWorkersByPdp_shouldReturnWorkers() {
+        // Arrange
+        Worker worker1 = new Worker(); worker1.setId(50L);
+        Worker worker2 = new Worker(); worker2.setId(51L);
+        pdp1.getSignatures().addAll(Arrays.asList(worker1, worker2));
+        when(pdpRepo.findById(1L)).thenReturn(Optional.of(pdp1));
+
+        // Act
+        List<Worker> workers = pdpService.findWorkersByPdp(1L);
+
+        // Assert
+        assertNotNull(workers);
+        assertEquals(2, workers.size());
+        assertEquals(50L, workers.get(0).getId());
+        verify(pdpRepo, times(1)).findById(1L);
+    }
+
+    @Test
+    void getObjectAnsweredByPdpId_shouldReturnRelations() {
+        // Arrange
+        pdp1.getRelations().add(relation1); // Add one relation for testing
+        when(pdpRepo.findById(1L)).thenReturn(Optional.of(pdp1));
+
+        // Act
+        // Test fetching for a specific type if logic differentiates, otherwise just fetch all
+        List<ObjectAnswered> relations = pdpService.getObjectAnsweredsByPdpId(1L, ObjectAnsweredObjects.RISQUE); // Example type
+
+        // Assert
+        assertNotNull(relations);
+        assertEquals(1, relations.size());
+        assertEquals(10L, relations.get(0).getId());
+        verify(pdpRepo, times(1)).findById(1L);
+    }
+
+
+    // Add more tests for other methods like getRecent, getLastId, getByIds etc. following the same pattern.
+
 }

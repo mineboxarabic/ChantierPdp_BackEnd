@@ -2,9 +2,12 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.EntrepriseService;
 import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.Utils.mappers.WorkerChantierSelectionMapper;
+import com.danone.pdpbackend.Utils.mappers.WorkerMapper;
 import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
 import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,13 +22,17 @@ public class EntrepriseController {
 
 
     private final com.danone.pdpbackend.Utils.mappers.EntrepriseMapper entrepriseMapper;
+    private final WorkerChantierSelectionMapper workerChantierSelectionMapper;
+    private final WorkerMapper workerMapper;
     EntrepriseService entrepriseService;
 
 
     @Autowired
-    public EntrepriseController(EntrepriseService entrepriseService, com.danone.pdpbackend.Utils.mappers.EntrepriseMapper entrepriseMapper) {
+    public EntrepriseController(EntrepriseService entrepriseService, com.danone.pdpbackend.Utils.mappers.EntrepriseMapper entrepriseMapper, WorkerChantierSelectionMapper workerChantierSelectionMapper, WorkerMapper workerMapper) {
         this.entrepriseService = entrepriseService;
         this.entrepriseMapper = entrepriseMapper;
+        this.workerChantierSelectionMapper = workerChantierSelectionMapper;
+        this.workerMapper = workerMapper;
     }
 
     //CRUD
@@ -93,9 +100,9 @@ public class EntrepriseController {
     //    const getWorkersByEntreprise = async (entrepriseId: number): Promise<Worker[]> => {
 
     @GetMapping("/{entrepriseId}/workers")
-    public ResponseEntity<ApiResponse<List<Worker>>> getWorkersByEntreprise(@PathVariable Long entrepriseId)
+    public ResponseEntity<ApiResponse<List<WorkerDTO>>> getWorkersByEntreprise(@PathVariable Long entrepriseId)
     {
-        return ResponseEntity.ok(new ApiResponse<>(entrepriseService.getWorkersByEntreprise(entrepriseId), "Workers fetched successfully"));
+        return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTOList(entrepriseService.getWorkersByEntreprise(entrepriseId)), "Workers fetched successfully"));
     }
 
 }

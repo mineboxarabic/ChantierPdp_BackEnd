@@ -2,14 +2,13 @@ package com.danone.pdpbackend.entities;
 
 
 import com.danone.pdpbackend.Utils.HoraireDeTravaille;
-import com.danone.pdpbackend.Utils.MedecinDuTravailleEE;
 import com.danone.pdpbackend.Utils.MisesEnDisposition;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.danone.pdpbackend.Utils.DocumentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Where;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -52,5 +51,12 @@ public class Pdp {
 
     @OneToMany
     private List<Worker> signatures = new ArrayList<>();// ✅ List of workers who signed the PDP
+
+
+    // --- New Fields ---
+    @Enumerated(EnumType.STRING)
+    private DocumentStatus status = DocumentStatus.PLANNED; // Default status
+
+    private LocalDate creationDate = LocalDate.now(); // Track when it was created/became valid
 
 }

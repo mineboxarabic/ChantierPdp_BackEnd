@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,22 +28,27 @@ public class Worker {
     private String prenom;
 
     @ManyToOne
+    @JoinColumn(name = "entreprise_id")
     @JsonIgnoreProperties({"workers", "pdps", "chantiers"})
     private Entreprise entreprise;
 
     @ManyToMany
     @JsonIgnore
+    @ToString.Exclude // <--- Add this
     private List<Pdp> pdps;
 
     @ManyToMany
+    @ToString.Exclude // <--- Add this
     private List<Signature> signatures;
 
     @ManyToMany
     @JsonIgnore
+    @ToString.Exclude // <--- Add this
     private List<Chantier> chantiers;
 
     // Nouvelle relation avec la table de jointure
     @OneToMany(mappedBy = "worker", cascade = CascadeType.ALL)
     @JsonIgnore
+    @ToString.Exclude // <--- Add this
     private List<WorkerChantierSelection> chantierSelections;
 }

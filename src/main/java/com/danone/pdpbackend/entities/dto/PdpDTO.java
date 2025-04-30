@@ -3,15 +3,10 @@ package com.danone.pdpbackend.entities.dto;
 
 import com.danone.pdpbackend.Utils.HoraireDeTravaille;
 import com.danone.pdpbackend.Utils.MisesEnDisposition;
-import com.danone.pdpbackend.entities.Entreprise;
-import com.danone.pdpbackend.entities.ObjectAnswered;
-import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
-import com.danone.pdpbackend.entities.Worker;
-import jakarta.persistence.*;
+import com.danone.pdpbackend.Utils.DocumentStatus;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,4 +31,8 @@ public class PdpDTO {
 
     private List<Long> signatures; // ✅ List of workers who signed the PDP
 
+
+    private DocumentStatus status; // Default status
+
+    private LocalDate creationDate;
 }

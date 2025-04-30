@@ -1,9 +1,11 @@
 package com.danone.pdpbackend.Repo;
 
+import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.entities.Pdp;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -26,4 +28,8 @@ public interface PdpRepo extends Repository<Pdp, Integer> {
     void deleteById(Long id);
 
     List<Pdp> findPdpsByIdIn(Collection<Long> ids);
+
+    Boolean existsById(Long id);
+
+    List<Pdp> findByStatusInAndCreationDateBefore(List<DocumentStatus> ready, LocalDate oneYearAgo);
 }

@@ -3,7 +3,9 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.WorkerService;
 import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.Utils.mappers.WorkerMapper;
 import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,23 +17,27 @@ import java.util.List;
 @Slf4j
 public class WorkerController {
     private final WorkerService workerService;
-    public WorkerController(WorkerService workerService) {
+    private final WorkerMapper workerMapper;
+
+    public WorkerController(WorkerService workerService, WorkerMapper workerMapper) {
         this.workerService = workerService;
+        this.workerMapper = workerMapper;
     }
     @GetMapping
-    public ResponseEntity<ApiResponse<List<Worker>>> getAllWorkers() {
+    public ResponseEntity<ApiResponse<List<WorkerDTO>>> getAllWorkers() {
         //return new ApiResponse<>(risqueService.getAllRisques(), "Risques fetched");
-        return ResponseEntity.ok(new ApiResponse<>(workerService.getAll(), "Workers fetched"));
+        return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTOList(workerService.getAll()), "Workers fetched"));
     }
-    @PostMapping
-    public ResponseEntity<ApiResponse<Worker>> createWorker(@RequestBody Worker worker) {
-        return ResponseEntity.ok(new ApiResponse<>(workerService.create(worker), "Worker created"));
+
+    @PostMapping("/")
+    public ResponseEntity<ApiResponse<WorkerDTO>> createWorker(@RequestBody WorkerDTO worker) {
+        return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTO(workerService.create(workerMapper.toEntity(worker))), "Worker created"));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ApiResponse<Worker>> updateWorker(@PathVariable Long id, @RequestBody Worker workerDetails) {
+    public ResponseEntity<ApiResponse<WorkerDTO>> updateWorker(@PathVariable Long id, @RequestBody WorkerDTO workerDetails) {
         try {
-            return ResponseEntity.ok(new ApiResponse<>(workerService.update(id, workerDetails), "Worker updated"));
+            return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTO(workerService.update(id, workerMapper.toEntity(workerDetails))), "Worker updated"));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -44,8 +50,8 @@ public class WorkerController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Worker>> getWorkerById(@PathVariable Long id) {
-        return ResponseEntity.ok(new ApiResponse<>(workerService.getById(id), "Worker fetched"));
+    public ResponseEntity<ApiResponse<WorkerDTO>> getWorkerById(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTO(workerService.getById(id)), "Worker fetched"));
     }
 
 

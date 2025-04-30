@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -50,7 +51,8 @@ public class ChantierController {
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<ChantierDTO>> updateChantier(@PathVariable Long id, @RequestBody ChantierDTO chantierDTO) {
         log.info("Updating chantier with id: {}", id);
-        Chantier updatedChantier = chantierService.update( id,chantierMapper.toEntity(chantierDTO));
+        Chantier existingChantier = chantierService.getById(id);
+        Chantier updatedChantier = chantierService.update( id,chantierMapper.updateEntityFromDTO(existingChantier, chantierDTO));
         return ResponseEntity.ok(new ApiResponse<>(chantierMapper.toDTO(updatedChantier), "Chantier updated successfully"));
     }
 
@@ -76,5 +78,24 @@ public class ChantierController {
     @GetMapping("/{chantierId}/workers")
     public ResponseEntity<ApiResponse<List<Worker>>> getWorkersByChantier(@PathVariable Long chantierId) {
         return ResponseEntity.ok(new ApiResponse<>(chantierService.getWorkersByChantier(chantierId), "Workers fetched successfully"));
+    }
+
+
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getChantierStats(@PathVariable Long id) {
+        return ResponseEntity.ok(new ApiResponse<>(chantierService.getChantierStats(id), "Chantier stats fetched successfully"));
+    }
+
+    @PostMapping("/{id}/update-status")
+    public ResponseEntity<ApiResponse<ChantierDTO>> updateChantierStatus(@PathVariable Long id, @RequestBody String newStatus) {
+        Chantier updatedChantier = chantierService.updateAndSaveChantierStatus(id);
+        return ResponseEntity.ok(new ApiResponse<>(chantierMapper.toDTO(updatedChantier), "Chantier status updated successfully"));
+    }
+
+
+    @GetMapping("/{id}/requires-pdp")
+    public ResponseEntity<ApiResponse<Boolean>> requiresPdp(@PathVariable Long id) {
+        boolean requiresPdp = chantierService.requiresPdp(id);
+        return ResponseEntity.ok(new ApiResponse<>(requiresPdp, "PDP requirement status fetched successfully"));
     }
 }

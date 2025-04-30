@@ -22,5 +22,11 @@ public interface WorkerRepo extends Repository<Worker, Long> {
 
     List<Worker> findAllBy();
 
+    //Find all by a chantier id
+    @Query("SELECT w FROM Worker w JOIN w.chantiers c WHERE c.id = :chantierId")
+    List<Worker> findAllByChantierId(Long chantierId);
+
     List<Worker> findWorkersByIdIn(Collection<Long> ids);
+
+
 }

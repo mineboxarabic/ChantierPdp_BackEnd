@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -65,16 +66,14 @@ public class WorkerSelectionService {
      */
     @Transactional
     public void deselectWorkerFromChantier(Long workerId, Long chantierId) {
-        Optional<WorkerChantierSelection> existingSelection =
-                selectionRepository.findByWorkerAndChantier(
-                        workerRepository.findById(workerId),
-                        chantierRepository.findById(chantierId).orElseThrow()
-                );
+        Optional<WorkerChantierSelection> existingSelection = selectionRepository.findByWorkerAndChantier(workerRepository.findById(workerId), chantierRepository.findById(chantierId).orElseThrow());
 
         if (existingSelection.isPresent()) {
             WorkerChantierSelection selection = existingSelection.get();
             selection.setIsSelected(false);
             selectionRepository.save(selection);
+        }else{
+            throw new RuntimeException("Selection not found for worker ID: " + workerId + " and chantier ID: " + chantierId);
         }
     }
 
@@ -82,19 +81,34 @@ public class WorkerSelectionService {
      * Get all workers selected for a chantier
      */
     public List<Worker> getWorkersForChantier(Long chantierId) {
-        return selectionRepository.findSelectedWorkersByChantier(chantierId)
-                .stream()
-                .map(WorkerChantierSelection::getWorker)
-                .collect(Collectors.toList());
-    }
+        // Fetch the Chantier entity first
+        Chantier chantier = chantierRepository.findById(chantierId)
+                .orElseThrow(() -> new RuntimeException("Chantier not found with id: " + chantierId));
+
+        // Query the selection repository for active selections for this chantier
+        // Ensure you have a method like this in WorkerChantierSelectionRepo
+        List<WorkerChantierSelection> selections = selectionRepository.findByChantierAndIsSelectedTrue(chantier);
+
+        // Map the selections to Worker entities
+        return selections.stream()
+                .map(WorkerChantierSelection::getWorker) // Get the worker from each selection
+                .filter(Objects::nonNull) // Filter out any selections with null workers (shouldn't happen ideally)
+                .distinct() // Avoid potential duplicates
+                .collect(Collectors.toList());    }
 
     /**
      * Get all chantiers a worker is selected for
      */
     public List<Chantier> getChantiersForWorker(Long workerId) {
-        return selectionRepository.findSelectedChantiersByWorker(workerId)
-                .stream()
-                .map(WorkerChantierSelection::getChantier)
+        Worker worker = workerRepository.findById(workerId);
+        // Query the selection repository for active selections for this worker
+        List<WorkerChantierSelection> selections = selectionRepository.findByWorkerAndIsSelectedTrue(worker);
+
+        // Map the selections to Chantier entities
+        return selections.stream()
+                .map(WorkerChantierSelection::getChantier) // Get the chantier from each selection
+                .filter(Objects::nonNull) // Filter out any selections with null chantiers (shouldn't happen ideally)
+                .distinct() // Avoid potential duplicates
                 .collect(Collectors.toList());
     }
 

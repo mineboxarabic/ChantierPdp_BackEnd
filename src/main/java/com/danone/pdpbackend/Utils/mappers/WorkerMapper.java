@@ -1,24 +1,31 @@
 package com.danone.pdpbackend.Utils.mappers;
 
+import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.Services.EntrepriseService;
 import com.danone.pdpbackend.Services.Implimetations.ChantierServiceImpl;
 import com.danone.pdpbackend.Services.Implimetations.PdpServiceImpl;
+import com.danone.pdpbackend.Services.PdpService;
 import com.danone.pdpbackend.entities.Chantier;
-import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.Worker;
-import com.danone.pdpbackend.entities.dto.WokerDTO;
+import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 @AllArgsConstructor
-public class WorkerMapper implements Mapper<WokerDTO, Worker> {
+public class WorkerMapper implements Mapper<WorkerDTO, Worker> {
 
+    @Autowired
     private final EntrepriseService entrepriseService;
-    private final PdpServiceImpl pdpServiceImpl;
-    private final ChantierServiceImpl chantierServiceImpl;
+    private final PdpService pdpService;
+    private final ChantierService chantierService;
 
 
     /* private Long id;
@@ -32,16 +39,16 @@ public class WorkerMapper implements Mapper<WokerDTO, Worker> {
 
 
     @Override
-    public void setDTOFields(WokerDTO wokerDTO, Worker worker) {
-        if (wokerDTO == null || worker == null) {
+    public void setDTOFields(WorkerDTO workerDTO, Worker worker) {
+        if (workerDTO == null || worker == null) {
             return;
         }
-        wokerDTO.setId(worker.getId());
-        wokerDTO.setNom(worker.getNom());
-        wokerDTO.setPrenom(worker.getPrenom());
+        workerDTO.setId(worker.getId());
+        workerDTO.setNom(worker.getNom());
+        workerDTO.setPrenom(worker.getPrenom());
         //Entreprise
         if (worker.getEntreprise() != null) {
-            wokerDTO.setEntreprise(worker.getEntreprise().getId());
+            workerDTO.setEntreprise(worker.getEntreprise().getId());
         }
 
         //PDP
@@ -49,7 +56,7 @@ public class WorkerMapper implements Mapper<WokerDTO, Worker> {
             List<Long> pdpIds = worker.getPdps().stream()
                     .map(pdp -> pdp.getId())
                     .toList();
-            wokerDTO.setPdps(pdpIds);
+            workerDTO.setPdps(pdpIds);
         }
 
         //Chantiers
@@ -57,86 +64,94 @@ public class WorkerMapper implements Mapper<WokerDTO, Worker> {
             List<Long> chantierIds = worker.getChantiers().stream()
                     .map(chantier -> chantier.getId())
                     .toList();
-            wokerDTO.setChantiers(chantierIds);
+            workerDTO.setChantiers(chantierIds);
         }
     }
 
     @Override
-    public void setEntityFields(WokerDTO wokerDTO, Worker worker) {
-        if (wokerDTO == null || worker == null) {
+    public void setEntityFields(WorkerDTO workerDTO, Worker worker) {
+        if (workerDTO == null || worker == null) {
             return;
         }
-        worker.setId(wokerDTO.getId());
-        worker.setNom(wokerDTO.getNom());
-        worker.setPrenom(wokerDTO.getPrenom());
+        worker.setId(workerDTO.getId());
+        worker.setNom(workerDTO.getNom());
+        worker.setPrenom(workerDTO.getPrenom());
         //Entreprise
-        if (wokerDTO.getEntreprise() != null) {
-          worker.setEntreprise(entrepriseService.getById(wokerDTO.getEntreprise()));
+        if (workerDTO.getEntreprise() != null) {
+          worker.setEntreprise(entrepriseService.getById(workerDTO.getEntreprise()));
 
         }
 
         //PDP
-        if (wokerDTO.getPdps() != null) {
+        if (workerDTO.getPdps() != null) {
            // worker.setPdps(pdpServiceImpl.getByIds(wokerDTO.getPdps()));
-            List<Pdp> pdps = pdpServiceImpl.getByIds(wokerDTO.getPdps());
+            List<Pdp> pdps = pdpService.getByIds(workerDTO.getPdps());
             worker.getPdps().clear();
             worker.getPdps().addAll(pdps);
         }
 
         //Chantiers
-        if (wokerDTO.getChantiers() != null) {
+        if (workerDTO.getChantiers() != null) {
            // worker.setChantiers(chantierServiceImpl.getByIds(wokerDTO.getChantiers()));
-            List<Chantier> chantiers = chantierServiceImpl.getByIds(wokerDTO.getChantiers());
+            List<Chantier> chantiers = chantierService.getByIds(workerDTO.getChantiers());
             worker.getChantiers().clear();
             worker.getChantiers().addAll(chantiers);
         }
     }
 
     @Override
-    public Worker toEntity(WokerDTO wokerDTO) {
+    public Worker toEntity(WorkerDTO workerDTO) {
 
-        if (wokerDTO == null) {
+        if (workerDTO == null) {
             return null;
         }
         Worker worker = new Worker();
-        setEntityFields(wokerDTO, worker);
+        setEntityFields(workerDTO, worker);
         return worker;
     }
 
     @Override
-    public WokerDTO toDTO(Worker worker) {
+    public WorkerDTO toDTO(Worker worker) {
         if (worker == null) {
             return null;
         }
-        WokerDTO wokerDTO = new WokerDTO();
-        setDTOFields(wokerDTO, worker);
-        return wokerDTO;
+        WorkerDTO workerDTO = new WorkerDTO();
+        setDTOFields(workerDTO, worker);
+        return workerDTO;
     }
 
     @Override
-    public List<Worker> toEntityList(List<WokerDTO> wokerDTOS) {
-        return List.of();
+    public List<Worker> toEntityList(List<WorkerDTO> workerDTOS) {
+        return workerDTOS.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<WokerDTO> toDTOList(List<Worker> workers) {
-        return List.of();
-    }
+    public List<WorkerDTO> toDTOList(List<Worker> workers) {
+        if (workers == null) {
+            // Return an empty list if the input is null
+            return new ArrayList<>();
+        }
+
+        return workers.stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());    }
 
     @Override
-    public Worker updateEntityFromDTO(Worker worker, WokerDTO wokerDTO) {
-        if (wokerDTO == null) {
+    public Worker updateEntityFromDTO(Worker worker, WorkerDTO workerDTO) {
+        if (workerDTO == null) {
             return worker;
         }
-        setEntityFields(wokerDTO, worker);
+        setEntityFields(workerDTO, worker);
 
         return worker;
     }
 
     @Override
-    public WokerDTO updateDTOFromEntity(WokerDTO wokerDTO, Worker worker) {
-        if (worker == null) return wokerDTO;
-        setDTOFields(wokerDTO, worker);
-        return wokerDTO;
+    public WorkerDTO updateDTOFromEntity(WorkerDTO workerDTO, Worker worker) {
+        if (worker == null) return workerDTO;
+        setDTOFields(workerDTO, worker);
+        return workerDTO;
     }
 }

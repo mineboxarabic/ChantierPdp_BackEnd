@@ -5,7 +5,7 @@ import com.danone.pdpbackend.Services.BDTService;
 import com.danone.pdpbackend.Services.PdpService;
 import com.danone.pdpbackend.Services.WorkerService;
 import com.danone.pdpbackend.Utils.BidirectionalRelationshipUtil;
-import com.danone.pdpbackend.entities.BDT.BDT;
+import com.danone.pdpbackend.entities.BDT.Bdt;
 import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.Worker;
@@ -48,7 +48,7 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
 
         //BDT
         if (entreprise.getBdts() != null) {
-            entrepriseDTO.setBdts(entreprise.getBdts().stream().map(BDT::getId).toList());
+            entrepriseDTO.setBdts(entreprise.getBdts().stream().map(Bdt::getId).toList());
         } else {
             entrepriseDTO.setBdts(List.of());
         }
@@ -108,9 +108,9 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
                     entreprise,
                     entreprise.getBdts(),
                     entrepriseDTO.getBdts(),
-                    bdtService::getBDTsByIds,
-                    BDT::getId,
-                    BDT::setEntrepriseExterieure  // Assuming this setter exists
+                    bdtService::getByIds,
+                    Bdt::getId,
+                    Bdt::setEntrepriseExterieure  // Assuming this setter exists
             );
         }
     }
@@ -136,7 +136,7 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
         //BDT
         if (entrepriseDTO.getBdts() != null) {
          //   entreprise.setBdts(bdtService.getBDTsByIds(entrepriseDTO.getBdts()));
-            List<BDT> bdts = bdtService.getBDTsByIds(entrepriseDTO.getBdts());
+            List<Bdt> bdts = bdtService.getByIds(entrepriseDTO.getBdts());
             entreprise.getBdts().clear();
             entreprise.getBdts().addAll(bdts);
         }
@@ -170,7 +170,7 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
 
         //BDT
         if (entreprise.getBdts() != null) {
-            entrepriseDTO.setBdts(entreprise.getBdts().stream().map(BDT::getId).toList());
+            entrepriseDTO.setBdts(entreprise.getBdts().stream().map(Bdt::getId).toList());
         } else {
             entrepriseDTO.setBdts(List.of());
         }

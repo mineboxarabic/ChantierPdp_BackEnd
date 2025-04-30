@@ -1,7 +1,8 @@
 package com.danone.pdpbackend.entities;
 
 
-import com.danone.pdpbackend.entities.BDT.BDT;
+import com.danone.pdpbackend.Utils.ChantierStatus;
+import com.danone.pdpbackend.entities.BDT.Bdt;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -50,7 +51,7 @@ public class Chantier {
     private User donneurDOrdre;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "chantier")
-    private List<BDT> bdts;
+    private List<Bdt> bdts;
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "chantier")
     private List<Pdp> pdps = new ArrayList<>();
@@ -58,6 +59,11 @@ public class Chantier {
     // Replace the direct many-to-many with the join entity
     @OneToMany(mappedBy = "chantier", cascade = CascadeType.ALL)
     private List<WorkerChantierSelection> workerSelections = new ArrayList<>();
+
+
+    @Enumerated(EnumType.STRING)
+    private ChantierStatus status;
+    private Boolean travauxDangereux = false;
 
     // Keep this for backward compatibility if needed
     @ManyToMany

@@ -4,10 +4,8 @@ package com.danone.pdpbackend.entities;
 import com.danone.pdpbackend.Utils.EntrepriseType;
 import com.danone.pdpbackend.Utils.Image.ImageModel;
 import com.danone.pdpbackend.Utils.MedecinDuTravailleEE;
-import com.danone.pdpbackend.entities.BDT.BDT;
-import com.fasterxml.jackson.annotation.JsonCreator;
+import com.danone.pdpbackend.entities.BDT.Bdt;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +51,7 @@ public class Entreprise {
 
     @OneToMany(mappedBy = "entrepriseExterieure", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<BDT> bdts = new ArrayList<>();// ✅ If this entreprise is an EE, it has BDTs
+    private List<Bdt> bdts = new ArrayList<>();// ✅ If this entreprise is an EE, it has BDTs
 
     @OneToMany(mappedBy = "entreprise", cascade = CascadeType.ALL)
     private List<Worker> workers = new ArrayList<>();

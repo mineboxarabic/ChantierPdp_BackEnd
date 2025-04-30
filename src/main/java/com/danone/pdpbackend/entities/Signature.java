@@ -3,8 +3,12 @@ package com.danone.pdpbackend.entities;
 
 import com.danone.pdpbackend.Utils.Image.ImageModel;
 import jakarta.persistence.*;
+import lombok.Data;
+
+import java.util.Date;
 
 @Entity(name = "signature")
+@Data
 public class Signature {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,6 +21,7 @@ public class Signature {
     private String docType; //Pdp, Permit, BDT,
     private Long docId;
 
+    private Date date;
 
 
     @Embedded

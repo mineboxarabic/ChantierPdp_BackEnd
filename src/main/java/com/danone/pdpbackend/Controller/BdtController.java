@@ -3,14 +3,16 @@ package com.danone.pdpbackend.Controller;
 import com.danone.pdpbackend.Services.BDTService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 
-import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
-import com.danone.pdpbackend.entities.BDT.BDT;
-import com.danone.pdpbackend.entities.ObjectAnswered;
+import com.danone.pdpbackend.Utils.mappers.BdtMapper;
+import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.dto.BdtDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -18,62 +20,69 @@ import java.util.List;
 public class BdtController {
 
     private final BDTService bdtService;
+    private final BdtMapper bdtMapper;
 
-    public BdtController(BDTService bdtService) {
+    public BdtController(BDTService bdtService, BdtMapper bdtMapper) {
         this.bdtService = bdtService;
+        this.bdtMapper = bdtMapper;
     }
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<BDT>>> getAllBDT() {
-        return ResponseEntity.ok(new ApiResponse<>(bdtService.getAllBDT(), "BDTs fetched successfully"));
+    public ResponseEntity<ApiResponse<List<BdtDTO>>> getAllBDT() {
+        return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTOList(bdtService.getAll()), "BDTs fetched successfully"));
     }
 
-    @PostMapping("/")
-    public ResponseEntity<ApiResponse<BDT>> createBDT(@RequestBody BDT bdt) {
-        BDT createdBdt = bdtService.createBDT(bdt);
-        return ResponseEntity.ok(new ApiResponse<>(bdt, "BDT created successfully"));
+    @PostMapping("")
+    public ResponseEntity<ApiResponse<BdtDTO>> createBDT(@RequestBody BdtDTO bdt) {
+        Bdt createdBdt = bdtService.create(bdtMapper.toEntity(bdt));
+        return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTO(createdBdt), "BDT created successfully"));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<BDT>> getBDT(@PathVariable Long id) {
-        BDT bdt = bdtService.getBDTById(id);
+    public ResponseEntity<ApiResponse<BdtDTO>> getBDT(@PathVariable Long id) {
+    Bdt bdt = bdtService.getById(id);
         if (bdt == null) {
             return ResponseEntity.status(404).body(new ApiResponse<>(null, "BDT not found"));
         }
-        return ResponseEntity.ok(new ApiResponse<>(bdt, "BDT fetched successfully"));
+        return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTO(bdt), "BDT fetched successfully"));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ApiResponse<BDT>> updateBDT(@PathVariable Long id, @RequestBody BDT bdt) {
-        BDT updatedBDT = bdtService.updateBDT(id, bdt);
-        return ResponseEntity.ok(new ApiResponse<>(updatedBDT, "BDT updated successfully"));
+    public ResponseEntity<ApiResponse<BdtDTO>> updateBDT(@PathVariable Long id, @RequestBody BdtDTO bdt) {
+        Bdt existingBdt = bdtService.getById(id);
+        Bdt updatedBdt = bdtService.update(id, bdtMapper.updateEntityFromDTO(existingBdt, bdt));
+        return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTO(updatedBdt), "BDT updated successfully"));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<String>> deleteBDT(@PathVariable Long id) {
-        if (!bdtService.deleteBDT(id)) {
+        if (!bdtService.delete(id)) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(null, "BDT not found"));
         }
         return ResponseEntity.ok(new ApiResponse<>(null, "BDT deleted successfully"));
     }
 
-    @PostMapping("/{bdtId}/risque/{risqueId}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> addRisqueToBDT(@PathVariable Long bdtId, @PathVariable Long risqueId) {
-        return ResponseEntity.ok(new ApiResponse<>(bdtService.addObjectAnswered(bdtId, risqueId, ObjectAnsweredObjects.RISQUE), "Risque added to BDT successfully"));
+    @GetMapping("/chantier/{chantierId}/date/{date}")
+    public ResponseEntity<ApiResponse<BdtDTO>> getBDTByChantierAndDate(@PathVariable Long chantierId, @PathVariable String date) {
+        LocalDate parsedDate;
+        try {
+            parsedDate = LocalDate.parse(date);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Invalid date format"));
+        }
+        Optional<Bdt> bdt = bdtService.findByChantierIdAndDate(chantierId, parsedDate);
+        if (bdt.isEmpty()) {
+            return ResponseEntity.status(404).body(new ApiResponse<>(null, "BDT not found"));
+        }
+        return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTO(bdt.get()), "BDTs fetched successfully"));
     }
 
-    @PostMapping("/{bdtId}/audit/{auditId}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> addAuditToBDT(@PathVariable Long bdtId, @PathVariable Long auditId) {
-        return ResponseEntity.ok(new ApiResponse<>(bdtService.addObjectAnswered(bdtId, auditId,ObjectAnsweredObjects.AUDIT), "Audit added to BDT successfully"));
-    }
-
-    @DeleteMapping("/{bdtId}/risque/{risqueId}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> removeRisqueFromBDT(@PathVariable Long bdtId, @PathVariable Long risqueId) {
-        return ResponseEntity.ok(new ApiResponse<>(bdtService.removeObjectAnswered(bdtId, risqueId, ObjectAnsweredObjects.RISQUE), "Risque removed from BDT successfully"));
-    }
-
-    @DeleteMapping("/{bdtId}/audit/{auditId}")
-    public ResponseEntity<ApiResponse<ObjectAnswered>> removeAuditFromBDT(@PathVariable Long bdtId, @PathVariable Long auditId) {
-        return ResponseEntity.ok(new ApiResponse<>(bdtService.removeObjectAnswered(bdtId, auditId, ObjectAnsweredObjects.AUDIT), "Audit removed from BDT successfully"));
+    @GetMapping("/chantier/{chantierId}")
+    public ResponseEntity<ApiResponse<List<BdtDTO>>> getBDTByChantier(@PathVariable Long chantierId) {
+        List<Bdt> bdts = bdtService.findByChantierId(chantierId);
+        if (bdts.isEmpty()) {
+            return ResponseEntity.status(404).body(new ApiResponse<>(null, "No BDTs found for this chantier"));
+        }
+        return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTOList(bdts), "BDTs fetched successfully"));
     }
 }
