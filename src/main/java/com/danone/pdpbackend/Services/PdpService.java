@@ -10,7 +10,7 @@ import com.danone.pdpbackend.entities.dto.PdpDTO;
 import java.util.List;
 import java.util.Map;
 
-public interface PdpService extends Service<Pdp>{
+public interface PdpService extends DocumentService<Pdp>{
     Pdp update(Long id, Pdp pdp);
 
   //  Pdp updatePdp(Pdp updatedPdp, Long id);
@@ -21,7 +21,6 @@ public interface PdpService extends Service<Pdp>{
 
     List<Pdp> getRecent();
 
-    List<Worker> findWorkersByPdp(Long pdpId);
 
     List<Pdp> getByIds(List<Long> pdps);
 
@@ -60,18 +59,5 @@ public interface PdpService extends Service<Pdp>{
      * (Alternatively, this logic could be in a separate scheduled service).
      */
     void triggerPdpRenewalCheck();
-
-    /**
-     * Adds a signature of a worker to the PDP.
-     * Should trigger a status update check afterwards.
-     * @param pdpId The ID of the Pdp.
-     * @param workerId The ID of the Worker signing.
-     * @return The updated Pdp.
-     */
-    Pdp addSignature(Long pdpId, Long workerId);
-
-    // Optional: removeSignature if needed
-
-    // --- End New Methods ---
 
 }

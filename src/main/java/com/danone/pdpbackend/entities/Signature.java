@@ -18,12 +18,15 @@ public class Signature {
 
     private String prenom;
 
-    private String docType; //Pdp, Permit, BDT,
-    private Long docId;
+    @ManyToOne
+    private Document document;
 
     private Date date;
 
 
     @Embedded
     private ImageModel signature;
+
+    @ManyToOne
+    private Worker worker;
 }

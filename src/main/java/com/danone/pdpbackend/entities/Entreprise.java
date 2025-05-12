@@ -4,7 +4,6 @@ package com.danone.pdpbackend.entities;
 import com.danone.pdpbackend.Utils.EntrepriseType;
 import com.danone.pdpbackend.Utils.Image.ImageModel;
 import com.danone.pdpbackend.Utils.MedecinDuTravailleEE;
-import com.danone.pdpbackend.entities.BDT.Bdt;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;

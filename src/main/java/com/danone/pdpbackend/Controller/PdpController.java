@@ -41,7 +41,7 @@ public class PdpController {
     }
 
     //Create
-    @PostMapping("/")
+    @PostMapping("")
     public ResponseEntity<ApiResponse<PdpDTO>> savePdp(@RequestBody PdpDTO pdpDTO) {
         Pdp createdPdp = pdpService.saveOrUpdatePdp(pdpDTO);
         return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(createdPdp), "Pdp saved successfully"));
@@ -110,12 +110,6 @@ public class PdpController {
         return ResponseEntity.ok(new ApiResponse<>(pdpService.getById(id) != null, "Pdp exist"));
     }
 
-
-    //        return fetch(`api/pdp/${pdpId}/workers`, 'GET', null, [
-    @GetMapping("/{pdpId}/workers")
-    public ResponseEntity<ApiResponse<List<Worker>>> getWorkersByPdpId(@PathVariable Long pdpId) {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.findWorkersByPdp(pdpId), "Workers fetched"));
-    }
 
 
     //Make a get to get teh risques of a pdp

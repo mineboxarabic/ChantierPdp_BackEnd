@@ -58,15 +58,13 @@ class PdpServiceImplTest {
         // Initialize common test objects
         pdp1 = new Pdp();
         pdp1.setId(1L);
-        pdp1.setChantier(100L);
+       // pdp1.setChantier(100L);
         pdp1.setRelations(new ArrayList<>()); // Initialize collections
-        pdp1.setSignatures(new ArrayList<>());
 
         pdp2 = new Pdp();
         pdp2.setId(2L);
-        pdp2.setChantier(101L);
+       // pdp2.setChantier(101L);
         pdp2.setRelations(new ArrayList<>());
-        pdp2.setSignatures(new ArrayList<>());
 
         pdpDTO1 = new PdpDTO();
         pdpDTO1.setId(1L);
@@ -74,11 +72,11 @@ class PdpServiceImplTest {
         pdpDTO1.setRelations(new ArrayList<>());
         pdpDTO1.setSignatures(new ArrayList<>());
 
-        relation1 = ObjectAnswered.builder().id(10L).pdp(pdp1).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build();
-        relation2_updated = ObjectAnswered.builder().id(11L).pdp(pdp1).objectId(2L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build(); // Will be "updated"
-        relation3_new = ObjectAnswered.builder().id(null).pdp(pdp1).objectId(3L).objectType(ObjectAnsweredObjects.RISQUE).answer(false).build(); // New
+        relation1 = ObjectAnswered.builder().id(10L).document(pdp1).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build();
+        relation2_updated = ObjectAnswered.builder().id(11L).document(pdp1).objectId(2L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build(); // Will be "updated"
+        relation3_new = ObjectAnswered.builder().id(null).document(pdp1).objectId(3L).objectType(ObjectAnsweredObjects.RISQUE).answer(false).build(); // New
 
-        relationDTO1 = ObjectAnsweredDTO.builder().id(10L).pdp(1L).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build();
+        relationDTO1 = ObjectAnsweredDTO.builder().id(10L).document(1L).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build();
 
     }
 
@@ -132,15 +130,15 @@ class PdpServiceImplTest {
         newDto.setSignatures(new ArrayList<>());
 
         Pdp pdpFromMapper = new Pdp();
-        pdpFromMapper.setChantier(102L);
+     //   pdpFromMapper.setChantier(/102L);
         pdpFromMapper.setRelations(new ArrayList<>());
-        pdpFromMapper.setSignatures(new ArrayList<>());
+      //  pdpFromMapper.setWorkers(new ArrayList<>());
 
         Pdp savedPdp = new Pdp();
         savedPdp.setId(3L); // ID assigned after save
-        savedPdp.setChantier(102L);
+    //    savedPdp.setChantier(102L);
         savedPdp.setRelations(new ArrayList<>());
-        savedPdp.setSignatures(new ArrayList<>());
+      //  savedPdp.setWorkers(new ArrayList<>());
 
         when(pdpMapper.toEntity(any(PdpDTO.class))).thenReturn(pdpFromMapper);
         when(pdpRepo.save(any(Pdp.class))).thenReturn(savedPdp);
@@ -191,9 +189,9 @@ class PdpServiceImplTest {
         existingPdp.setId(1L);
         existingPdp.setRelations(new ArrayList<>(List.of(relation1))); // Starts with relation1
 
-        ObjectAnswered incomingRelation1_updated = ObjectAnswered.builder().id(10L).pdp(null).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(false).build(); // Update answer
-        ObjectAnswered incomingRelation2_toDelete = ObjectAnswered.builder().id(11L).pdp(null).objectId(2L).objectType(ObjectAnsweredObjects.RISQUE).answer(null).build(); // Delete this one (has existing ID but null answer)
-        ObjectAnswered incomingRelation3_new = ObjectAnswered.builder().id(null).pdp(null).objectId(3L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build(); // Add this one
+        ObjectAnswered incomingRelation1_updated = ObjectAnswered.builder().id(10L).document(null).objectId(1L).objectType(ObjectAnsweredObjects.RISQUE).answer(false).build(); // Update answer
+        ObjectAnswered incomingRelation2_toDelete = ObjectAnswered.builder().id(11L).document(null).objectId(2L).objectType(ObjectAnsweredObjects.RISQUE).answer(null).build(); // Delete this one (has existing ID but null answer)
+        ObjectAnswered incomingRelation3_new = ObjectAnswered.builder().id(null).document(null).objectId(3L).objectType(ObjectAnsweredObjects.RISQUE).answer(true).build(); // Add this one
 
         Pdp updatedPdpInput = new Pdp(); // This is the input to the service's update method
         updatedPdpInput.setId(1L);
@@ -271,23 +269,7 @@ class PdpServiceImplTest {
         verify(pdpRepo, never()).deleteById(anyLong()); // Verify delete was not called
     }
 
-    @Test
-    void findWorkersByPdp_shouldReturnWorkers() {
-        // Arrange
-        Worker worker1 = new Worker(); worker1.setId(50L);
-        Worker worker2 = new Worker(); worker2.setId(51L);
-        pdp1.getSignatures().addAll(Arrays.asList(worker1, worker2));
-        when(pdpRepo.findById(1L)).thenReturn(Optional.of(pdp1));
 
-        // Act
-        List<Worker> workers = pdpService.findWorkersByPdp(1L);
-
-        // Assert
-        assertNotNull(workers);
-        assertEquals(2, workers.size());
-        assertEquals(50L, workers.get(0).getId());
-        verify(pdpRepo, times(1)).findById(1L);
-    }
 
     @Test
     void getObjectAnsweredByPdpId_shouldReturnRelations() {

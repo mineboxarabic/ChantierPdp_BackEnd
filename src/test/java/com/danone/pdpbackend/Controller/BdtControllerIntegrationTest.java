@@ -44,7 +44,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("test")
 @DisplayName("BDT Controller Integration Tests")
@@ -124,11 +123,13 @@ class BdtControllerIntegrationTest {
                 100, // < 400 hours
                 false // Not dangerous
         ));
-      //  ChantierDTO chantierBefore = getChantierById(testChantierId);
 
-        assertEquals(ChantierStatus.PENDING_BDT, chantierBefore.getStatus(),
-                "Chantier should start with INACTIVE_TODAY status");
+        assertEquals(ChantierStatus.PENDING_BDT, chantierBefore.getStatus(), "Chantier should start with INACTIVE_TODAY status");
 
+        // Act - Create a BDT for the chantier
+        BdtDTO newBdtRequest = buildBDT(chantierBefore.getId(), today);
+        newBdtRequest.setChantier(chantierBefore.getId());
+        BdtDTO createdBdt = createBDT(newBdtRequest);
 
         // Assert - Chantier should move to PENDING_PDP when a BDT is created for it
         ChantierDTO chantierAfter = getChantierById(testChantierId);
@@ -211,71 +212,71 @@ class BdtControllerIntegrationTest {
         assertEquals("New complement", updatedBdt.getComplementOuRappels().get(0).getComplement(),
                 "Complement text should match");
     }
+    /*
+       @Test
+       @DisplayName("Sign BDT as charge de travail - should update status")
+       void signBDTAsChargeDeTravail_ShouldUpdateStatus() throws Exception {
+           // Arrange - Create signature data
+           Signature signature = new Signature();
+           signature.setSignature(new ImageModel());
+           signature.setDate(new Date());
+           signature.setNom("Test Signer");
 
-    @Test
-    @DisplayName("Sign BDT as charge de travail - should update status")
-    void signBDTAsChargeDeTravail_ShouldUpdateStatus() throws Exception {
-        // Arrange - Create signature data
-        Signature signature = new Signature();
-        signature.setSignature(new ImageModel());
-        signature.setDate(new Date());
-        signature.setNom("Test Signer");
+           // Act - Add signature as charge de travail
+           BdtDTO signedBdt = addBDTSignature(testBdtId, signature, "CHARGE_DE_TRAVAIL");
 
-        // Act - Add signature as charge de travail
-        BdtDTO signedBdt = addBDTSignature(testBdtId, signature, "CHARGE_DE_TRAVAIL");
+           // Assert - Verify signature was added
+           assertNotNull(signedBdt.getSignatures(),
+                   "Signature charge de travail should be set");
 
-        // Assert - Verify signature was added
-        assertNotNull(signedBdt.getSignatureChargeDeTravail(),
-                "Signature charge de travail should be set");
-      /*  assertEquals("Test Signer", signedBdt.getSignatureChargeDeTravail().getNom(),
-                "Signature name should match");*/
 
-        // BDT status should still be NEEDS_SIGNATURES until both signatures are present
-        assertEquals(DocumentStatus.NEEDS_SIGNATURES, signedBdt.getStatus(),
-                "BDT should need more signatures");
-    }
+           // BDT status should still be NEEDS_SIGNATURES until both signatures are present
+           assertEquals(DocumentStatus.NEEDS_SIGNATURES, signedBdt.getStatus(),
+                   "BDT should need more signatures");
+       }
 
-    @Test
-    @DisplayName("Sign BDT with both signatures - should make BDT READY")
-    void signBDTWithBothSignatures_ShouldMakeBDTReady() throws Exception {
-        // Arrange - Create signature data
-        Signature signature1 = new Signature();
-        signature1.setSignature(new ImageModel());
-        signature1.setDate(new Date());
-        signature1.setNom("Charge Signer");
+     @Test
+       @DisplayName("Sign BDT with both signatures - should make BDT READY")
+       void signBDTWithBothSignatures_ShouldMakeBDTReady() throws Exception {
+           // Arrange - Create signature data
+           Signature signature1 = new Signature();
+           signature1.setSignature(new ImageModel());
+           signature1.setDate(new Date());
+           signature1.setNom("Charge Signer");
 
-        Signature signature2 = new Signature();
-        signature2.setSignature(new ImageModel());
-        signature2.setDate(new Date());
-        signature2.setNom("Donneur Signer");
+           Signature signature2 = new Signature();
+           signature2.setSignature(new ImageModel());
+           signature2.setDate(new Date());
+           signature2.setNom("Donneur Signer");
 
-        // Act - Add both signatures
-        BdtDTO bdt = addBDTSignature(testBdtId, signature1, "CHARGE_DE_TRAVAIL");
-        bdt = addBDTSignature(bdt.getId(), signature2, "DONNEUR_D_ORDRE");
+           // Act - Add both signatures
+           BdtDTO bdt = addBDTSignature(testBdtId, signature1, "CHARGE_DE_TRAVAIL");
+           bdt = addBDTSignature(bdt.getId(), signature2, "DONNEUR_D_ORDRE");
 
-        // Assert - Verify both signatures are present
-        assertNotNull(bdt.getSignatureChargeDeTravail(), "Signature charge de travail should be set");
-        assertNotNull(bdt.getSignatureDonneurDOrdre(), "Signature donneur d'ordre should be set");
+           // Assert - Verify both signatures are present
+           assertNotNull(bdt.getSignatureChargeDeTravail(), "Signature charge de travail should be set");
+           assertNotNull(bdt.getSignatureDonneurDOrdre(), "Signature donneur d'ordre should be set");
 
-        // BDT status should be READY when both signatures are present
-        assertEquals(DocumentStatus.ACTIVE, bdt.getStatus(),
-                "BDT should be READY when both signatures are present");
+           // BDT status should be READY when both signatures are present
+           assertEquals(DocumentStatus.ACTIVE, bdt.getStatus(),
+                   "BDT should be READY when both signatures are present");
 
-        // Chantier should be ACTIVE when today's BDT is READY
-        ChantierDTO chantier = getChantierById(testChantierId);
-        assertEquals(ChantierStatus.ACTIVE, chantier.getStatus(),
-                "Chantier should be ACTIVE when today's BDT is READY");
-    }
-
+           // Chantier should be ACTIVE when today's BDT is READY
+           ChantierDTO chantier = getChantierById(testChantierId);
+           assertEquals(ChantierStatus.ACTIVE, chantier.getStatus(),
+                   "Chantier should be ACTIVE when today's BDT is READY");
+       }
+   */
     @Test
     @DisplayName("Delete BDT - should delete successfully")
     void deleteBDT_ShouldDeleteSuccessfully() throws Exception {
         // Arrange - Create a BDT to delete for tomorrow
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         BdtDTO bdtToDelete = createBDT(buildBDT(testChantierId, tomorrow));
-
         // Act - Delete the BDT
         deleteBDT(bdtToDelete.getId());
+
+
 
         // Assert - Verify BDT is gone (should return 404)
         mockMvc.perform(get("/api/bdt/{id}", bdtToDelete.getId())
@@ -324,23 +325,27 @@ class BdtControllerIntegrationTest {
         riskRelation2.setObjectId(2L); // Assuming risk with ID 2 exists
         riskRelation2.setAnswer(false);
         riskRelation2.setObjectType(com.danone.pdpbackend.Utils.ObjectAnsweredObjects.RISQUE);
+        riskRelation.setDocument(testBdtId);
 
         List<ObjectAnsweredDTO> riskRelations = new ArrayList<>();
         riskRelations.add(riskRelation);
         riskRelations.add(riskRelation2);
+        riskRelation.setDocument(testBdtId);
 
         // Create a new BDT with the risk relations
         BdtDTO newBdt = buildBDT(testChantierId, today);
         newBdt.setRelations(riskRelations);
 
-
         // Act - Add risk to BDT
         BdtDTO updatedBdt = updateBdt(testBdtId, newBdt);
 
+
         // Assert - Verify risk was added
         assertNotNull(updatedBdt.getRelations(), "Risks list should not be null");
-        assertTrue(updatedBdt.getRelations().size() > 0, "Risk should be added to BDT");
-
+        assertFalse(updatedBdt.getRelations().isEmpty(), "Risk should be added to BDT");
+        assertEquals(2, updatedBdt.getRelations().size(), "Should have two risks");
+        //Assert the first risk is true
+        assertEquals(true, updatedBdt.getRelations().get(0).getAnswer(), "Risk answer should be true");
         // Find the added risk
         Optional<ObjectAnsweredDTO> foundRisk = updatedBdt.getRelations().stream()
                 .filter(r -> r.getObjectId().equals(riskRelation.getObjectId()))

@@ -2,7 +2,7 @@ package com.danone.pdpbackend.Utils.mappers;
 
 import com.danone.pdpbackend.Services.*;
 import com.danone.pdpbackend.entities.*;
-import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.dto.ChantierDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

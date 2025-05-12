@@ -28,6 +28,7 @@ public class PdpServiceImpl implements PdpService {
     private final PdpMapper pdpMapper;
     private final WorkerSelectionService workerSelectionService;
     private final WorkerService workerService;
+    private final DocumentService<Pdp> documentService;
     PdpRepo pdpRepo;
     EntrepriseService entrepriseService;
     private final ObjectAnswerRepo objectAnswerRepo;
@@ -144,10 +145,6 @@ public class PdpServiceImpl implements PdpService {
 
     }
 
-    @Override
-    public List<Worker> findWorkersByPdp(Long pdpId) {
-        return pdpRepo.findById(pdpId).get().getSignatures();
-    }
 
     @Override
     public List<ObjectAnswered> getObjectAnsweredsByPdpId(Long pdpId, ObjectAnsweredObjects objectType) {
@@ -192,7 +189,7 @@ public class PdpServiceImpl implements PdpService {
         if (pdp.getChantier() != null) {
             try {
                 // Use calculate, don't trigger save within a calculation
-                chantierStatus = chantierService.calculateChantierStatus(pdp.getChantier());
+                chantierStatus = chantierService.calculateChantierStatus(pdp.getChantier().getId());
                 if (chantierStatus == ChantierStatus.COMPLETED) {
                     return DocumentStatus.COMPLETED; // PDP is completed if Chantier is
                 }
@@ -242,7 +239,7 @@ public class PdpServiceImpl implements PdpService {
         List<Worker> assignedWorkers = List.of();
         if (pdp.getChantier() != null) {
             try {
-                assignedWorkers = workerSelectionService.getWorkersForChantier(pdp.getChantier());
+                assignedWorkers = workerSelectionService.getWorkersForChantier(pdp.getChantier().getId());
             } catch (Exception e) {
                 log.warn("Could not get assigned workers for Chantier {} linked to PDP {}", pdp.getChantier(), pdpId, e);
                 // If we can't get assigned workers, assume signatures are needed? Or is it an error state?
@@ -251,7 +248,11 @@ public class PdpServiceImpl implements PdpService {
         }
 
         if (!assignedWorkers.isEmpty()) {
-            List<Worker> signedWorkers = pdp.getSignatures();
+            List<Worker> signedWorkers = pdp.getSignatures().stream()
+                    .filter(signature -> signature.getWorker() != null)
+                    .map(DocumentSignature::getWorker)
+                    .collect(Collectors.toList());
+
             Set<Long> assignedWorkerIds = assignedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
             Set<Long> signedWorkerIds = signedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
 
@@ -279,7 +280,7 @@ public class PdpServiceImpl implements PdpService {
             // Potentially update linked Chantier status as well
             if(pdp.getChantier() != null) {
                 try {
-                    chantierService.updateAndSaveChantierStatus(pdp.getChantier());
+                    chantierService.updateAndSaveChantierStatus(pdp.getChantier().getId());
                 } catch (Exception e) {
                     log.error("Failed to update chantier status after PDP {} status change", pdpId, e);
                 }
@@ -372,7 +373,6 @@ public class PdpServiceImpl implements PdpService {
         }
 
         // Reset fields for a new cycle
-        newPdp.setSignatures(new ArrayList<>()); // MUST be empty
         newPdp.setCreationDate(LocalDate.now()); // Set to today
         newPdp.setStatus(DocumentStatus.DRAFT); // Start as draft/planned
         // Reset other dates like inspection date etc.
@@ -386,25 +386,9 @@ public class PdpServiceImpl implements PdpService {
 
     @Override
     @Transactional
-    public Pdp addSignature(Long pdpId, Long workerId) {
-        Pdp pdp = getById(pdpId);
-        Worker worker = workerService.getById(workerId); // Fetch the worker
-
-        if (pdp.getSignatures() == null) {
-            pdp.setSignatures(new ArrayList<>());
-        }
-
-        // Avoid adding duplicate signatures
-        if (!pdp.getSignatures().contains(worker)) {
-            pdp.getSignatures().add(worker);
-            pdp = pdpRepo.save(pdp);
-            log.info("Added signature for worker {} to PDP {}", workerId, pdpId);
-            // Update status after adding signature
-            return updateAndSavePdpStatus(pdpId);
-        } else {
-            log.warn("Worker {} already signed PDP {}", workerId, pdpId);
-            return pdp; // No change
-        }
+    public Pdp addSignature(Long documentId, DocumentSignature documentSignature) {
+        Pdp pdp = getById(documentId);
+        return (Pdp) documentService.addSignature(pdp.getId(), documentSignature);
     }
 
 }

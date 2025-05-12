@@ -9,7 +9,7 @@ import com.danone.pdpbackend.Utils.ChantierStatus;
 import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import com.danone.pdpbackend.entities.*;
-import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Bdt;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,14 +27,16 @@ public class BDTServiceImpl implements BDTService {
     private final SignatureRepo signatureRepo;
     private final WorkerSelectionService workerSelectionService;
     private final ObjectAnswerRepo objectAnswerRepo;
+    private final DocumentServiceImpl documentServiceImpl;
 
-    public BDTServiceImpl(BDTRepo bdtRepo, RisqueService risqueService, ChantierService chantierService, SignatureRepo signatureRepo, WorkerSelectionService workerSelectionService, ObjectAnswerRepo objectAnswerRepo) {
+    public BDTServiceImpl(BDTRepo bdtRepo, RisqueService risqueService, ChantierService chantierService, SignatureRepo signatureRepo, WorkerSelectionService workerSelectionService, ObjectAnswerRepo objectAnswerRepo, DocumentServiceImpl documentServiceImpl) {
         this.bdtRepo = bdtRepo;
         this.risqueService = risqueService;
         this.chantierService = chantierService;
         this.signatureRepo = signatureRepo;
         this.workerSelectionService = workerSelectionService;
         this.objectAnswerRepo = objectAnswerRepo;
+        this.documentServiceImpl = documentServiceImpl;
     }
 
     @Override
@@ -55,6 +57,9 @@ public class BDTServiceImpl implements BDTService {
     private List<ObjectAnswered> mergeObjectAnswered(List<ObjectAnswered> incoming, List<ObjectAnswered> existing, Long pdpId) {
         List<ObjectAnswered> result = new ArrayList<>();
 
+        if(null == incoming) {
+            return existing;
+        }
 
         for (ObjectAnswered obj : incoming) {
             if (obj.getId() == null) {
@@ -149,12 +154,7 @@ public class BDTServiceImpl implements BDTService {
             newBdt.setRelations(new ArrayList<>());
             // newBdt.setPermits(new ArrayList<>()); // If using permits linked to BDT
 
-            // Populate with initialData if provided and needed
-            /*
-            if (initialData.isPresent()) {
-                // Apply initial data...
-            }
-            */
+
 
             Bdt savedBdt = bdtRepo.save(newBdt); // Save the new BDT
             // Update chantier status after creating BDT
@@ -208,12 +208,12 @@ public class BDTServiceImpl implements BDTService {
         // 3. Check Permits based on linked Risks
         boolean permitsNeeded = false;
 
-        if(bdt.getPermitRelations() == null || bdt.getPermitRelations().isEmpty()) {
+        if(bdt.getRelations() == null || bdt.getRelations().isEmpty()) {
             log.warn("No permit relations found for BDT {}", bdtId);
             return DocumentStatus.PERMIT_NEEDED;
         }
 
-        List<Long> requiredPermitIds = bdt.getPermitRelations().stream()
+        List<Long> requiredPermitIds = bdt.getRelations().stream()
                 .filter(r -> r.getObjectType() == ObjectAnsweredObjects.RISQUE)
                 .map(r -> {
                     try { return risqueService.getRisqueById(r.getObjectId()); }
@@ -225,7 +225,7 @@ public class BDTServiceImpl implements BDTService {
                 .toList();
 
         if (!requiredPermitIds.isEmpty()) {
-            Set<Long> linkedPermitObjectIds = bdt.getPermitRelations().stream()
+            Set<Long> linkedPermitObjectIds = bdt.getRelations().stream()
                     .filter(r -> r.getObjectType() == ObjectAnsweredObjects.PERMIT && r.getAnswer() != null && r.getAnswer()) // Check if linked and marked as addressed/valid
                     .map(ObjectAnswered::getObjectId)
                     .collect(Collectors.toSet());
@@ -252,7 +252,15 @@ public class BDTServiceImpl implements BDTService {
         }
 
         if (!assignedWorkers.isEmpty()) {
-            List<Worker> signedWorkers = bdt.getSignatures();
+            List<Worker> signedWorkers = bdt.getSignatures().stream()
+                    .filter(signature -> signature.getSignatureDate() != null) // Assuming this means signed
+                    .map(signature -> {
+                        try { return signature.getWorker(); }
+                        catch (Exception e) { log.warn("Could not find Worker for signature {} in BDT {}", signature.getId(), bdtId); return null; }
+                    })
+                    .filter(Objects::nonNull)
+                    .toList();
+
             Set<Long> assignedWorkerIds = assignedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
             Set<Long> signedWorkerIds = signedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
 
@@ -286,23 +294,9 @@ public class BDTServiceImpl implements BDTService {
 
     @Override
     @Transactional
-    public Bdt addSignature(Long bdtId, Signature signature, String type) {
-        Bdt bdt = getById(bdtId);
-        // Save the signature first to get an ID if it's new
-        Signature savedSignature = signatureRepo.save(signature);
-
-        if ("CHARGE_DE_TRAVAIL".equalsIgnoreCase(type)) {
-            bdt.setSignatureChargeDeTravail(savedSignature);
-        } else if ("DONNEUR_D_ORDRE".equalsIgnoreCase(type)) {
-            bdt.setSignatureDonneurDOrdre(savedSignature);
-        } else {
-            throw new IllegalArgumentException("Invalid signature type for BDT: " + type);
-        }
-
-        Bdt updatedBdt = bdtRepo.save(bdt);
-        log.info("Added {} signature to BDT {}", type, bdtId);
-        // Update status after adding signature
-        return updateAndSaveBdtStatus(updatedBdt.getId());
+    public Bdt addSignature(Long documentId, DocumentSignature documentSignature){
+        
+        return (Bdt) documentServiceImpl.addSignature(documentId, documentSignature);
     }
 
     @Override
@@ -314,7 +308,15 @@ public class BDTServiceImpl implements BDTService {
             return Optional.of(list.get(0));
         }
     }
-
+    @Override
+    public Optional<Bdt> findByChantierIdAndCreationDate(Long id, LocalDate today) {
+        List<Bdt> list =  bdtRepo.findBDTByChantierIdAndCreationDate(id, today);
+        if (list.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(list.get(0));
+        }
+    }
     @Override
     public List<Bdt> findByChantierId(Long chantierId) {
         List<Bdt> list =  bdtRepo.findBDTByChantierId(chantierId);

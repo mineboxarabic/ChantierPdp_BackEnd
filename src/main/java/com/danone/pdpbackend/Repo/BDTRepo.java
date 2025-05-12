@@ -1,6 +1,6 @@
 package com.danone.pdpbackend.Repo;
 
-import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Bdt;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -15,10 +15,13 @@ public interface BDTRepo extends org.springframework.data.repository.Repository<
     Optional<Bdt> findById(Long id);
     Bdt save(Bdt bdt);
     Boolean existsById(Long id);
+
     void deleteById(Long id);
+
     List<Bdt> findBDTsByIdIn(List<Long> ids);
 
     List<Bdt> findBDTByChantierIdAndDate(Long chantierId, LocalDate date);
+    List<Bdt> findBDTByChantierIdAndCreationDate(Long chantierId, LocalDate date);
 
     List<Bdt> findBDTByChantierId(Long chantierId);
 

@@ -8,7 +8,7 @@ import com.danone.pdpbackend.Services.PdpService;
 import com.danone.pdpbackend.Services.WorkerSelectionService;
 import com.danone.pdpbackend.Utils.ChantierStatus;
 import com.danone.pdpbackend.Utils.DocumentStatus;
-import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.Chantier;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.Worker;
@@ -95,9 +95,7 @@ public class ChantierServiceImpl implements ChantierService {
     }
 
     @Override
-    public void addPdpToChantier(Long chantierId, Pdp pdp) {
-        Chantier chantier = chantierRepo.findById(chantierId)
-                .orElseThrow(() -> new IllegalArgumentException("Chantier with id " + chantierId + " not found"));
+    public void addPdpToChantier(Chantier chantier, Pdp pdp) {
         chantier.getPdps().add(pdp);
         chantier.setStatus(calculateChantierStatus(chantier)); // Update status after adding PDP
         chantierRepo.save(chantier);
@@ -194,7 +192,7 @@ public class ChantierServiceImpl implements ChantierService {
 
         // If PDP wasn't required or is READY, check for today's BDT
         // Find BDT for today linked to this chantier
-         Optional<Bdt> todayBdtOpt = bdtService.findByChantierIdAndDate(chantier.getId(), today); // Need this repo method
+         Optional<Bdt> todayBdtOpt = bdtService.findByChantierIdAndCreationDate(chantier.getId(), today); // Need this repo method
 
         // --- Placeholder: Fetch BDT for today ---
         //Optional<BDT> todayBdtOpt = Optional.empty(); // Replace with actual fetch: bdtService.findBdtForChantierAndDate(chantier.getId(), today);

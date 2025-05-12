@@ -38,10 +38,6 @@ public class Worker {
     private List<Pdp> pdps;
 
     @ManyToMany
-    @ToString.Exclude // <--- Add this
-    private List<Signature> signatures;
-
-    @ManyToMany
     @JsonIgnore
     @ToString.Exclude // <--- Add this
     private List<Chantier> chantiers;

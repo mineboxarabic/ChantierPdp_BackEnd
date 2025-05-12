@@ -1,7 +1,6 @@
 package com.danone.pdpbackend.entities;
 
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
-import com.danone.pdpbackend.entities.BDT.Bdt;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,12 +16,7 @@ public class ObjectAnswered {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "pdp_id", nullable = false)
-    private Pdp pdp;
-
-    @ManyToOne
-    @JoinColumn(name = "bdt_id", nullable = false)
-    private Bdt bdt;
+    private Document document;
 
     @Enumerated(EnumType.STRING)
     private ObjectAnsweredObjects objectType; // "Srisque", "dispositif", "permit", ...

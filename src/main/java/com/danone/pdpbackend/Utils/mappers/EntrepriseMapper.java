@@ -5,7 +5,7 @@ import com.danone.pdpbackend.Services.BDTService;
 import com.danone.pdpbackend.Services.PdpService;
 import com.danone.pdpbackend.Services.WorkerService;
 import com.danone.pdpbackend.Utils.BidirectionalRelationshipUtil;
-import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.Worker;

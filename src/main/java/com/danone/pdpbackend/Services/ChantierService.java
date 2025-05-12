@@ -1,7 +1,7 @@
 package com.danone.pdpbackend.Services;
 
 import com.danone.pdpbackend.Utils.ChantierStatus;
-import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.Chantier;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.Worker;
@@ -16,7 +16,7 @@ public interface ChantierService extends Service<Chantier> {
     List<Chantier> getRecent();
 
 
-    void addPdpToChantier(Long chantierId, Pdp pdpId);
+    void addPdpToChantier(Chantier chantier, Pdp pdpId);
 
     void addBdtToChantier(Chantier chantier, Bdt bdt);
 

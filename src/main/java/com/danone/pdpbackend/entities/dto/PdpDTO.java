@@ -12,10 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 @Data
-public class PdpDTO {
-    private Long id;
-    private Long chantier; // ✅ PDP is always linked to a chantier
-    private Long entrepriseExterieure; // ✅ PDP is linked to an EE (Entreprise Extérieure)
+public class PdpDTO extends DocumentDTO {
     private Date dateInspection;
     private Date icpdate;
     private Date datePrevenirCSSCT; // ✅ Notification date for CSSCT (if required)
@@ -26,13 +23,4 @@ public class PdpDTO {
 
     private HoraireDeTravaille horaireDeTravail;
     private MisesEnDisposition misesEnDisposition;
-
-    private List<ObjectAnsweredDTO> relations = new ArrayList<>();
-
-    private List<Long> signatures; // ✅ List of workers who signed the PDP
-
-
-    private DocumentStatus status; // Default status
-
-    private LocalDate creationDate;
 }

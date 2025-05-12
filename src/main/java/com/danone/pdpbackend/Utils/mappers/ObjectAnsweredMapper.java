@@ -1,23 +1,22 @@
 package com.danone.pdpbackend.Utils.mappers;
 
 import com.danone.pdpbackend.Repo.BDTRepo;
+import com.danone.pdpbackend.Repo.DocumentRepo;
 import com.danone.pdpbackend.Repo.PdpRepo;
-import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Bdt;
+import com.danone.pdpbackend.entities.Document;
 import com.danone.pdpbackend.entities.ObjectAnswered;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 @Component
+@AllArgsConstructor
 public class ObjectAnsweredMapper implements Mapper<ObjectAnsweredDTO, ObjectAnswered>{
-    private final PdpRepo pdpRepo;
-    private final BDTRepo bdtRepo;
+    private final DocumentRepo documentRepo;
 
-    public ObjectAnsweredMapper(PdpRepo pdpRepo, BDTRepo bdtRepo) {
-        this.pdpRepo = pdpRepo;
-        this.bdtRepo = bdtRepo;
-    }
 
     @Override
     public void setDTOFields(ObjectAnsweredDTO objectAnsweredDTO, ObjectAnswered objectAnswered) {
@@ -25,8 +24,11 @@ public class ObjectAnsweredMapper implements Mapper<ObjectAnsweredDTO, ObjectAns
             objectAnsweredDTO.setId(objectAnswered.getId());
         }
         //objectAnsweredDTO.setId(objectAnswered.getId());
-        objectAnsweredDTO.setPdp(objectAnswered.getPdp().getId());
-        objectAnsweredDTO.setBdt(objectAnswered.getBdt().getId());
+        if(objectAnswered.getDocument() != null){
+            objectAnsweredDTO.setDocument(objectAnswered.getDocument().getId());
+
+        }
+
         objectAnsweredDTO.setObjectType(objectAnswered.getObjectType());
         objectAnsweredDTO.setObjectId(objectAnswered.getObjectId());
         objectAnsweredDTO.setAnswer(objectAnswered.getAnswer());
@@ -38,17 +40,13 @@ public class ObjectAnsweredMapper implements Mapper<ObjectAnsweredDTO, ObjectAns
     public void setEntityFields(ObjectAnsweredDTO objectAnsweredDTO, ObjectAnswered objectAnswered) {
         objectAnswered.setId(objectAnsweredDTO.getId());
 
-        if (objectAnsweredDTO.getPdp() != null && objectAnswered.getPdp() == null) {
-            Pdp pdp = pdpRepo.findById(objectAnsweredDTO.getPdp())
+        if (objectAnsweredDTO.getDocument() != null && objectAnswered.getDocument() == null) {
+            Document document = documentRepo.findById(objectAnsweredDTO.getDocument())
                     .orElseThrow(() -> new IllegalArgumentException("PDP not found"));
-            objectAnswered.setPdp(pdp);
+            objectAnswered.setDocument(document);
         }
 
-        if (objectAnsweredDTO.getBdt() != null && objectAnswered.getBdt() == null) {
-            // Assuming you have a method to find BDT by ID
-             Bdt bdt = bdtRepo.findById(objectAnsweredDTO.getBdt()).orElseThrow(() -> new IllegalArgumentException("BDT not found"));
-             objectAnswered.setBdt(bdt);
-        }
+
 
         objectAnswered.setObjectType(objectAnsweredDTO.getObjectType());
         objectAnswered.setObjectId(objectAnsweredDTO.getObjectId());
@@ -64,10 +62,10 @@ public class ObjectAnsweredMapper implements Mapper<ObjectAnsweredDTO, ObjectAns
         return objectAnswered;
     }
 
-    public ObjectAnswered toEntity(ObjectAnsweredDTO dto, Pdp pdp) {
+    public ObjectAnswered toEntity(ObjectAnsweredDTO dto, Document document) {
         ObjectAnswered objectAnswered = new ObjectAnswered();
         setEntityFields(dto, objectAnswered);
-        objectAnswered.setPdp(pdp);
+        objectAnswered.setDocument(document);
         return objectAnswered;
     }
 
@@ -86,9 +84,9 @@ public class ObjectAnsweredMapper implements Mapper<ObjectAnsweredDTO, ObjectAns
     }
 
 
-    public List<ObjectAnswered> toEntityList(List<ObjectAnsweredDTO> objectAnsweredDTOS, Pdp pdp) {
+    public List<ObjectAnswered> toEntityList(List<ObjectAnsweredDTO> objectAnsweredDTOS, Document document) {
         return objectAnsweredDTOS.stream()
-                .map(dto -> toEntity(dto, pdp))
+                .map(dto -> toEntity(dto, document))
                 .toList();
     }
 

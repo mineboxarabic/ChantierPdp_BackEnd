@@ -4,7 +4,7 @@ import com.danone.pdpbackend.Services.BDTService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 
 import com.danone.pdpbackend.Utils.mappers.BdtMapper;
-import com.danone.pdpbackend.entities.BDT.Bdt;
+import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.dto.BdtDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

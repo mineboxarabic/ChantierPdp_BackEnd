@@ -16,16 +16,7 @@ import java.util.List;
 @Entity(name = "pdp")
 @Getter
 @Setter
-public class Pdp {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-
-    private Long chantier; // ✅ PDP is always linked to a chantier
-
-    @ManyToOne
-    private Entreprise entrepriseExterieure; // ✅ PDP is linked to an EE (Entreprise Extérieure)
+public class Pdp extends Document {
 
 
     private Date dateInspection = new Date();
@@ -35,7 +26,6 @@ public class Pdp {
 
     private String horairesDetails;
 
-
     @OneToOne
     private Entreprise entrepriseDInspection;
 
@@ -44,19 +34,5 @@ public class Pdp {
 
     @Embedded
     private MisesEnDisposition misesEnDisposition;
-
-
-    @OneToMany(mappedBy = "pdp", cascade = CascadeType.ALL)
-    private List<ObjectAnswered> relations = new ArrayList<>();
-
-    @OneToMany
-    private List<Worker> signatures = new ArrayList<>();// ✅ List of workers who signed the PDP
-
-
-    // --- New Fields ---
-    @Enumerated(EnumType.STRING)
-    private DocumentStatus status = DocumentStatus.PLANNED; // Default status
-
-    private LocalDate creationDate = LocalDate.now(); // Track when it was created/became valid
 
 }

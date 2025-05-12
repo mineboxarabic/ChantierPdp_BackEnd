@@ -2,7 +2,6 @@ package com.danone.pdpbackend.entities;
 
 
 import com.danone.pdpbackend.Utils.ChantierStatus;
-import com.danone.pdpbackend.entities.BDT.Bdt;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
