@@ -10,6 +10,7 @@ import com.danone.pdpbackend.entities.Worker;
 import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,16 +23,14 @@ public class EntrepriseController {
 
 
     private final com.danone.pdpbackend.Utils.mappers.EntrepriseMapper entrepriseMapper;
-    private final WorkerChantierSelectionMapper workerChantierSelectionMapper;
     private final WorkerMapper workerMapper;
     EntrepriseService entrepriseService;
 
 
     @Autowired
-    public EntrepriseController(EntrepriseService entrepriseService, com.danone.pdpbackend.Utils.mappers.EntrepriseMapper entrepriseMapper, WorkerChantierSelectionMapper workerChantierSelectionMapper, WorkerMapper workerMapper) {
+    public EntrepriseController(EntrepriseService entrepriseService, com.danone.pdpbackend.Utils.mappers.EntrepriseMapper entrepriseMapper, @Lazy WorkerMapper workerMapper) {
         this.entrepriseService = entrepriseService;
         this.entrepriseMapper = entrepriseMapper;
-        this.workerChantierSelectionMapper = workerChantierSelectionMapper;
         this.workerMapper = workerMapper;
     }
 

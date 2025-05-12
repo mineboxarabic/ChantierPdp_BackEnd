@@ -11,6 +11,7 @@ import com.danone.pdpbackend.entities.Worker;
 import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -23,19 +24,12 @@ import java.util.stream.Collectors;
 public class WorkerMapper implements Mapper<WorkerDTO, Worker> {
 
     @Autowired
+    @Lazy
     private final EntrepriseService entrepriseService;
+    @Lazy
     private final PdpService pdpService;
+    @Lazy
     private final ChantierService chantierService;
-
-
-    /* private Long id;
-    private String nom;
-    private String prenom;
-    private Entreprise entreprise;
-    private List<Long> pdp;
-    private List<Long> signatures;
-    private List<Long> chantiers;
-    private List<Long> chantierSelections;*/
 
 
     @Override

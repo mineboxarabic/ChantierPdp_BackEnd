@@ -5,6 +5,7 @@ import com.danone.pdpbackend.entities.*;
 import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.dto.ChantierDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
     @Autowired
     private BDTService bdtService;
     @Autowired
+    @Lazy
     private PdpService pdpService;
     @Autowired
     private WorkerSelectionService workerSelectionService;

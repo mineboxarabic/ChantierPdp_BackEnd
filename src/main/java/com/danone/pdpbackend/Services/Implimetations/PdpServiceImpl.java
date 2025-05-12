@@ -13,6 +13,7 @@ import com.danone.pdpbackend.entities.dto.PdpDTO;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,18 +22,26 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service
-@AllArgsConstructor
 public class PdpServiceImpl implements PdpService {
 
+    @Lazy
     private final ChantierService chantierService;
     private final PdpMapper pdpMapper;
     private final WorkerSelectionService workerSelectionService;
-    private final WorkerService workerService;
     private final DocumentService<Pdp> documentService;
-    PdpRepo pdpRepo;
-    EntrepriseService entrepriseService;
+    private final PdpRepo pdpRepo;
     private final ObjectAnswerRepo objectAnswerRepo;
     private final RisqueService risqueService;
+
+    public PdpServiceImpl(ChantierService chantierService, PdpMapper pdpMapper, WorkerSelectionService workerSelectionService,@Lazy  DocumentService<Pdp> documentService, PdpRepo pdpRepo, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService) {
+        this.chantierService = chantierService;
+        this.pdpMapper = pdpMapper;
+        this.workerSelectionService = workerSelectionService;
+        this.documentService = documentService;
+        this.pdpRepo = pdpRepo;
+        this.objectAnswerRepo = objectAnswerRepo;
+        this.risqueService = risqueService;
+    }
 
 
     public List<Pdp> getAll() {

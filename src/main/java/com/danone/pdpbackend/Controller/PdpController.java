@@ -12,6 +12,7 @@ import com.danone.pdpbackend.entities.Worker;
 import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
 import com.danone.pdpbackend.entities.dto.PdpDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

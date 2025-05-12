@@ -10,6 +10,7 @@ import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.Worker;
 import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
     private final PdpService pdpService;
     private final BDTService bdtService;
     private final WorkerService workerService;
-    public EntrepriseMapper(PdpService pdpService, BDTService bdtService, WorkerService workerService) {
+    public EntrepriseMapper(@Lazy PdpService pdpService, BDTService bdtService, WorkerService workerService) {
         this.pdpService = pdpService;
         this.bdtService = bdtService;
         this.workerService = workerService;

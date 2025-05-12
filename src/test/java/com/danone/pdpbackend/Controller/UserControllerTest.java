@@ -2,10 +2,14 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.UserService;
 import com.danone.pdpbackend.entities.User;
+import com.danone.pdpbackend.entities.dto.UsersRegisterData;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -14,8 +18,17 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SpringBootTest
+@AutoConfigureMockMvc
 class UserControllerTest {
 
+
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     void createUser_shouldReturnCreatedStatus_whenValidUserProvided() throws Exception {
@@ -40,5 +53,23 @@ class UserControllerTest {
                         .content(jsonRequest))
                 .andExpect(status().isCreated())
                 .andExpect(content().string("User Created Successfully"));*/
+    }
+
+
+    @Test
+    void registerUser_shouldReturnCreatedStatus_whenValidUserProvided() throws Exception {
+
+        UsersRegisterData validUser = new UsersRegisterData();
+
+        validUser.name = "Yassin4";
+        validUser.password = "Zaqwe123!";
+        validUser.email = "mineboxarabic@gmail.com";
+
+        String jsonRequest = objectMapper.writeValueAsString(validUser);
+
+        mockMvc.perform(post("/api/user/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonRequest))
+                .andExpect(status().isOk());
     }
 }

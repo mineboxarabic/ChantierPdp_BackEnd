@@ -21,7 +21,7 @@ public class ChantierController {
     private final ChantierService chantierService;
     private final ChantierMapper chantierMapper;
 
-    public ChantierController(ChantierService chantierService, ChantierMapper chantierMapper, ChantierMapper chantierMapper1) {
+    public ChantierController(ChantierService chantierService, ChantierMapper chantierMapper1) {
         this.chantierService = chantierService;
         this.chantierMapper = chantierMapper1;
     }
