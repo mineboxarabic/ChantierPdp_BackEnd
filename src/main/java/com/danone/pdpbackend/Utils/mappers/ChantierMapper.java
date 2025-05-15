@@ -8,10 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -27,7 +25,7 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
     @Autowired
     private UserService userService;
     @Autowired
-    private BDTService bdtService;
+    private BdtService bdtService;
     @Autowired
     @Lazy
     private PdpService pdpService;
@@ -40,6 +38,49 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
         this.chantierService = chantierService;
     }
 
+    public static <T, ID> List<T> mergeEntityCollection(
+            List<T> existingCollection,
+            List<ID> requestedIds,
+            Function<T, ID> idExtractor,
+            Function<List<ID>, List<T>> entityFetcher) {
+
+        if (requestedIds == null) {
+            // If the requested IDs are null, don't modify the collection
+            return existingCollection;
+        }
+
+        // Convert the requested IDs to a set for efficient lookups
+        Set<ID> requestedIdSet = new HashSet<>(requestedIds);
+
+        // Initialize the collection if it's null
+        if (existingCollection == null) {
+            existingCollection = new ArrayList<>();
+        }
+
+        // Remove items that are no longer in the requested list
+        existingCollection.removeIf(entity ->
+                entity != null && !requestedIdSet.contains(idExtractor.apply(entity)));
+
+        // Get existing IDs
+        Set<ID> existingIds = existingCollection.stream()
+                .filter(Objects::nonNull)
+                .map(idExtractor)
+                .collect(Collectors.toSet());
+
+        // Add only new items
+        Set<ID> idsToAdd = requestedIds.stream()
+                .filter(id -> !existingIds.contains(id))
+                .collect(Collectors.toSet());
+
+        if (!idsToAdd.isEmpty()) {
+            List<T> newEntities = entityFetcher.apply(new ArrayList<>(idsToAdd));
+            if (newEntities != null) {
+                existingCollection.addAll(newEntities);
+            }
+        }
+
+        return existingCollection;
+    }
 
     @Override
     public void setDTOFields(ChantierDTO chantierDTO, Chantier chantier) {
@@ -54,7 +95,7 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
         chantierDTO.setNombreInterimaires(chantier.getNombreInterimaires());
         chantierDTO.setStatus(chantier.getStatus());
         chantierDTO.setTravauxDangereux(chantier.getTravauxDangereux());
-
+        chantierDTO.setStatus(chantier.getStatus());
         // Handle collection with null check and filtering
         if (chantier.getEntrepriseExterieurs() != null) {
             chantierDTO.setEntrepriseExterieurs(chantier.getEntrepriseExterieurs().stream()
@@ -132,6 +173,7 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
         chantier.setNombreInterimaires(chantierDTO.getNombreInterimaires());
         chantier.setStatus(chantierDTO.getStatus());
         chantier.setTravauxDangereux(chantierDTO.getTravauxDangereux());
+        chantier.setStatus(chantierDTO.getStatus());
         // Handle collection with null check
         if (chantierDTO.getEntrepriseExterieurs() != null) {
             chantier.setEntrepriseExterieurs(entrepriseService.getByIds(chantierDTO.getEntrepriseExterieurs()));
@@ -153,6 +195,8 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
         }
 
         // Handle collections with null checks
+        //In case of create we get the them by id
+        //In case of update we get them from chantier
         if (chantierDTO.getBdts() != null) {
             List<Bdt> bdts = bdtService.getByIds(chantierDTO.getBdts());
             chantier.setBdts(bdts);
@@ -188,7 +232,6 @@ public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
         setEntityFields(chantierDTO, chantier);
         return chantier;
     }
-
 
     //From Entity to DTO
     public ChantierDTO toDTO(Chantier chantier) {

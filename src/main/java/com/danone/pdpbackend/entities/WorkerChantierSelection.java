@@ -22,14 +22,10 @@ public class WorkerChantierSelection {
 
     @ManyToOne
     @JoinColumn(name = "worker_id")
-    @ToString.Exclude // <--- Add this
     private Worker worker;
 
     @ManyToOne
     @JoinColumn(name = "chantier_id")
-    @JsonIgnoreProperties({"entrepriseExterieurs", "entrepriseUtilisatrice", "localisation", "donneurDOrdre", "bdts", "pdps", "workers", "workerSelections"})
-    @ToString.Exclude // <--- Add this
-
     private Chantier chantier;
 
     private Date selectionDate;

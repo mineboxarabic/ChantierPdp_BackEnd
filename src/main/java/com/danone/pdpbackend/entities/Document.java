@@ -1,5 +1,6 @@
 package com.danone.pdpbackend.entities;
 
+import com.danone.pdpbackend.Utils.ActionType;
 import com.danone.pdpbackend.Utils.DocumentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -27,14 +28,16 @@ public abstract class Document {
     @Enumerated(EnumType.STRING)
     private DocumentStatus status = DocumentStatus.DRAFT;
 
+    @Enumerated(EnumType.STRING)
+    private ActionType actionType = ActionType.NONE;
+
     private LocalDate date;
 
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<DocumentSignature> signatures = new ArrayList<>();
 
-    @OneToMany
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<ObjectAnswered> relations = new ArrayList<>();
 
     private LocalDate creationDate = LocalDate.now(); // Track when it was created/became valid
-
 }

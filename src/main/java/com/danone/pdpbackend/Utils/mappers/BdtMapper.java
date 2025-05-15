@@ -25,13 +25,7 @@ public class BdtMapper implements Mapper<BdtDTO, Bdt> {
     private final ObjectAnsweredMapper objectAnsweredMapper;
     private final ChantierService chantierService;
     private final EntrepriseService entrepriseService;
-    // No longer need SignatureRepo directly here for mapping signatures
-    // private final SignatureRepo signatureRepo;
-    // No longer need WorkerService directly here for mapping signatures
-    // private final WorkerService workerService;
     private final DocumentSignatureMapper documentSignatureMapper; // Inject the new mapper
-
-    // --- Mapping from Entity to DTO ---
 
     @Override
     public BdtDTO toDTO(Bdt bdt) {
@@ -47,20 +41,9 @@ public class BdtMapper implements Mapper<BdtDTO, Bdt> {
     public void setDTOFields(BdtDTO bdtDTO, Bdt bdt) {
         if (bdtDTO == null || bdt == null) return;
 
-        // --- Map Base Document Fields ---
-        bdtDTO.setId(bdt.getId());
-        bdtDTO.setStatus(bdt.getStatus());
-        bdtDTO.setDate(bdt.getDate()); // Inherited
-        bdtDTO.setCreationDate(bdt.getCreationDate()); // Inherited
-        if (bdt.getEntrepriseExterieure() != null) { // Inherited
-            bdtDTO.setEntrepriseExterieure(bdt.getEntrepriseExterieure().getId());
-        }
-        bdtDTO.setRelations(objectAnsweredMapper.toDTOList(bdt.getRelations())); // Inherited
 
-        // Map New Unified Signatures (inherited from Document)
-        bdtDTO.setSignatures(documentSignatureMapper.toDTOList(bdt.getSignatures()));
+        DocumentMappingUtils.mapEntityToDtoBase(bdt, bdtDTO, objectAnsweredMapper, documentSignatureMapper);
 
-        // --- Map BDT Specific Fields ---
         bdtDTO.setNom(bdt.getNom());
         bdtDTO.setComplementOuRappels(bdt.getComplementOuRappels()); // Assuming direct copy is ok
         if (bdt.getChantier() != null) {
@@ -99,27 +82,10 @@ public class BdtMapper implements Mapper<BdtDTO, Bdt> {
     public void setEntityFields(BdtDTO bdtDTO, Bdt bdt) {
         if (bdtDTO == null || bdt == null) return;
 
-        // --- Map Base Document Fields ---
-        bdt.setStatus(bdtDTO.getStatus());
-        bdt.setDate(bdtDTO.getDate()); // Inherited
-        // bdt.setCreationDate(bdtDTO.getCreationDate()); // Usually set automatically
-
-        if (bdtDTO.getEntrepriseExterieure() != null) { // Inherited
-            if (bdt.getEntrepriseExterieure() == null || !bdt.getEntrepriseExterieure().getId().equals(bdtDTO.getEntrepriseExterieure())) {
-                bdt.setEntrepriseExterieure(entrepriseService.getById(bdtDTO.getEntrepriseExterieure()));
-            }
-        } else {
-            bdt.setEntrepriseExterieure(null);
-        }
-
-        // Map ObjectAnswered relations (inherited) - Use helper if needed
-        updateObjectAnsweredCollection(bdt.getRelations(), objectAnsweredMapper.toEntityList(bdtDTO.getRelations(), bdt));
-
-        // Map New Unified Signatures (inherited) - Use helper
-        updateDocumentSignatureCollection(bdt.getSignatures(), documentSignatureMapper.toEntityList(bdtDTO.getSignatures(), bdt));
+        // Map common Document fields using the utility
+        DocumentMappingUtils.mapDtoToEntityBase(bdtDTO, bdt,chantierService,entrepriseService, objectAnsweredMapper, documentSignatureMapper);
 
 
-        // --- Map BDT Specific Fields ---
         bdt.setNom(bdtDTO.getNom());
         bdt.setComplementOuRappels(bdtDTO.getComplementOuRappels()); // Direct copy ok for JSON type?
 
@@ -130,19 +96,6 @@ public class BdtMapper implements Mapper<BdtDTO, Bdt> {
         } else {
             bdt.setChantier(null);
         }
-
-        // REMOVE mapping for old signature fields
-        // if(bdtDTO.getSignatureChargeDeTravail() != null) {
-        //     bdt.setSignatureChargeDeTravail(signatureRepo.findById(bdtDTO.getSignatureChargeDeTravail()));
-        // }
-        // if(bdtDTO.getSignatureDonneurDOrdre() != null) {
-        //     bdt.setSignatureDonneurDOrdre(signatureRepo.findById(bdtDTO.getSignatureDonneurDOrdre()));
-        // }
-
-        // REMOVE mapping for old worker list
-        // if(bdtDTO.getSignatures() != null) { // This was List<Long> of Worker IDs
-        //     bdt.setSignatures(workerService.getWorkersByIds(bdtDTO.getSignatures()));
-        // }
     }
 
     // --- List Mapping ---

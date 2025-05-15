@@ -1,5 +1,6 @@
 package com.danone.pdpbackend.Utils.mappers;
 
+import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.Services.EntrepriseService;
 import com.danone.pdpbackend.entities.Document;
 import com.danone.pdpbackend.entities.DocumentSignature;
@@ -37,8 +38,10 @@ public class DocumentMappingUtils {
 
         target.setId(source.getId());
         target.setStatus(source.getStatus());
+        target.setActionType(source.getActionType());
         target.setDate(source.getDate());
         target.setCreationDate(source.getCreationDate());
+        target.setChantier(source.getChantier() != null ? source.getChantier().getId() : null);
 
         if (source.getEntrepriseExterieure() != null) {
             target.setEntrepriseExterieure(source.getEntrepriseExterieure().getId());
@@ -63,6 +66,7 @@ public class DocumentMappingUtils {
     public static void mapDtoToEntityBase(
             DocumentDTO source,
             Document target,
+            ChantierService chantierService,
             EntrepriseService entrepriseService,
             ObjectAnsweredMapper objectAnsweredMapper,
             DocumentSignatureMapper documentSignatureMapper) {
@@ -75,6 +79,11 @@ public class DocumentMappingUtils {
         target.setDate(source.getDate());
         // target.setCreationDate(source.getCreationDate()); // Usually set automatically
 
+        if (source.getChantier() != null) {
+            // Fetch only if the ID has changed or wasn't set
+            target.setChantier(chantierService.getById(source.getChantier()));
+        }
+
         // Map Entreprise relation
         if (source.getEntrepriseExterieure() != null) {
             // Fetch only if the ID has changed or wasn't set
@@ -86,12 +95,9 @@ public class DocumentMappingUtils {
         }
 
         // Use helper methods to update collections (important for relationship management)
-        updateObjectAnsweredCollection(target, target.getRelations(), objectAnsweredMapper.toEntityList(source.getRelations(), (Pdp) target));
+        updateObjectAnsweredCollection(target, target.getRelations(), objectAnsweredMapper.toEntityList(source.getRelations(), target));
         updateDocumentSignatureCollection(target, target.getSignatures(), documentSignatureMapper.toEntityList(source.getSignatures(), target));
     }
-
-    // --- Helper Methods for Collection Updates ---
-    // (These manage adding/updating/removing items in the collection correctly)
 
     private static void updateDocumentSignatureCollection(Document parent, List<DocumentSignature> existingList, List<DocumentSignature> newList) {
         if (newList == null) return; // Nothing to update with

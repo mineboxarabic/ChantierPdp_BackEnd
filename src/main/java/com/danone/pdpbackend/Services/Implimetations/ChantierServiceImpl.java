@@ -2,16 +2,13 @@ package com.danone.pdpbackend.Services.Implimetations;
 
 import com.danone.pdpbackend.Repo.ChantierRepo;
 import com.danone.pdpbackend.Repo.EntrepriseRepo;
-import com.danone.pdpbackend.Services.BDTService;
+import com.danone.pdpbackend.Services.BdtService;
 import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.Services.PdpService;
 import com.danone.pdpbackend.Services.WorkerSelectionService;
 import com.danone.pdpbackend.Utils.ChantierStatus;
 import com.danone.pdpbackend.Utils.DocumentStatus;
-import com.danone.pdpbackend.entities.Bdt;
-import com.danone.pdpbackend.entities.Chantier;
-import com.danone.pdpbackend.entities.Pdp;
-import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.*;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -31,10 +28,10 @@ public class ChantierServiceImpl implements ChantierService {
     private final ChantierRepo chantierRepo;
     private final EntrepriseRepo entrepriseRepo;
     private final PdpService pdpService;
-    private final BDTService bdtService;
+    private final BdtService bdtService;
     private final WorkerSelectionService workerSelectionService;
 
-    public ChantierServiceImpl(ChantierRepo chantierRepo, EntrepriseRepo entrepriseRepo, @Lazy PdpService pdpService,@Lazy BDTService bdtService, WorkerSelectionService workerSelectionService) {
+    public ChantierServiceImpl(ChantierRepo chantierRepo, EntrepriseRepo entrepriseRepo, @Lazy PdpService pdpService, @Lazy BdtService bdtService, WorkerSelectionService workerSelectionService) {
         this.chantierRepo = chantierRepo;
         this.entrepriseRepo = entrepriseRepo;
         this.pdpService = pdpService;
@@ -48,9 +45,12 @@ public class ChantierServiceImpl implements ChantierService {
     }
 
     public Chantier update(Long id, Chantier updatedChantier) {
-        updatedChantier.setStatus(calculateChantierStatus(updatedChantier));
+        ChantierStatus newChantierStatus = calculateChantierStatus(updatedChantier);
+        updatedChantier.setStatus(newChantierStatus);
 
-        return chantierRepo.save(updatedChantier);
+        Chantier savedChantier = chantierRepo.save(updatedChantier);
+        updateAssociatedDocumentStatuses(savedChantier); // Then update documents based on new chantier state
+        return savedChantier;
     }
 
     @Override
@@ -101,6 +101,27 @@ public class ChantierServiceImpl implements ChantierService {
         chantierRepo.save(chantier);
     }
 
+
+
+    @Override
+    public <T extends Document> void addDocumentToChantier(Chantier chantier, T document) {
+
+
+
+        if(document instanceof Pdp) {
+            Pdp pdp = (Pdp) document;
+            chantier.getPdps().add(pdp);
+        } else if (document instanceof Bdt) {
+            Bdt bdt = (Bdt) document;
+            chantier.getBdts().add(bdt);
+        } else {
+            throw new IllegalArgumentException("Unsupported document type");
+        }
+
+
+        chantier.setStatus(calculateChantierStatus(chantier)); // Update status after adding PDP
+        chantierRepo.save(chantier);
+    }
     @Override
     public void addBdtToChantier(Chantier chantier, Bdt bdt) {
        /* Chantier chantier = chantierRepo.findById(chantier)
@@ -116,6 +137,8 @@ public class ChantierServiceImpl implements ChantierService {
                 .orElseThrow(() -> new IllegalArgumentException("Chantier with id " + chantierId + " not found"));
         return chantier.getWorkers();
     }
+
+
 
     @Override
     public boolean requiresPdp(Long chantierId) {
@@ -142,20 +165,7 @@ public class ChantierServiceImpl implements ChantierService {
         if (chantier == null) {
             throw new IllegalArgumentException("Chantier cannot be null for status calculation");
         }
-/*
-    PLANIFIED,
-    PENDING_PDP,
-    PENDING_BDT,
-    READY_TO_START,
-    ACTIVE,
-    SUSPENDED,
-    COMPLETED,
-    CANCELED,
-    INACTIVE_TODAY,
-    EXPIRED, it's expired if today > dateFin
-    */
-        // Check for terminal statuses first
-        //If it's canceled or completed, we dont need to check anything else
+
         if (chantier.getStatus() == ChantierStatus.CANCELED || chantier.getStatus() == ChantierStatus.COMPLETED) {
             return chantier.getStatus();
         }
@@ -172,36 +182,26 @@ public class ChantierServiceImpl implements ChantierService {
             List<Pdp> pdps = chantier.getPdps(); // Get from loaded entity if available
             // Or fetch: List<Pdp> pdps = pdpRepo.findByChantier(chantier.getId());
 
-            Optional<Pdp> activePdp = pdps.stream()
-                    .filter(pdp -> pdpService.calculatePdpStatus(pdp.getId()) == DocumentStatus.ACTIVE) // Using unified 'READY' status
-                    .findFirst();
+            List<Pdp> activePdps = pdps.stream()
+                    .filter(pdp ->pdpService.calculateDocumentState(pdp).getStatus() == DocumentStatus.ACTIVE).toList();
 
-            if (activePdp.isEmpty()) {
-      /*          // Check if any PDP is pending permits or signatures
-                boolean needsPermit = pdps.stream().anyMatch(p -> pdpService.calculatePdpStatus(p.getId()) == DocumentStatus.PERMIT_NEEDED);
-                if (needsPermit) return ChantierStatus.PENDING_PDP; // Or a more specific status?
-
-                boolean needsSignature = pdps.stream().anyMatch(p -> pdpService.calculatePdpStatus(p.getId()) == DocumentStatus.NEEDS_SIGNATURES);
-                if(needsSignature) return ChantierStatus.PENDING_PDP; // Waiting on PDP
-*/
-                // If no active PDP and none pending specific actions, assume it's waiting for PDP creation/completion
+            if (activePdps.isEmpty()) {
                 return ChantierStatus.PENDING_PDP;
             }
-            // If we reach here, PDP requirement is met. Now check daily BDT.
+
+
         }
 
         // If PDP wasn't required or is READY, check for today's BDT
         // Find BDT for today linked to this chantier
          Optional<Bdt> todayBdtOpt = bdtService.findByChantierIdAndCreationDate(chantier.getId(), today); // Need this repo method
 
-        // --- Placeholder: Fetch BDT for today ---
-        //Optional<BDT> todayBdtOpt = Optional.empty(); // Replace with actual fetch: bdtService.findBdtForChantierAndDate(chantier.getId(), today);
 
         if (todayBdtOpt.isPresent()) {
             Bdt todayBdt = todayBdtOpt.get();
             // Assuming BDT has a status field using DocumentStatus
-            DocumentStatus bdtStatus = bdtService.calculateBdtStatus(todayBdt.getId()); // Assuming this method exists
-            if (bdtStatus == DocumentStatus.ACTIVE) { // Check if BDT is signed/ready
+            Bdt bdt = bdtService.calculateDocumentState(todayBdt.getId()); // Assuming this method exists
+            if (bdt.getStatus() == DocumentStatus.ACTIVE) { // Check if BDT is signed/ready
                 return ChantierStatus.ACTIVE;
             } else {
                 // BDT exists but isn't ready (e.g., DRAFT, NEEDS_SIGNATURES, PERMIT_NEEDED)
@@ -220,13 +220,28 @@ public class ChantierServiceImpl implements ChantierService {
         Chantier chantier = getById(chantierId);
         ChantierStatus newStatus = calculateChantierStatus(chantier); // Use helper
         if (chantier.getStatus() != newStatus) {
-            log.info("Updating status for Chantier {} from {} to {}", chantierId, chantier.getStatus(), newStatus);
             chantier.setStatus(newStatus);
             return chantierRepo.save(chantier);
         }
         return chantier;
     }
-
+    private void updateAssociatedDocumentStatuses(Chantier chantier) {
+        if (chantier == null) return;
+        if (chantier.getPdps() != null) {
+            for (Pdp pdp : chantier.getPdps()) {
+                if (pdp != null && pdp.getId() != null) {
+                    pdpService.updateDocumentStatus(pdp);
+                }
+            }
+        }
+        if (chantier.getBdts() != null) {
+            for (Bdt bdt : chantier.getBdts()) {
+                if (bdt != null && bdt.getId() != null) {
+                    bdtService.updateDocumentStatus(bdt); // You'll need to create this method in BdtService
+                }
+            }
+        }
+    }
     @Override
     public Map<String, Object> getChantierStats(Long chantierId) {
         Chantier chantier = getById(chantierId);
@@ -242,12 +257,12 @@ public class ChantierServiceImpl implements ChantierService {
 
         // Count PDPs by Status
         Map<DocumentStatus, Long> pdpStatusCounts = chantier.getPdps().stream()
-                .collect(Collectors.groupingBy(pdp -> pdpService.calculatePdpStatus(pdp.getId()), Collectors.counting()));
+                .collect(Collectors.groupingBy(pdp -> pdpService.calculateDocumentState(pdp.getId()).getStatus(), Collectors.counting()));
         stats.put("pdpStatusCounts", pdpStatusCounts);
 
         // Count BDTs by Status (if BDT status exists)
         Map<DocumentStatus, Long> bdtStatusCounts = chantier.getBdts().stream()
-                .collect(Collectors.groupingBy(bdt -> bdtService.calculateBdtStatus(bdt.getId()), Collectors.counting())); // Assuming BDT status and service method
+                .collect(Collectors.groupingBy(bdt -> bdtService.calculateDocumentState(bdt.getId()).getStatus(), Collectors.counting())); // Assuming BDT status and service method
         stats.put("bdtStatusCounts", bdtStatusCounts);
         stats.put("totalBdtCount", chantier.getBdts().size());
 

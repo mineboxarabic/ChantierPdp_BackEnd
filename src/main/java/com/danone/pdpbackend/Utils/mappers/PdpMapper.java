@@ -73,7 +73,7 @@ public class PdpMapper implements Mapper<PdpDTO, Pdp> {
         if (pdpDTO == null || pdp == null) return;
 
         // Map common Document fields using the utility
-        DocumentMappingUtils.mapDtoToEntityBase(pdpDTO, pdp, entrepriseService, objectAnsweredMapper, documentSignatureMapper);
+        DocumentMappingUtils.mapDtoToEntityBase(pdpDTO, pdp, chantierService, entrepriseService, objectAnsweredMapper, documentSignatureMapper);
 
         // Map PDP Specific Fields
        // pdp.setChantier(pdpDTO.getChantier());

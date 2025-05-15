@@ -7,12 +7,9 @@ import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import com.danone.pdpbackend.Utils.mappers.ObjectAnsweredMapper;
 import com.danone.pdpbackend.Utils.mappers.PdpMapper;
 import com.danone.pdpbackend.entities.Pdp;
-import com.danone.pdpbackend.entities.ObjectAnswered;
-import com.danone.pdpbackend.entities.Worker;
 import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
 import com.danone.pdpbackend.entities.dto.PdpDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,7 +39,7 @@ public class PdpController {
     }
 
     //Create
-    @PostMapping("")
+    @PostMapping("/")
     public ResponseEntity<ApiResponse<PdpDTO>> savePdp(@RequestBody PdpDTO pdpDTO) {
         Pdp createdPdp = pdpService.saveOrUpdatePdp(pdpDTO);
         return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(createdPdp), "Pdp saved successfully"));

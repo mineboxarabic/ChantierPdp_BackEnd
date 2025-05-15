@@ -1,6 +1,6 @@
 package com.danone.pdpbackend.Controller;
 
-import com.danone.pdpbackend.Services.BDTService;
+import com.danone.pdpbackend.Services.BdtService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 
 import com.danone.pdpbackend.Utils.mappers.BdtMapper;
@@ -19,10 +19,10 @@ import java.util.Optional;
 @RequestMapping("/api/bdt")
 public class BdtController {
 
-    private final BDTService bdtService;
+    private final BdtService bdtService;
     private final BdtMapper bdtMapper;
 
-    public BdtController(BDTService bdtService, BdtMapper bdtMapper) {
+    public BdtController(BdtService bdtService, BdtMapper bdtMapper) {
         this.bdtService = bdtService;
         this.bdtMapper = bdtMapper;
     }

@@ -4,6 +4,7 @@ package com.danone.pdpbackend.Services.Implimetations;
 import com.danone.pdpbackend.Repo.*;
 import com.danone.pdpbackend.Services.*;
 
+import com.danone.pdpbackend.Utils.ActionType;
 import com.danone.pdpbackend.Utils.ChantierStatus;
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import com.danone.pdpbackend.Utils.DocumentStatus;
@@ -11,11 +12,11 @@ import com.danone.pdpbackend.Utils.mappers.PdpMapper;
 import com.danone.pdpbackend.entities.*;
 import com.danone.pdpbackend.entities.dto.PdpDTO;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import javax.print.Doc;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,16 +29,16 @@ public class PdpServiceImpl implements PdpService {
     private final ChantierService chantierService;
     private final PdpMapper pdpMapper;
     private final WorkerSelectionService workerSelectionService;
-    private final DocumentService<Pdp> documentService;
+    private final DocumentService documentService;
     private final PdpRepo pdpRepo;
     private final ObjectAnswerRepo objectAnswerRepo;
     private final RisqueService risqueService;
 
-    public PdpServiceImpl(ChantierService chantierService, PdpMapper pdpMapper, WorkerSelectionService workerSelectionService,@Lazy  DocumentService<Pdp> documentService, PdpRepo pdpRepo, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService) {
+    public PdpServiceImpl(ChantierService chantierService, PdpMapper pdpMapper, WorkerSelectionService workerSelectionService, @Lazy CommonDocumentServiceInterface<Pdp> documentService, DocumentService documentService1, PdpRepo pdpRepo, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService) {
         this.chantierService = chantierService;
         this.pdpMapper = pdpMapper;
         this.workerSelectionService = workerSelectionService;
-        this.documentService = documentService;
+        this.documentService = documentService1;
         this.pdpRepo = pdpRepo;
         this.objectAnswerRepo = objectAnswerRepo;
         this.risqueService = risqueService;
@@ -87,33 +88,13 @@ public class PdpServiceImpl implements PdpService {
     @Override
     @Transactional
     public Pdp update(Long id, Pdp updatedPdp) {
-        if (updatedPdp.getId() != null && !updatedPdp.getId().equals(id)) {
-            throw new IllegalArgumentException("Path ID and PDP ID must match");
-        }
-
-        Boolean isExisit = existsById(id);
-
-        if(!isExisit){
-            return null;
-        }
-
-        // ********* RISQUES *********
-        updatedPdp.setRelations(mergeObjectAnswered(updatedPdp.getRelations(), updatedPdp.getRelations(), id));
-
-
-        return pdpRepo.save(updatedPdp);
+        calculateDocumentState(updatedPdp);
+        return (Pdp) documentService.update(id,updatedPdp);
     }
     @Override
     public Pdp create(Pdp pdp) {
-        Pdp pdp1 = pdpRepo.save(pdp);
-
-        if(pdp.getChantier() != null)
-        {
-         chantierService.addPdpToChantier(pdp.getChantier(), pdp);
-        }
-        pdpRepo.save(pdp1);
-
-        return pdp1;
+        calculateDocumentState(pdp);
+        return (Pdp) documentService.create(pdp);
     }
 
     @Override
@@ -174,55 +155,123 @@ public class PdpServiceImpl implements PdpService {
             }
 
             pdpMapper.updateEntityFromDTO(pdp, dto);
+            calculateDocumentState(pdp);
+            return (Pdp) documentService.update(pdp.getId(), pdp);
         } else {
             pdp = pdpMapper.toEntity(dto);
+            calculateDocumentState(pdp);
+            return (Pdp) documentService.create(pdp);
         }
 
-        return pdpRepo.save(pdp);
     }
 
 
+
     @Override
-    public DocumentStatus calculatePdpStatus(Long pdpId) {
-        Pdp pdp = getById(pdpId); // Fetches or throws if not found
+    public Pdp calculateDocumentState(Document pdp) {
+      /*  ChantierStatus chantierStatus = null;
+        if (pdp == null) {
+            throw new IllegalArgumentException("Document not found");
+        }
+
+        if (pdp.getChantier() != null) {
+            try {
+                // Use calculate, don't trigger save within a calculation
+                chantierStatus = chantierService.getById(pdp.getChantier().getId()).getStatus();
+                if (chantierStatus == ChantierStatus.COMPLETED) {
+                    pdp.setStatus(DocumentStatus.COMPLETED);
+                    pdp.setActionType(ActionType.NONE);
+                    return (Pdp) pdp;
+                }
+                else if (chantierStatus == ChantierStatus.CANCELED){
+                    pdp.setStatus(DocumentStatus.CANCELED);
+                    pdp.setActionType(ActionType.NONE);
+                    return (Pdp) pdp;
+
+                }
+            } catch (Exception e) {
+                log.warn("Could not determine status for Chantier {} linked to Document {}", pdp.getChantier(), pdp.getId(), e);
+            }
+        }else{
+            log.warn("Document {} has no associated chantier ID.", pdp.getId());
+            pdp.setStatus(DocumentStatus.DRAFT);
+            pdp.setActionType(ActionType.NONE);
+            return (Pdp) pdp;
+
+        }
+
 
         // 1. Check Expiry
         LocalDate oneYearAgo = LocalDate.now().minusYears(1);
         if (pdp.getCreationDate() != null && pdp.getCreationDate().isBefore(oneYearAgo)) {
             //It's been over a year since creation
-            return DocumentStatus.EXPIRED;
+            pdp.setStatus(DocumentStatus.NEEDS_ACTION);
+            pdp.setActionType(ActionType.DOCUMENT_EXPIRED);
+            return (Pdp) pdp;
+
         }
 
-        // 2. Check associated Chantier status
-        ChantierStatus chantierStatus = null;
+
+
+
+
+        // 4. Check Signatures
+        List<Worker> assignedWorkers = List.of();
         if (pdp.getChantier() != null) {
             try {
-                // Use calculate, don't trigger save within a calculation
-                chantierStatus = chantierService.calculateChantierStatus(pdp.getChantier().getId());
-                if (chantierStatus == ChantierStatus.COMPLETED) {
-                    return DocumentStatus.COMPLETED; // PDP is completed if Chantier is
-                }
-                else if (chantierStatus == ChantierStatus.CANCELED){
-                    return DocumentStatus.CANCELED;
-                }
+                assignedWorkers = workerSelectionService.getWorkersForChantier(pdp.getChantier().getId());
             } catch (Exception e) {
-                log.warn("Could not determine status for Chantier {} linked to PDP {}", pdp.getChantier(), pdpId, e);
+                log.warn("Could not get assigned workers for Chantier {} linked to PDP {}", pdp.getChantier(), pdp.getId(), e);
+                // If we can't get assigned workers, assume signatures are needed? Or is it an error state?
+               // return   DocumentStatus.ACTION_NEEDS_SIGNATURES; // Default to needing action if unsure
+                pdp.setStatus(DocumentStatus.NEEDS_ACTION);
+                pdp.setActionType(ActionType.SIGHNATURES_MISSING);
+                return (Pdp) pdp;
+
             }
-        } else {
-            log.warn("PDP {} has no associated chantier ID.", pdpId);
-            // Decide status if no chantier - likely DRAFT or NEEDS_ACTION based on other criteria
-            // For simplicity, let's assume it needs setup/signatures if no chantier info
-            return DocumentStatus.NEEDS_SIGNATURES; // Or DRAFT?
         }
 
+        if (!assignedWorkers.isEmpty()) {
+            List<Worker> signedWorkers = pdp.getSignatures().stream()
+                    .filter(signature -> signature.getWorker() != null)
+                    .map(DocumentSignature::getWorker).toList();
 
+            Set<Long> assignedWorkerIds = assignedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
+            Set<Long> signedWorkerIds = signedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
+
+            boolean allSigned = assignedWorkerIds.stream().allMatch(signedWorkerIds::contains);
+            if (!allSigned) {
+                pdp.setStatus(DocumentStatus.NEEDS_ACTION);
+                pdp.setActionType(ActionType.SIGHNATURES_MISSING);
+                return (Pdp) pdp;
+            }
+        }
+        // If no workers are assigned, maybe signatures aren't required? Depends on rules.
         // 3. Check Permits based on linked Risks
         boolean permitsNeeded = false;
+
+        Boolean isThereNullPermits = pdp.getRelations().stream()
+                .filter(r -> r.getObjectType() == ObjectAnsweredObjects.RISQUE)
+                .map(r -> {
+                    try { return risqueService.getRisqueById(r.getObjectId()); }
+                    catch (Exception e) { log.warn("Could not find Risque {} for PDP {}", r.getObjectId(), pdp.getId()); return null; }
+                })
+                .filter(Objects::nonNull)
+                .filter(risque -> risque.getTravaillePermit() != null && risque.getTravaillePermit())
+                .map(Risque::getPermitId)
+                .anyMatch(Objects::isNull);
+
+        if (isThereNullPermits) {
+            pdp.setStatus(DocumentStatus.NEEDS_ACTION);
+            pdp.setActionType(ActionType.PERMIT_MISSING);
+            return (Pdp) pdp;
+        }
+
         List<Long> requiredPermitIds = pdp.getRelations().stream()
                 .filter(r -> r.getObjectType() == ObjectAnsweredObjects.RISQUE)
                 .map(r -> {
                     try { return risqueService.getRisqueById(r.getObjectId()); }
-                    catch (Exception e) { log.warn("Could not find Risque {} for PDP {}", r.getObjectId(), pdpId); return null; }
+                    catch (Exception e) { log.warn("Could not find Risque {} for PDP {}", r.getObjectId(), pdp.getId()); return null; }
                 })
                 .filter(Objects::nonNull)
                 .filter(risque -> risque.getTravaillePermit() != null && risque.getTravaillePermit())
@@ -241,75 +290,60 @@ public class PdpServiceImpl implements PdpService {
         }
 
         if (permitsNeeded) {
-            return DocumentStatus.PERMIT_NEEDED;
+            pdp.setStatus(DocumentStatus.NEEDS_ACTION);
+            pdp.setActionType(ActionType.PERMIT_MISSING);
+            return (Pdp) pdp;
+
         }
-
-        // 4. Check Signatures
-        List<Worker> assignedWorkers = List.of();
-        if (pdp.getChantier() != null) {
-            try {
-                assignedWorkers = workerSelectionService.getWorkersForChantier(pdp.getChantier().getId());
-            } catch (Exception e) {
-                log.warn("Could not get assigned workers for Chantier {} linked to PDP {}", pdp.getChantier(), pdpId, e);
-                // If we can't get assigned workers, assume signatures are needed? Or is it an error state?
-                return DocumentStatus.NEEDS_SIGNATURES; // Default to needing action if unsure
-            }
-        }
-
-        if (!assignedWorkers.isEmpty()) {
-            List<Worker> signedWorkers = pdp.getSignatures().stream()
-                    .filter(signature -> signature.getWorker() != null)
-                    .map(DocumentSignature::getWorker)
-                    .collect(Collectors.toList());
-
-            Set<Long> assignedWorkerIds = assignedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
-            Set<Long> signedWorkerIds = signedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
-
-            boolean allSigned = assignedWorkerIds.stream().allMatch(signedWorkerIds::contains);
-            if (!allSigned) {
-                return DocumentStatus.NEEDS_SIGNATURES;
-            }
-        }
-        // If no workers are assigned, maybe signatures aren't required? Depends on rules.
-
         // 5. If not Expired, Completed, Permit Needed, or Needs Signatures -> Ready
-        return DocumentStatus.ACTIVE;
+        pdp.setStatus(DocumentStatus.ACTIVE);
+        pdp.setActionType(ActionType.NONE);
+        return (Pdp) pdp;*/
+
+
+        Document document = documentService.calculateDocumentState(pdp);
+
+        //Check expiry
+        LocalDate oneYearAgo = LocalDate.now().minusYears(1);
+        if (document.getCreationDate() != null && document.getCreationDate().isBefore(oneYearAgo)) {
+            //It's been over a year since creation
+            pdp.setStatus(DocumentStatus.NEEDS_ACTION);
+            pdp.setActionType(ActionType.DOCUMENT_EXPIRED);
+            return (Pdp) pdp;
+        }
+
+        return (Pdp) document;
     }
 
-
-    @Override
     @Transactional
-    public Pdp updateAndSavePdpStatus(Long pdpId) {
-        Pdp pdp = getById(pdpId); // Use getById to ensure it exists
-        DocumentStatus newStatus = calculatePdpStatus(pdpId);
-        if (pdp.getStatus() != newStatus) {
-            log.info("Updating status for PDP {} from {} to {}", pdpId, pdp.getStatus(), newStatus);
-            pdp.setStatus(newStatus);
-            pdp = pdpRepo.save(pdp); // Save the change
-            // Potentially update linked Chantier status as well
-            if(pdp.getChantier() != null) {
+    @Override
+    public Pdp updateDocumentStatus(Pdp pdp) {
+            /*calculateDocumentState(pdp);
+            pdpRepo.save(pdp);
+            if(pdp.getChantier() != null){
                 try {
                     chantierService.updateAndSaveChantierStatus(pdp.getChantier().getId());
                 } catch (Exception e) {
-                    log.error("Failed to update chantier status after PDP {} status change", pdpId, e);
+                    log.error("Failed to update chantier status after PDP {} status change", pdp.getId(), e);
                 }
             }
-        }
-        return pdp;
+            return pdp;*/
+        return (Pdp) documentService.updateDocumentStatus(pdp);
     }
 
     @Override
-    public Map<DocumentStatus, Long> getPdpStatusCounts() {
-        // Optional: Trigger status updates for all PDPs before counting? (Potentially very slow)
-        // updateAllPdpStatuses();
-        log.info("Calculating PDP status counts...");
-        return pdpRepo.findAll().stream()
-                .collect(Collectors.groupingBy(
-                        pdp -> calculatePdpStatus(pdp.getId()), // Recalculate for accuracy, could be slow
-                        // OR use persisted status: pdp -> pdp.getStatus(), requires statuses to be kept up-to-date
-                        Collectors.counting()
-                ));
+    public Pdp calculateDocumentState(Long documentId) {
+        Pdp document = pdpRepo.findById(documentId).orElse(null);
+        if (document == null) {
+            throw new IllegalArgumentException("Document not found");
+        }
+
+        return calculateDocumentState(document);
     }
+
+
+
+
 
     @Override
     @Transactional
@@ -383,7 +417,7 @@ public class PdpServiceImpl implements PdpService {
 
         // Reset fields for a new cycle
         newPdp.setCreationDate(LocalDate.now()); // Set to today
-        newPdp.setStatus(DocumentStatus.DRAFT); // Start as draft/planned
+     //   newPdp.setStatus(DocumentStatus.DRAFT); // Start as draft/planned
         // Reset other dates like inspection date etc.
         newPdp.setDateInspection(null);
         newPdp.setIcpdate(null);

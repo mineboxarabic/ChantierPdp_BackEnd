@@ -2,8 +2,6 @@ package com.danone.pdpbackend.Utils.mappers;
 
 import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.Services.EntrepriseService;
-import com.danone.pdpbackend.Services.Implimetations.ChantierServiceImpl;
-import com.danone.pdpbackend.Services.Implimetations.PdpServiceImpl;
 import com.danone.pdpbackend.Services.PdpService;
 import com.danone.pdpbackend.entities.Chantier;
 import com.danone.pdpbackend.entities.Pdp;
@@ -15,7 +13,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

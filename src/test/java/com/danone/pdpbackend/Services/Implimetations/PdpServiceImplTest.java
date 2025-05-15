@@ -8,7 +8,6 @@ import com.danone.pdpbackend.Utils.mappers.ObjectAnsweredMapper; // Assuming you
 import com.danone.pdpbackend.Utils.mappers.PdpMapper;
 import com.danone.pdpbackend.entities.ObjectAnswered;
 import com.danone.pdpbackend.entities.Pdp;
-import com.danone.pdpbackend.entities.Worker;
 import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
 import com.danone.pdpbackend.entities.dto.PdpDTO;
 

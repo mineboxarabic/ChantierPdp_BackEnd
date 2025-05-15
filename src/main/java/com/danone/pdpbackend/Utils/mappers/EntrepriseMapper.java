@@ -1,7 +1,7 @@
 package com.danone.pdpbackend.Utils.mappers;
 
 
-import com.danone.pdpbackend.Services.BDTService;
+import com.danone.pdpbackend.Services.BdtService;
 import com.danone.pdpbackend.Services.PdpService;
 import com.danone.pdpbackend.Services.WorkerService;
 import com.danone.pdpbackend.Utils.BidirectionalRelationshipUtil;
@@ -18,9 +18,9 @@ import java.util.List;
 @Component
 public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
     private final PdpService pdpService;
-    private final BDTService bdtService;
+    private final BdtService bdtService;
     private final WorkerService workerService;
-    public EntrepriseMapper(@Lazy PdpService pdpService, BDTService bdtService, WorkerService workerService) {
+    public EntrepriseMapper(@Lazy PdpService pdpService, BdtService bdtService, WorkerService workerService) {
         this.pdpService = pdpService;
         this.bdtService = bdtService;
         this.workerService = workerService;

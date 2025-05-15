@@ -1,5 +1,6 @@
 package com.danone.pdpbackend.entities.dto;
 
+import com.danone.pdpbackend.Utils.ActionType;
 import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.entities.Chantier;
 import com.danone.pdpbackend.entities.DocumentSignature;
@@ -21,6 +22,7 @@ public class DocumentDTO {
     private Long entrepriseExterieure;
 
     private DocumentStatus status = DocumentStatus.DRAFT;
+    private ActionType actionType = ActionType.NONE;
 
     private LocalDate date;
 

@@ -1,10 +1,7 @@
 package com.danone.pdpbackend.Services;
 
 import com.danone.pdpbackend.Utils.ChantierStatus;
-import com.danone.pdpbackend.entities.Bdt;
-import com.danone.pdpbackend.entities.Chantier;
-import com.danone.pdpbackend.entities.Pdp;
-import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.*;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +14,8 @@ public interface ChantierService extends Service<Chantier> {
 
 
     void addPdpToChantier(Chantier chantier, Pdp pdpId);
+
+    <T extends Document> void addDocumentToChantier(Chantier chantier, T document);
 
     void addBdtToChantier(Chantier chantier, Bdt bdt);
 
