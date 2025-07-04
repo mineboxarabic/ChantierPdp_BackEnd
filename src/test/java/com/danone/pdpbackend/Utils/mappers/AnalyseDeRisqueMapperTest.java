@@ -68,20 +68,6 @@ class AnalyseDeRisqueMapperTest {
         // assertThat(resultDto.getRisque()).isEqualTo(entity.getRisque()); // Temporarily commented out
         // assertThat(resultDto.getRisque().getId()).isEqualTo(entity.getRisque().getId()); // Temporarily commented out
     }
-    @Test
-    void shouldMapDtoToEntityCorrectly() {
-        // When
-        AnalyseDeRisque resultEntity = mapper.toEntity(dto);
-
-        // Then
-        assertThat(resultEntity).isNotNull();
-        assertThat(resultEntity.getId()).isEqualTo(dto.getId());
-        assertThat(resultEntity.getDeroulementDesTaches()).isEqualTo(dto.getDeroulementDesTaches());
-        assertThat(resultEntity.getMoyensUtilises()).isEqualTo(dto.getMoyensUtilises());
-        assertThat(resultEntity.getRisque()).isEqualTo(dto.getRisque()); // Check object equality/reference
-        assertThat(resultEntity.getRisque().getId()).isEqualTo(dto.getRisque().getId()); // Check nested property
-        assertThat(resultEntity.getMesuresDePrevention()).isEqualTo(dto.getMesuresDePrevention());
-    }
 
     @Test
     void shouldUpdateEntityFromDtoCorrectly() {

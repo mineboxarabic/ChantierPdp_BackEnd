@@ -29,7 +29,7 @@ Content-Type: application/json
 <> 2025-03-25T140008.401.json
 
 ### Store the auth token in a variable
-@authToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJZYXNzaW40IiwiaWF0IjoxNzQ0NzIyODQ4LCJleHAiOjE3NDQ3NTg4NDh9.xiEp1-3KmTMkosl2A3XjGUzgIGnVpyMXOP6U1Z-Oe7U
+@authToken = eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJZYXNzaW40IiwiaWF0IjoxNzQ3MzA0NjQ3LCJleHAiOjE3NDczNDA2NDd9.JUd58uEevpox2lHKgnoF_2Xi2yB5TFAnj0SfdkRudO8
 
 
 ### Create a BDT
@@ -71,3 +71,10 @@ Authorization: Bearer {{authToken}}
 ### Link BDT to audit
 http://localhost:8080/api/pdp/65/objectAnswered/RISQUE
 Authorization: Bearer {{authToken}}
+
+
+
+### get entreprise
+GET http://localhost:8080/api/entreprise/1159
+Authorization: Bearer {{authToken}}
+Content-Type: application/json

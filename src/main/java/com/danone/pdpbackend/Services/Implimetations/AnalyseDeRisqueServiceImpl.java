@@ -7,6 +7,8 @@ import com.danone.pdpbackend.Repo.RisqueRepo;
 import com.danone.pdpbackend.Services.AnalyseDeRisqueService;
 import com.danone.pdpbackend.entities.AnalyseDeRisque;
 import com.danone.pdpbackend.entities.Risque;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,35 +30,35 @@ public class AnalyseDeRisqueServiceImpl implements AnalyseDeRisqueService {
     }
 
     @Override
-    public List<AnalyseDeRisque> getAllAnalyseDeRisques() {
+    public List<AnalyseDeRisque> getAll() {
         return analyseDeRisqueRepo.findAll();
     }
 
     @Override
-    public AnalyseDeRisque getAnalyseDeRisqueById(Long id) {
+    public AnalyseDeRisque getById(Long id) {
         return analyseDeRisqueRepo.findAnalyseDeRisqueById((id));
     }
 
     @Override
-    public AnalyseDeRisque createAnalyseDeRisque(AnalyseDeRisque analyseDeRisqueDTO) {
+    public AnalyseDeRisque create(AnalyseDeRisque analyseDeRisqueDTO) {
 
         return analyseDeRisqueRepo.save(analyseDeRisqueDTO);
     }
 
     @Override
-    public AnalyseDeRisque updateAnalyseDeRisque(Long id, AnalyseDeRisque analyseDeRisqueDetails) {
+    public AnalyseDeRisque update(Long id, AnalyseDeRisque analyseDeRisqueDetails) {
         return analyseDeRisqueRepo.save(analyseDeRisqueDetails);
     }
 
     @Override
-    public Boolean deleteAnalyseDeRisque(Long id) {
-        if (!analyseDeRisqueRepo.existsById(id)) {
-            return false;
-        } else {
-            analyseDeRisqueRepo.deleteById(id);
-            return true;
+    @Transactional
+    public void delete(Long id) {
+        if(!analyseDeRisqueRepo.existsById(id)){
+            throw new EntityNotFoundException("Analyse De RisqueRepo with id " + id + " not found");
         }
+        analyseDeRisqueRepo.deleteById(id);
     }
+
 
     @Override
     public AnalyseDeRisque addRisqueToAnalyse(Long analyseId, Long risqueId) {
@@ -67,4 +69,8 @@ public class AnalyseDeRisqueServiceImpl implements AnalyseDeRisqueService {
         return analyseDeRisqueRepo.save(analyseDeRisque);
     }
 
+    @Override
+    public List<AnalyseDeRisque> getByIds(List<Long> ids){
+        return analyseDeRisqueRepo.findAnalyseDeRisqueByIdIn(ids);
+    }
 }

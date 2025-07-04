@@ -26,7 +26,7 @@ public class Pdp extends Document {
 
     private String horairesDetails;
 
-    @OneToOne
+    @ManyToOne
     private Entreprise entrepriseDInspection;
 
     @Embedded
@@ -35,4 +35,11 @@ public class Pdp extends Document {
     @Embedded
     private MisesEnDisposition misesEnDisposition;
 
+    public Pdp(long l) {
+        super.setId(l);
+    }
+
+    public Pdp() {
+
+    }
 }

@@ -12,7 +12,6 @@ public interface EntrepriseRepo extends Repository<Entreprise, Integer> {
 
     Entreprise save(Entreprise entreprise);
 
-    void delete(Entreprise entreprise);
 
     List<Entreprise> findAll();
 
@@ -26,4 +25,8 @@ public interface EntrepriseRepo extends Repository<Entreprise, Integer> {
     Entreprise findEntrepriseById(Long id);
 
     List<Entreprise> findEntreprisesByIdIn(Collection<Long> ids);
+
+    void deleteById(Long id);
+
+    boolean existsById(Long id);
 }

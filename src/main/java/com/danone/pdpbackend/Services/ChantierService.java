@@ -19,8 +19,6 @@ public interface ChantierService extends Service<Chantier> {
 
     void addBdtToChantier(Chantier chantier, Bdt bdt);
 
-    List<Worker> getWorkersByChantier(Long chantierId);
-
 
 
 

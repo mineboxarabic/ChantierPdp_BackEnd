@@ -23,10 +23,9 @@ public class ChantierDTO {
     private Long entrepriseUtilisatrice;
     private Long localisation;
     private Long donneurDOrdre;
-    private List<Long> bdts;
-    private List<Long> pdps;
+    private List<Long> bdts = new ArrayList<>();
+    private List<Long> pdps = new ArrayList<>();
     private List<Long> workerSelections = new ArrayList<>();
-    private List<Long> workers;
     private ChantierStatus status;
     private Boolean travauxDangereux = false;
 }

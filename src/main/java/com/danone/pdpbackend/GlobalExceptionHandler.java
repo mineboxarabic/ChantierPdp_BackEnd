@@ -2,6 +2,7 @@ package com.danone.pdpbackend;
 
 import com.danone.pdpbackend.Utils.ApiResponse;
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,5 +21,12 @@ public class GlobalExceptionHandler {
         log.error("Token is expired: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(new ApiResponse<>(null, "Token is expired: Try relogging in"));
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ApiResponse<String>> handleEntityNotFoundException(EntityNotFoundException ex) {
+        log.error("Entity not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ApiResponse<>(null, "Entity not found: " + ex.getMessage()));
     }
 }

@@ -40,4 +40,11 @@ public abstract class Document {
     private List<ObjectAnswered> relations = new ArrayList<>();
 
     private LocalDate creationDate = LocalDate.now(); // Track when it was created/became valid
+    private LocalDate lastUpdate = LocalDate.now(); // Track when it was last updated
+
+
+    @PreUpdate
+    protected void onUpdate() {
+        lastUpdate = LocalDate.now();
+    }
 }

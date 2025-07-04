@@ -2,25 +2,18 @@ package com.danone.pdpbackend.Services.Implimetations;
 
 import com.danone.pdpbackend.Repo.DocumentRepo;
 import com.danone.pdpbackend.Repo.ObjectAnswerRepo;
-import com.danone.pdpbackend.Services.ChantierService;
-import com.danone.pdpbackend.Services.DocumentService;
-import com.danone.pdpbackend.Services.RisqueService;
-import com.danone.pdpbackend.Services.WorkerSelectionService;
-import com.danone.pdpbackend.Utils.ActionType;
-import com.danone.pdpbackend.Utils.ChantierStatus;
-import com.danone.pdpbackend.Utils.DocumentStatus;
-import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
+import com.danone.pdpbackend.Services.*;
+import com.danone.pdpbackend.Utils.*;
+import com.danone.pdpbackend.config.SecurityConfiguration;
 import com.danone.pdpbackend.entities.*;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,13 +24,18 @@ public class DocumentServiceImpl implements DocumentService{
     private final ObjectAnswerRepo objectAnswerRepo;
     private final RisqueService risqueService;
     private final WorkerSelectionService workerSelectionService;
-
-    public DocumentServiceImpl(DocumentRepo documentRepo, ChantierService chantierService, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService, WorkerSelectionService workerSelectionService) {
+    private final NotificationService notificationService;
+    private final SecurityConfiguration securityConfiguration;
+    private final ActivityLogService activityLogService;
+    public DocumentServiceImpl(DocumentRepo documentRepo, ChantierService chantierService, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService, WorkerSelectionService workerSelectionService, NotificationService notificationService, SecurityConfiguration securityConfiguration, ActivityLogService activityLogService) {
         this.documentRepo = documentRepo;
         this.chantierService = chantierService;
         this.objectAnswerRepo = objectAnswerRepo;
         this.risqueService = risqueService;
         this.workerSelectionService = workerSelectionService;
+        this.notificationService = notificationService;
+        this.securityConfiguration = securityConfiguration;
+        this.activityLogService = activityLogService;
     }
 
     @Override
@@ -62,6 +60,14 @@ public class DocumentServiceImpl implements DocumentService{
                 log.error("Failed to update chantier status after DOCUMENT {} creation", document.getId(), e);
             }
         }
+
+        activityLogService.logActivity(
+                "document.created",
+                document.getId(),
+                "Chantier",
+                "Document created",
+                Map.of()
+        );
 
         return document;
     }
@@ -111,7 +117,17 @@ public class DocumentServiceImpl implements DocumentService{
                 log.error("Failed to update chantier status after DOCUMENT {} creation", entityDetails.getId(), e);
             }
         }
-        return documentRepo.save(entityDetails);
+        Document document = documentRepo.findById(id).orElse(null);
+
+        assert document != null;
+        activityLogService.logActivity(
+                "document.created",
+                document.getId(),
+                "Chantier",
+                "Document created",
+                Map.of()
+        );
+        return document;
     }
 
     private Boolean existsById(Long id) {
@@ -119,12 +135,12 @@ public class DocumentServiceImpl implements DocumentService{
     }
 
     @Override
-    public Boolean delete(Long id) {
-        if(documentRepo.existsById(id)) {
-            documentRepo.deleteById(id);
-            return true;
+    @Transactional
+    public void delete(Long id) {
+        if(!documentRepo.existsById(id)){
+            throw new EntityNotFoundException("Document with id " + id + " not found");
         }
-        return false;
+        documentRepo.deleteById(id);
     }
 
     @Override
@@ -209,6 +225,12 @@ public class DocumentServiceImpl implements DocumentService{
                 log.warn("Could not get assigned workers for Chantier {} linked to PDP {}", document.getChantier(), document.getId(), e);
                 document.setStatus(DocumentStatus.NEEDS_ACTION);
                 document.setActionType(ActionType.SIGHNATURES_MISSING);
+
+                 String message = String.format("Signature manquante pour le document %d du chantier '%s'.", document.getId(), document.getChantier().getNom());
+
+                 User currentUser = securityConfiguration.getCurrentUser();
+
+                 notificationService.createNotification(currentUser, NotificationType.DOCUMENT_SIGNATURE_MISSING, message, document.getId(), document instanceof Pdp ? "Pdp" : "Bdt", "/documents/" + (document instanceof Pdp ? "pdp/" : "bdt/") + document.getId(), "Document Signature Missing");
                 return document;
             }
         }

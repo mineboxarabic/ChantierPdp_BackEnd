@@ -20,4 +20,6 @@ public interface AnalyseDeRisqueRepo extends Repository<AnalyseDeRisque, Long> {
     AnalyseDeRisque findAnalyseDeRisqueById(Long id);
 
     Boolean existsById(Long id);
+
+    List<AnalyseDeRisque> findAnalyseDeRisqueByIdIn(List<Long> ids);
 }

@@ -1,284 +1,116 @@
 package com.danone.pdpbackend.Utils.mappers;
 
+
 import com.danone.pdpbackend.Services.*;
 import com.danone.pdpbackend.entities.*;
-import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.dto.ChantierDTO;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
-@Component
-public class ChantierMapper implements Mapper<ChantierDTO, Chantier> {
-    //From DTO to Entity
-
+@Mapper(componentModel = "spring")
+public abstract class ChantierMapper {
     @Autowired
-    private final ChantierService chantierService;
-    @Autowired
-    private EntrepriseService entrepriseService;
-    @Autowired
-    private LocalisationService localisationService;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private BdtService bdtService;
-    @Autowired
-    @Lazy
-    private PdpService pdpService;
-    @Autowired
-    private WorkerSelectionService workerSelectionService;
-    @Autowired
-    private WorkerService workerService;
+    protected EntrepriseService entrepriseService;
+    @Autowired protected LocalisationService localisationService;
+    @Autowired protected UserService userService;
+    @Autowired protected BdtService bdtService;
+    @Autowired protected PdpService pdpService;
+    @Autowired protected WorkerService workerService;
+    @Autowired protected WorkerSelectionService workerSelectionService;
 
-    public ChantierMapper(ChantierService chantierService) {
-        this.chantierService = chantierService;
+    @Mapping(target = "entrepriseUtilisatrice", expression = "java(mapEntreprise(dto.getEntrepriseUtilisatrice()))")
+    @Mapping(target = "entrepriseExterieurs", expression = "java(mapEntreprises(dto.getEntrepriseExterieurs()))")
+    @Mapping(target = "localisation", expression = "java(mapLocalisation(dto.getLocalisation()))")
+    @Mapping(target = "donneurDOrdre", expression = "java(mapUser(dto.getDonneurDOrdre()))")
+    @Mapping(target = "bdts", expression = "java(mapBdts(dto.getBdts()))")
+    @Mapping(target = "pdps", expression = "java(mapPdps(dto.getPdps()))")
+    @Mapping(target = "workerSelections", expression = "java(mapWorkerSelections(dto.getWorkerSelections()))")
+    public abstract Chantier toEntity(ChantierDTO dto);
+
+    @Mapping(target = "entrepriseUtilisatrice", source = "entrepriseUtilisatrice.id")
+    @Mapping(target = "entrepriseExterieurs", expression = "java(toIdList(chantier.getEntrepriseExterieurs()))")
+    @Mapping(target = "localisation", source = "localisation.id")
+    @Mapping(target = "donneurDOrdre", source = "donneurDOrdre.id")
+    @Mapping(target = "bdts", expression = "java(toBdtIds(chantier.getBdts()))")
+    @Mapping(target = "pdps", expression = "java(toPdpIds(chantier.getPdps()))")
+    @Mapping(target = "workerSelections", expression = "java(toWorkerSelectionIds(chantier.getWorkerSelections()))")
+    public abstract ChantierDTO toDTO(Chantier chantier);
+
+
+
+    @Mapping(target = "id" , ignore = true)
+    public abstract void updateEntity(ChantierDTO dto, @MappingTarget Chantier chantier);
+
+    @Mapping(target = "id", ignore = true)
+    public abstract void updateDTO(Chantier chantier, @MappingTarget ChantierDTO dto);
+
+    public abstract List<ChantierDTO> toDTOList(List<Chantier> chantiers);
+    public abstract List<Chantier> toEntityList(List<ChantierDTO> dtos);
+
+    protected Entreprise mapEntreprise(Long id) {
+        return id != null ? entrepriseService.getById(id) : null;
     }
 
-    public static <T, ID> List<T> mergeEntityCollection(
-            List<T> existingCollection,
-            List<ID> requestedIds,
-            Function<T, ID> idExtractor,
-            Function<List<ID>, List<T>> entityFetcher) {
-
-        if (requestedIds == null) {
-            // If the requested IDs are null, don't modify the collection
-            return existingCollection;
-        }
-
-        // Convert the requested IDs to a set for efficient lookups
-        Set<ID> requestedIdSet = new HashSet<>(requestedIds);
-
-        // Initialize the collection if it's null
-        if (existingCollection == null) {
-            existingCollection = new ArrayList<>();
-        }
-
-        // Remove items that are no longer in the requested list
-        existingCollection.removeIf(entity ->
-                entity != null && !requestedIdSet.contains(idExtractor.apply(entity)));
-
-        // Get existing IDs
-        Set<ID> existingIds = existingCollection.stream()
-                .filter(Objects::nonNull)
-                .map(idExtractor)
-                .collect(Collectors.toSet());
-
-        // Add only new items
-        Set<ID> idsToAdd = requestedIds.stream()
-                .filter(id -> !existingIds.contains(id))
-                .collect(Collectors.toSet());
-
-        if (!idsToAdd.isEmpty()) {
-            List<T> newEntities = entityFetcher.apply(new ArrayList<>(idsToAdd));
-            if (newEntities != null) {
-                existingCollection.addAll(newEntities);
-            }
-        }
-
-        return existingCollection;
+    protected List<Entreprise> mapEntreprises(List<Long> ids) {
+        return ids != null ? entrepriseService.getByIds(ids) : new ArrayList<>();
     }
 
-    @Override
-    public void setDTOFields(ChantierDTO chantierDTO, Chantier chantier) {
-        chantierDTO.setId(chantier.getId());
-        chantierDTO.setNom(chantier.getNom());
-        chantierDTO.setOperation(chantier.getOperation());
-        chantierDTO.setDateDebut(chantier.getDateDebut());
-        chantierDTO.setDateFin(chantier.getDateFin());
-        chantierDTO.setNbHeurs(chantier.getNbHeurs());
-        chantierDTO.setIsAnnuelle(chantier.getIsAnnuelle());
-        chantierDTO.setEffectifMaxiSurChantier(chantier.getEffectifMaxiSurChantier());
-        chantierDTO.setNombreInterimaires(chantier.getNombreInterimaires());
-        chantierDTO.setStatus(chantier.getStatus());
-        chantierDTO.setTravauxDangereux(chantier.getTravauxDangereux());
-        chantierDTO.setStatus(chantier.getStatus());
-        // Handle collection with null check and filtering
-        if (chantier.getEntrepriseExterieurs() != null) {
-            chantierDTO.setEntrepriseExterieurs(chantier.getEntrepriseExterieurs().stream()
-                    .filter(Objects::nonNull)
-                    .map(Entreprise::getId)
-                    .collect(Collectors.toList()));
-        } else {
-            chantierDTO.setEntrepriseExterieurs(Collections.emptyList());
-        }
-
-        // Handle references with null checks
-        if (chantier.getEntrepriseUtilisatrice() != null) {
-            chantierDTO.setEntrepriseUtilisatrice(chantier.getEntrepriseUtilisatrice().getId());
-        }
-
-        if (chantier.getLocalisation() != null) {
-            chantierDTO.setLocalisation(chantier.getLocalisation().getId());
-        }
-
-        if (chantier.getDonneurDOrdre() != null) {
-            chantierDTO.setDonneurDOrdre(chantier.getDonneurDOrdre().getId());
-        }
-
-        // Handle collections with null checks and filtering
-        if (chantier.getBdts() != null) {
-            chantierDTO.setBdts(chantier.getBdts().stream()
-                    .filter(Objects::nonNull)
-                    .map(Bdt::getId)
-                    .collect(Collectors.toList()));
-        } else {
-            chantierDTO.setBdts(Collections.emptyList());
-        }
-
-        if (chantier.getPdps() != null) {
-            chantierDTO.setPdps(chantier.getPdps().stream()
-                    .filter(Objects::nonNull)
-                    .map(Pdp::getId)
-                    .collect(Collectors.toList()));
-        } else {
-            chantierDTO.setPdps(Collections.emptyList());
-        }
-
-        if (chantier.getWorkerSelections() != null) {
-            chantierDTO.setWorkerSelections(chantier.getWorkerSelections().stream()
-                    .filter(Objects::nonNull)
-                    .map(WorkerChantierSelection::getId)
-                    .collect(Collectors.toList()));
-        } else {
-            chantierDTO.setWorkerSelections(Collections.emptyList());
-        }
-
-        if (chantier.getWorkers() != null) {
-            chantierDTO.setWorkers(chantier.getWorkers().stream()
-                    .filter(Objects::nonNull)
-                    .map(Worker::getId)
-                    .collect(Collectors.toList()));
-        } else {
-            chantierDTO.setWorkers(Collections.emptyList());
-        }
-
-
+    protected Localisation mapLocalisation(Long id) {
+        return id != null ? localisationService.getById(id) : null;
     }
 
-    @Override
-    public void setEntityFields(ChantierDTO chantierDTO, Chantier chantier) {
-
-        chantier.setId(chantierDTO.getId());
-        chantier.setNom(chantierDTO.getNom());
-        chantier.setOperation(chantierDTO.getOperation());
-        chantier.setDateDebut(chantierDTO.getDateDebut());
-        chantier.setDateFin(chantierDTO.getDateFin());
-        chantier.setNbHeurs(chantierDTO.getNbHeurs());
-        chantier.setIsAnnuelle(chantierDTO.getIsAnnuelle());
-        chantier.setEffectifMaxiSurChantier(chantierDTO.getEffectifMaxiSurChantier());
-        chantier.setNombreInterimaires(chantierDTO.getNombreInterimaires());
-        chantier.setStatus(chantierDTO.getStatus());
-        chantier.setTravauxDangereux(chantierDTO.getTravauxDangereux());
-        chantier.setStatus(chantierDTO.getStatus());
-        // Handle collection with null check
-        if (chantierDTO.getEntrepriseExterieurs() != null) {
-            chantier.setEntrepriseExterieurs(entrepriseService.getByIds(chantierDTO.getEntrepriseExterieurs()));
-        } else {
-            chantier.setEntrepriseExterieurs(Collections.emptyList());
-        }
-
-        // Handle references with null checks
-        if (chantierDTO.getEntrepriseUtilisatrice() != null) {
-            chantier.setEntrepriseUtilisatrice(entrepriseService.getById(chantierDTO.getEntrepriseUtilisatrice()));
-        }
-
-        if (chantierDTO.getLocalisation() != null) {
-            chantier.setLocalisation(localisationService.getById(chantierDTO.getLocalisation()));
-        }
-
-        if (chantierDTO.getDonneurDOrdre() != null) {
-            chantier.setDonneurDOrdre(userService.getUserById(chantierDTO.getDonneurDOrdre()));
-        }
-
-        // Handle collections with null checks
-        //In case of create we get the them by id
-        //In case of update we get them from chantier
-        if (chantierDTO.getBdts() != null) {
-            List<Bdt> bdts = bdtService.getByIds(chantierDTO.getBdts());
-            chantier.setBdts(bdts);
-        } else {
-            chantier.setBdts(new ArrayList<>());
-        }
-
-        if (chantierDTO.getPdps() != null) {
-            chantier.setPdps(pdpService.getByIds(chantierDTO.getPdps()));
-        } else {
-            chantier.setPdps(new ArrayList<>());
-        }
-
-        if (chantierDTO.getWorkerSelections() != null) {
-            chantier.setWorkerSelections(workerSelectionService.getWorkerSelectionsByIds(chantierDTO.getWorkerSelections()));
-        } else {
-            chantier.setWorkerSelections(new ArrayList<>());
-        }
-
-        if (chantierDTO.getWorkers() != null) {
-            chantier.setWorkers(workerService.getWorkersByIds(chantierDTO.getWorkers()));
-        } else {
-            chantier.setWorkers(new ArrayList<>());
-        }
-
+    protected User mapUser(Long id) {
+        return id != null ? userService.getUserById(id) : null;
     }
 
-    public Chantier toEntity(ChantierDTO chantierDTO) {
-        if (chantierDTO == null) {
-            return null;
-        }
-        Chantier chantier = new Chantier();
-        setEntityFields(chantierDTO, chantier);
-        return chantier;
+    protected List<Bdt> mapBdts(List<Long> ids) {
+        return ids != null ? bdtService.getByIds(ids) : List.of();
     }
 
-    //From Entity to DTO
-    public ChantierDTO toDTO(Chantier chantier) {
-        if (chantier == null) {
-            return null;
-        }
-
-        ChantierDTO chantierDTO = new ChantierDTO();
-        setDTOFields(chantierDTO, chantier);
-        return chantierDTO;
+    protected List<Pdp> mapPdps(List<Long> ids) {
+        return ids != null ? pdpService.getByIds(ids) : List.of();
     }
 
-    @Override
-    public List<Chantier> toEntityList(List<ChantierDTO> chantierDTOS) {
-        return chantierDTOS.stream()
-                .map(this::toEntity)
-                .collect(Collectors.toList());
+    protected List<WorkerChantierSelection> mapWorkerSelections(List<Long> ids) {
+        return ids != null ? workerSelectionService.getWorkerSelectionsByIds(ids) : List.of();
     }
 
-    @Override
-    public List<ChantierDTO> toDTOList(List<Chantier> chantiers) {
-        return chantiers.stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+    protected List<Worker> mapWorkers(List<Long> ids) {
+        return ids != null ? workerService.getWorkersByIds(ids) : List.of();
     }
 
-    @Override
-    public Chantier updateEntityFromDTO(Chantier chantier, ChantierDTO chantierDTO) {
-        if(chantierDTO == null) {
-            return chantier;
-        }
-        setEntityFields(chantierDTO, chantier);
-        // Handle collection with null check
-
-        return chantier;
-
+    protected List<Long> toIdList(List<Entreprise> list) {
+        return list != null ? list.stream().map(Entreprise::getId).collect(Collectors.toList()) : List.of();
     }
 
-    @Override
-    public ChantierDTO updateDTOFromEntity(ChantierDTO chantierDTO, Chantier chantier) {
-        if(chantier == null) {
-            return chantierDTO;
-        }
-        setDTOFields(chantierDTO, chantier);
-
-        return chantierDTO;
+    protected List<Long> toBdtIds(List<Bdt> list) {
+        return list != null ? list.stream().map(Bdt::getId).collect(Collectors.toList()) : List.of();
     }
 
+    protected List<Long> toPdpIds(List<Pdp> list) {
+        return list != null ? list.stream().map(Pdp::getId).collect(Collectors.toList()) : List.of();
+    }
+
+    protected List<Long> toWorkerSelectionIds(List<WorkerChantierSelection> list) {
+        return list != null ? list.stream().map(WorkerChantierSelection::getId).collect(Collectors.toList()) : List.of();
+    }
+
+    protected List<Long> toWorkerIds(List<Worker> list) {
+        return list != null ? list.stream().map(Worker::getId).collect(Collectors.toList()) : List.of();
+    }
+
+    protected Long map(Entreprise entreprise) {
+        return entreprise != null ? entreprise.getId() : null;
+    }
+
+    protected Long map(User user) { return user != null ? user.getId() : null; }
+    protected Long map(Localisation loc) { return loc != null ? loc.getId() : null; }
 
 }
+

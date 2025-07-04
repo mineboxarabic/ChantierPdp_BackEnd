@@ -12,7 +12,7 @@ public interface PermitService {
 
     Permit updatePermit(Long id, Permit permitDetails);
 
-    boolean deletePermit(Long id);
+    void delete(Long id);
 
     List<Permit> getPermitsByIds(List<Long> ids);
 }

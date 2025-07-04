@@ -3,6 +3,8 @@ package com.danone.pdpbackend.Services.Implimetations;
 import com.danone.pdpbackend.Repo.RisqueRepo;
 import com.danone.pdpbackend.Services.RisqueService;
 import com.danone.pdpbackend.entities.Risque;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -60,17 +62,15 @@ public class RisqueServiceImpl implements RisqueService {
     }
 
     @Override
-    public Boolean deleteRisque(Long id) {
-        //Risque risque = risqueRepo.findRisqueById(id);
+    @Transactional
+    public void deleteRisque(Long id) {
 
-        Optional<Risque> risque = Optional.ofNullable(risqueRepo.findRisqueById(id));
 
-        if (risque.isEmpty()) {
-            return false;
-        }else{
-            risqueRepo.deleteById((risque.get().getId()));
-            return true;
+        if(!risqueRepo.existsById(id)){
+            throw new EntityNotFoundException("Risque with id " + id + " not found");
         }
+        risqueRepo.deleteById(id);
+
     }
 
     @Override

@@ -39,4 +39,8 @@ public class WorkerChantierSelection {
     @JoinColumn(name = "selected_by")
     @ToString.Exclude // <--- Add this
     private User selectedBy;
+
+    public WorkerChantierSelection(long l) {
+        this.id = l;
+    }
 }

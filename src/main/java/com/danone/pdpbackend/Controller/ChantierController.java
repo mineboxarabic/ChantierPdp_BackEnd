@@ -3,9 +3,12 @@ package com.danone.pdpbackend.Controller;
 import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.mappers.ChantierMapper;
+import com.danone.pdpbackend.Utils.mappers.WorkerMapper;
 import com.danone.pdpbackend.entities.Chantier;
+import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Worker;
 import com.danone.pdpbackend.entities.dto.ChantierDTO;
+import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +23,12 @@ public class ChantierController {
 
     private final ChantierService chantierService;
     private final ChantierMapper chantierMapper;
+    private final WorkerMapper workerMapper;
 
-    public ChantierController(ChantierService chantierService, ChantierMapper chantierMapper1) {
+    public ChantierController(ChantierService chantierService, ChantierMapper chantierMapper1, WorkerMapper workerMapper) {
         this.chantierService = chantierService;
         this.chantierMapper = chantierMapper1;
+        this.workerMapper = workerMapper;
     }
 
     @GetMapping("/all")
@@ -50,18 +55,15 @@ public class ChantierController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<ChantierDTO>> updateChantier(@PathVariable Long id, @RequestBody ChantierDTO chantierDTO) {
-        log.info("Updating chantier with id: {}", id);
         Chantier existingChantier = chantierService.getById(id);
-        Chantier updatedChantier = chantierService.update( id,chantierMapper.updateEntityFromDTO(existingChantier, chantierDTO));
+        chantierMapper.updateEntity(chantierDTO,existingChantier); // modifies in-place
+        Chantier updatedChantier = chantierService.update(id, existingChantier);
         return ResponseEntity.ok(new ApiResponse<>(chantierMapper.toDTO(updatedChantier), "Chantier updated successfully"));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> deleteChantier(@PathVariable Long id) {
-        if (!chantierService.delete(id)) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Chantier not found"));
-        }
-        return ResponseEntity.ok(new ApiResponse<>(null, "Chantier deleted successfully"));
+    public void deleteChantier(@PathVariable Long id) {
+        chantierService.delete(id);
     }
 
     @GetMapping("/last")
@@ -76,8 +78,16 @@ public class ChantierController {
 
     //        return fetch(`api/chantier/${chantierId}/workers`, 'GET', null, [
     @GetMapping("/{chantierId}/workers")
-    public ResponseEntity<ApiResponse<List<Worker>>> getWorkersByChantier(@PathVariable Long chantierId) {
-        return ResponseEntity.ok(new ApiResponse<>(chantierService.getWorkersByChantier(chantierId), "Workers fetched successfully"));
+    public ResponseEntity<ApiResponse<List<WorkerDTO>>> getWorkersByChantier(@PathVariable Long chantierId) {
+        Chantier chantier = chantierService.getById(chantierId);
+        List<Entreprise> entreprises = chantier.getEntrepriseExterieurs();
+
+        List<Worker> workers = entreprises.stream()
+                .flatMap(entreprise -> entreprise.getWorkers().stream())
+                .toList();
+        List<WorkerDTO> workerDTOs = workerMapper.toDTOList(workers);
+        return ResponseEntity.ok(new ApiResponse<>(workerDTOs, "Workers fetched successfully"));
+     //   return ResponseEntity.ok(new ApiResponse<>(chantierService.getWorkersByChantier(chantierId), "Workers fetched successfully"));
     }
 
 

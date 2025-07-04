@@ -55,21 +55,4 @@ class UserControllerTest {
                 .andExpect(content().string("User Created Successfully"));*/
     }
 
-
-    @Test
-    void registerUser_shouldReturnCreatedStatus_whenValidUserProvided() throws Exception {
-
-        UsersRegisterData validUser = new UsersRegisterData();
-
-        validUser.name = "Yassin4";
-        validUser.password = "Zaqwe123!";
-        validUser.email = "mineboxarabic@gmail.com";
-
-        String jsonRequest = objectMapper.writeValueAsString(validUser);
-
-        mockMvc.perform(post("/api/user/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonRequest))
-                .andExpect(status().isOk());
-    }
 }

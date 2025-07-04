@@ -29,4 +29,5 @@ public interface WorkerRepo extends Repository<Worker, Long> {
     List<Worker> findWorkersByIdIn(Collection<Long> ids);
 
 
+    Boolean existsById(Long id);
 }

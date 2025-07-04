@@ -79,12 +79,9 @@ public class EntrepriseController {
 
     //Delete
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Boolean>> deleteEntreprise(@PathVariable Long id)
+    public void deleteEntreprise(@PathVariable Long id)
     {
-        if(!entrepriseService.delete(id)){
-            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Entreprise not found"));
-        }
-        return ResponseEntity.ok(new ApiResponse<>(null, "Entreprise deleted successfully"));
+        entrepriseService.delete(id);
     }
 
 

@@ -64,8 +64,19 @@ public class Chantier {
     private ChantierStatus status;
     private Boolean travauxDangereux = false;
 
-    // Keep this for backward compatibility if needed
-    @ManyToMany
-    @Transient // This makes it not persist to the database
-    private List<Worker> workers;
+
+    private Date createdAt;
+
+    private Date updatedAt;
+
+    @PrePersist
+    private void onCreate() {
+        createdAt = new Date();
+    }
+
+
+    @PreUpdate
+    private void onUpdate() {
+        updatedAt = new Date();
+    }
 }

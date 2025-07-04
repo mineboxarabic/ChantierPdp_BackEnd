@@ -58,7 +58,7 @@ class EntrepriseControllerIntegrationTest {
 
     // Helper to POST and get ID from ApiResponse<Worker>
     private Long createWorkerViaApi(WorkerDTO workerDto) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/worker") // Assuming this endpoint takes Worker entity directly
+        MvcResult result = mockMvc.perform(post("/api/worker/") // Assuming this endpoint takes Worker entity directly
                         .header("Authorization", "Bearer " + authToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(workerDto)))
@@ -220,10 +220,7 @@ class EntrepriseControllerIntegrationTest {
         // Act & Assert for DELETE
         mockMvc.perform(delete("/api/entreprise/{id}", idToDelete)
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Entreprise deleted successfully"))
-                .andExpect(jsonPath("$.data").doesNotExist()); // Controller sets data to null on successful delete
-
+                .andExpect(status().isOk());
         // Assert: Verify with GET
         mockMvc.perform(get("/api/entreprise/{id}", idToDelete)
                         .header("Authorization", "Bearer " + authToken))
@@ -233,14 +230,12 @@ class EntrepriseControllerIntegrationTest {
     @Test
     void deleteEntreprise_whenNotExists_shouldReturnBadRequest() throws Exception {
         // Arrange: Use an ID that shouldn't exist
-        Long idToDelete = 99999L;
+        Long idToDelete = 123123123L;
 
         // Act & Assert for DELETE
         mockMvc.perform(delete("/api/entreprise/{id}", idToDelete)
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isBadRequest()) // Controller returns 400
-                .andExpect(jsonPath("$.message").value("Entreprise not found"))
-                .andExpect(jsonPath("$.data").isEmpty()); // Controller uses null in ApiResponse for error
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -259,8 +254,6 @@ class EntrepriseControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isArray())
                 // Verify that the list is not empty (Worker A from setup should be present)
                 .andExpect(jsonPath("$.data", not(empty())));
-        // Optionally, if you need to verify specific worker details,
-        // you might need to retrieve Worker A's ID after its creation in setUp.
     }
 
 }

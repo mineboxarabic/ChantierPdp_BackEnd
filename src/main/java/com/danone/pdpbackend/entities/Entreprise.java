@@ -18,6 +18,7 @@ import java.util.List;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class Entreprise {
 
     @Id
@@ -55,4 +56,7 @@ public class Entreprise {
     @OneToMany(mappedBy = "entreprise", cascade = CascadeType.ALL)
     private List<Worker> workers = new ArrayList<>();
 
+    public Entreprise(long l) {
+        this.id = l;
+    }
 }

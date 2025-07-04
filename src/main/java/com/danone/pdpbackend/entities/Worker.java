@@ -47,4 +47,8 @@ public class Worker {
     @JsonIgnore
     @ToString.Exclude // <--- Add this
     private List<WorkerChantierSelection> chantierSelections;
+
+    public Worker(long l) {
+        this.id = l;
+    }
 }

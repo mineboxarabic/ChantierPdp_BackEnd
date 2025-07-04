@@ -8,5 +8,4 @@ public interface LocalisationService extends Service<Localisation> {
     Localisation getById(Long id);
     Localisation create(Localisation localisation);
     Localisation update(Long id, Localisation localisationDetails);
-    Boolean delete(Long id);
 }

@@ -41,22 +41,6 @@ public class WorkerMapper implements Mapper<WorkerDTO, Worker> {
         if (worker.getEntreprise() != null) {
             workerDTO.setEntreprise(worker.getEntreprise().getId());
         }
-
-        //PDP
-        if (worker.getPdps() != null) {
-            List<Long> pdpIds = worker.getPdps().stream()
-                    .map(pdp -> pdp.getId())
-                    .toList();
-            workerDTO.setPdps(pdpIds);
-        }
-
-        //Chantiers
-        if (worker.getChantiers() != null) {
-            List<Long> chantierIds = worker.getChantiers().stream()
-                    .map(chantier -> chantier.getId())
-                    .toList();
-            workerDTO.setChantiers(chantierIds);
-        }
     }
 
     @Override
@@ -66,7 +50,7 @@ public class WorkerMapper implements Mapper<WorkerDTO, Worker> {
         }
         worker.setId(workerDTO.getId());
         worker.setNom(workerDTO.getNom());
-        worker.setPrenom(workerDTO.getPrenom());
+
         //Entreprise
         if (workerDTO.getEntreprise() != null) {
           worker.setEntreprise(entrepriseService.getById(workerDTO.getEntreprise()));
@@ -74,20 +58,7 @@ public class WorkerMapper implements Mapper<WorkerDTO, Worker> {
         }
 
         //PDP
-        if (workerDTO.getPdps() != null) {
-           // worker.setPdps(pdpServiceImpl.getByIds(wokerDTO.getPdps()));
-            List<Pdp> pdps = pdpService.getByIds(workerDTO.getPdps());
-            worker.getPdps().clear();
-            worker.getPdps().addAll(pdps);
-        }
 
-        //Chantiers
-        if (workerDTO.getChantiers() != null) {
-           // worker.setChantiers(chantierServiceImpl.getByIds(wokerDTO.getChantiers()));
-            List<Chantier> chantiers = chantierService.getByIds(workerDTO.getChantiers());
-            worker.getChantiers().clear();
-            worker.getChantiers().addAll(chantiers);
-        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.danone.pdpbackend.Repo.WorkerRepo;
 import com.danone.pdpbackend.Services.WorkerService;
 import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -62,9 +63,8 @@ public class WorkerServiceImpl implements WorkerService {
 
 
     @Override
-    public Boolean delete(Long id) {
+    public void delete(Long id) {
         workerRepo.deleteById(id);
-        return true;
     }
 
     @Override
@@ -103,5 +103,22 @@ public class WorkerServiceImpl implements WorkerService {
     @Override
     public List<Worker> findByIds(List<Long> signatures) {
         return workerRepo.findWorkersByIdIn(signatures);
+    }
+
+    @Override
+    public Boolean exists(Long id) {
+        return workerRepo.existsById(id);
+    }
+
+
+    @Override
+    public Boolean filters(WorkerDTO workerDTO){
+      if("".equals(workerDTO.getNom()) || workerDTO.getNom() == null){
+          return false;
+      }
+    if("".equals(workerDTO.getPrenom()) || workerDTO.getPrenom() == null){
+        return false;
+    }
+        return true;
     }
 }

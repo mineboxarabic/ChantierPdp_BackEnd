@@ -3,6 +3,8 @@ package com.danone.pdpbackend.Services.Implimetations;
 import com.danone.pdpbackend.Repo.LocalisationRepo;
 import com.danone.pdpbackend.Services.LocalisationService;
 import com.danone.pdpbackend.entities.Localisation;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -47,12 +49,12 @@ public class LocalisationServiceImpl implements LocalisationService {
     }
 
     @Override
-    public Boolean delete(Long id) {
-        if (!localisationRepo.existsById(id)) {
-            return false;
+    @Transactional
+    public void delete(Long id) {
+        if(!localisationRepo.existsById(id)){
+            throw new EntityNotFoundException("Entreprise with id " + id + " not found");
         }
         localisationRepo.deleteById(id);
-        return true;
     }
 
     @Override

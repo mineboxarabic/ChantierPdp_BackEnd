@@ -51,6 +51,7 @@ public class PdpMapper implements Mapper<PdpDTO, Pdp> {
         pdpDTO.setHorairesDetails(pdp.getHorairesDetails());
         pdpDTO.setHoraireDeTravail(pdp.getHoraireDeTravail());
         pdpDTO.setMisesEnDisposition(pdp.getMisesEnDisposition());
+        pdpDTO.setCreationDate(pdp.getCreationDate());
         if (pdp.getEntrepriseDInspection() != null) {
             pdpDTO.setEntrepriseDInspection(pdp.getEntrepriseDInspection().getId());
         } else {
@@ -90,7 +91,7 @@ public class PdpMapper implements Mapper<PdpDTO, Pdp> {
         pdp.setHorairesDetails(pdpDTO.getHorairesDetails());
         pdp.setHoraireDeTravail(pdpDTO.getHoraireDeTravail()); // Embeddable copy
         pdp.setMisesEnDisposition(pdpDTO.getMisesEnDisposition()); // Embeddable copy
-
+        pdp.setCreationDate(pdpDTO.getCreationDate());
         if (pdpDTO.getEntrepriseDInspection() != null) {
             if (pdp.getEntrepriseDInspection() == null || !pdp.getEntrepriseDInspection().getId().equals(pdpDTO.getEntrepriseDInspection())) {
                 pdp.setEntrepriseDInspection(entrepriseService.getById(pdpDTO.getEntrepriseDInspection()));

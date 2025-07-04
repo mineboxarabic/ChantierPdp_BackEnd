@@ -9,7 +9,10 @@ import com.danone.pdpbackend.Utils.mappers.PdpMapper;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
 import com.danone.pdpbackend.entities.dto.PdpDTO;
+import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
+import com.danone.pdpbackend.entities.dto.DocumentSignatureStatusDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -71,12 +74,10 @@ public class PdpController {
 
     //Delete
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> deletePdp(@PathVariable Long id)
+    public void deletePdp(@PathVariable Long id)
     {
-        if(!pdpService.delete(id)){
-            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Pdp not found"));
-        }
-        return ResponseEntity.ok(new ApiResponse<>(null, "Pdp deleted successfully"));
+      pdpService.delete(id);
+        //return ResponseEntity.ok(new ApiResponse<>(null, "Pdp deleted successfully"));
     }
 
     //Get last id
@@ -96,16 +97,40 @@ public class PdpController {
 
 
     @PostMapping("/sign/{pdpId}")
-    public ResponseEntity<ApiResponse<String>> signPdp(@PathVariable Long pdpId)
+    public ResponseEntity<ApiResponse<PdpDTO>> signPdp(@PathVariable Long pdpId, @RequestBody SignatureRequestDTO signatureRequest)
     {
-        return ResponseEntity.ok(new ApiResponse<>(null, "Pdp signed successfully"));
+        try {
+            Pdp signedPdp = pdpService.signDocument(pdpId, signatureRequest.getWorkerId(), signatureRequest.getSignatureImage());
+            return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(signedPdp), "PDP signed successfully"));
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid signature request for PDP {}: {}", pdpId, e.getMessage());
+            return ResponseEntity.badRequest().body(new ApiResponse<>(null, e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error signing PDP {}", pdpId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(null, "Error signing PDP"));
+        }
     }
 
+    @GetMapping("/{pdpId}/signature-status")
+    public ResponseEntity<ApiResponse<DocumentSignatureStatusDTO>> getPdpSignatureStatus(@PathVariable Long pdpId) {
+        try {
+            DocumentSignatureStatusDTO status = pdpService.getSignatureStatus(pdpId);
+            return ResponseEntity.ok(new ApiResponse<>(status, "PDP signature status retrieved"));
+        } catch (Exception e) {
+            log.error("Error getting PDP signature status for {}", pdpId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(null, "Error getting signature status"));
+        }
+    }
 
-    @GetMapping("/exist/{id}")
-    public ResponseEntity<ApiResponse<Boolean>> existPdp(@PathVariable Long id)
-    {
-        return ResponseEntity.ok(new ApiResponse<>(pdpService.getById(id) != null, "Pdp exist"));
+    @DeleteMapping("/{pdpId}/signatures/{signatureId}")
+    public ResponseEntity<ApiResponse<PdpDTO>> removePdpSignature(@PathVariable Long pdpId, @PathVariable Long signatureId) {
+        try {
+            Pdp pdp = pdpService.removeSignature(pdpId, signatureId);
+            return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(pdp), "Signature removed successfully"));
+        } catch (Exception e) {
+            log.error("Error removing signature {} from PDP {}", signatureId, pdpId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(null, "Error removing signature"));
+        }
     }
 
 
@@ -116,5 +141,10 @@ public class PdpController {
         return ResponseEntity.ok(new ApiResponse<>(objectAnsweredMapper.toDTOList(pdpService.getObjectAnsweredsByPdpId(pdpId, objectType)), "items fetched"));
     }
 
-}
 
+    @GetMapping("/{pdpId}/risques-without-permits")
+    public ResponseEntity<ApiResponse<List<ObjectAnsweredDTO>>> getRisquesWithoutPermits(@PathVariable Long pdpId) {
+        return ResponseEntity.ok(new ApiResponse<>(objectAnsweredMapper.toDTOList(pdpService.getRisquesWithoutPermits(pdpId)), "items fetched"));
+    }
+
+}

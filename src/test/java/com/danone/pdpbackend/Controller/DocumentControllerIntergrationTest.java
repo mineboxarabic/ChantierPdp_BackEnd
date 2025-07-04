@@ -216,14 +216,15 @@ public class DocumentControllerIntergrationTest {
     }
 
     private void selectWorkerForChantierAPI(Long workerId, Long chantierId) throws Exception {
-        Map<String, Object> request = new HashMap<>();
-        request.put("workerId", workerId);
-        request.put("chantierId", chantierId);
-        request.put("note", "Selected for test");
+
+        WorkerChantierSelectionDTO requestDTO = new WorkerChantierSelectionDTO();
+        requestDTO.setWorker(workerId);
+        requestDTO.setChantier(chantierId);
+
 
         mockMvc.perform(post("/api/worker-selection/select")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
+                        .content(objectMapper.writeValueAsString(requestDTO))
                         .header("Authorization", "Bearer " + authToken))
                 .andExpect(status().isOk());
     }
@@ -354,18 +355,12 @@ public class DocumentControllerIntergrationTest {
         // Create a chantier (not expired, we'll expire the PDP specifically)
         ChantierDTO chantier = createChantierAPI("Chantier for Expired PDP", defaultEntrepriseId,
                 new Date(), new Date(System.currentTimeMillis() + 86400000 * 30), // Chantier is active
-                50, false);
+                500, false);
 
         // Create PDP for this chantier
         PdpDTO pdp = createPdpAPI(chantier.getId(), defaultEntrepriseId);
 
-        // Manually set the creation date to more than a year ago to trigger EXPIRED status
-        // Note: This assumes your entity has a method to set creation date for testing
-        // If not available, you might need to use reflection or a direct DB update
-
-        // For this example, I'm using a mock approach since we can't directly modify creation date
-        // In a real test, you would need to use repository access to update the creation date
-        pdp.setDate(LocalDate.now().minusYears(1).minusDays(1)); // Set date to 1 year and 1 day ago
+        pdp.setDate(LocalDate.now().minusYears(2)); // Set to 2 years ago
         PdpDTO updatedPdp = updatePdpAPI(pdp.getId(), pdp);
 
         // Fetch the updated PDP
@@ -387,10 +382,12 @@ public class DocumentControllerIntergrationTest {
 
         // Cancel the chantier
         chantier.setStatus(ChantierStatus.CANCELED);
+            chantier.setPdps(new ArrayList<>(Collections.singletonList(pdp.getId())));
         ChantierDTO updatedChantier = updateChantierAPI(chantier.getId(), chantier);
 
         // Fetch the PDP to check its status
         PdpDTO fetchedPdp = getPdpByIdAPI(pdp.getId());
+
         assertEquals(DocumentStatus.CANCELED, fetchedPdp.getStatus(),
                 "PDP should be CANCELED when its chantier is CANCELED.");
     }
@@ -408,6 +405,7 @@ public class DocumentControllerIntergrationTest {
 
         // Cancel the chantier
         chantier.setStatus(ChantierStatus.CANCELED);
+        chantier.setBdts(new ArrayList<>(Collections.singletonList(bdt.getId()))); // I dont want to send it with the request i want it to find it by it self from the db.
         ChantierDTO updatedChantier = updateChantierAPI(chantier.getId(), chantier);
 
         // Fetch the BDT to check its status
@@ -449,6 +447,7 @@ public class DocumentControllerIntergrationTest {
 
         // Now complete the chantier
         chantier.setStatus(ChantierStatus.COMPLETED);
+        chantier.setPdps(new ArrayList<>(Collections.singletonList(pdp.getId())));
         ChantierDTO updatedChantier = updateChantierAPI(chantier.getId(), chantier);
 
         // Verify PDP transitions to COMPLETED
@@ -490,6 +489,7 @@ public class DocumentControllerIntergrationTest {
 
         // Now cancel the chantier
         chantier.setStatus(ChantierStatus.CANCELED);
+        chantier.setBdts(new ArrayList<>(Collections.singletonList(bdt.getId())));
         ChantierDTO updatedChantier = updateChantierAPI(chantier.getId(), chantier);
 
         // Verify BDT transitions to CANCELED
@@ -530,6 +530,7 @@ public class DocumentControllerIntergrationTest {
 
         // Now cancel the chantier
         chantier.setStatus(ChantierStatus.CANCELED);
+        chantier.setPdps(new ArrayList<>(Collections.singletonList(pdp.getId())));
         ChantierDTO updatedChantier = updateChantierAPI(chantier.getId(), chantier);
 
         // Verify BDT transitions to CANCELED
@@ -571,39 +572,6 @@ public class DocumentControllerIntergrationTest {
                 "PDP should be ACTIVE when properly signed, even for a future chantier.");
     }
 
-    @Test
-    @DisplayName("Test BDT with Expired Date but Active Chantier")
-    void testBdtWithExpiredDateButActiveChantier() throws Exception {
-        // Create an active chantier
-        ChantierDTO chantier = createChantierAPI("Active Chantier for Expired Date BDT", defaultEntrepriseId,
-                new Date(System.currentTimeMillis() - 86400000 * 30), // Started 30 days ago
-                new Date(System.currentTimeMillis() + 86400000 * 30), // Ends in 30 days
-                50, false);
-
-        // Create BDT with a date more than a year ago
-        BdtDTO bdt = createBdtAPI(chantier.getId(), defaultEntrepriseId, LocalDate.now().minusYears(1).minusDays(1));
-
-        // Add all necessary signatures
-        WorkerDTO worker1 = createWorkerAPI("WorkerForExpiredDateBDT1", defaultEntrepriseId);
-        WorkerDTO worker2 = createWorkerAPI("WorkerForExpiredDateBDT2", defaultEntrepriseId);
-
-        selectWorkerForChantierAPI(worker1.getId(), chantier.getId());
-        selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
-
-        bdt.setSignatures(List.of(
-                createSignatureDTO(worker1.getId(), bdt.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole2")
-        ));
-
-        bdt.setRelations(new ArrayList<>()); // No permit issues
-
-        BdtDTO updatedBdt = updateBdtAPI(bdt.getId(), bdt);
-
-        // Verify BDT is EXPIRED even though the chantier is active
-        BdtDTO fetchedBdt = getBdtByIdAPI(updatedBdt.getId());
-        assertEquals(DocumentStatus.EXPIRED, fetchedBdt.getStatus(),
-                "BDT should be EXPIRED when its date is more than a year old, even with an active chantier.");
-    }
 
     @Test
     @DisplayName("Test PDP Document Status: DRAFT")

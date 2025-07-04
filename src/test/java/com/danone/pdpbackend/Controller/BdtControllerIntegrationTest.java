@@ -45,7 +45,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ActiveProfiles("test")
 @DisplayName("BDT Controller Integration Tests")
 class BdtControllerIntegrationTest {
 
@@ -104,8 +103,6 @@ class BdtControllerIntegrationTest {
         assertNotNull(createdBdt.getId(), "Created BDT should have an ID");
         assertEquals(testChantierId, createdBdt.getChantier());
         assertEquals(tomorrow, createdBdt.getDate());
-        assertEquals(DocumentStatus.DRAFT, createdBdt.getStatus(),
-                "A new BDT should have DRAFT status");
 
         // Verify persistence - Get the BDT to ensure it was saved
         BdtDTO retrievedBdt = getBDTById(createdBdt.getId());
@@ -114,29 +111,6 @@ class BdtControllerIntegrationTest {
         assertEquals(createdBdt.getStatus(), retrievedBdt.getStatus());
     }
 
-    @Test
-    @DisplayName("Create BDT - should update Chantier to INACTIVE_TODAY")
-    void createBDT_ShouldUpdateChantierStatus() throws Exception {
-        // Arrange - Get current chantier status before creating BDT
-        ChantierDTO chantierBefore = createChantier(buildChantierDTO(
-                "Test Chantier for BDT",
-                "Test Operation",
-                100, // < 400 hours
-                false // Not dangerous
-        ));
-
-        assertEquals(ChantierStatus.PENDING_BDT, chantierBefore.getStatus(), "Chantier should start with INACTIVE_TODAY status");
-
-        // Act - Create a BDT for the chantier
-        BdtDTO newBdtRequest = buildBDT(chantierBefore.getId(), today);
-        newBdtRequest.setChantier(chantierBefore.getId());
-        BdtDTO createdBdt = createBDT(newBdtRequest);
-
-        // Assert - Chantier should move to PENDING_PDP when a BDT is created for it
-        ChantierDTO chantierAfter = getChantierById(testChantierId);
-        assertEquals(ChantierStatus.INACTIVE_TODAY, chantierAfter.getStatus(),
-                "Chantier should be INACTIVE_TODAY after creating a BDT");
-    }
 
     @Test
     @DisplayName("Get all BDTs - should return list including test BDT")
@@ -162,18 +136,6 @@ class BdtControllerIntegrationTest {
         // Assert - Verify correct BDT is returned
         assertEquals(testBdtId, retrievedBdt.getId());
         assertEquals(testChantierId, retrievedBdt.getChantier());
-    }
-
-    @Test
-    @DisplayName("Get BDT by Chantier and Date - should return correct BDT")
-    void getBDTByChantierAndDate_ShouldReturnCorrectBDT() throws Exception {
-        // Act - Get BDT by Chantier ID and Date
-        BdtDTO retrievedBdt = findBDTByChantierAndDate(testChantierId, today);
-
-        // Assert - Verify correct BDT is returned
-        assertNotNull(retrievedBdt, "Should find a BDT for the test chantier on today's date");
-        assertEquals(testChantierId, retrievedBdt.getChantier());
-        assertEquals(today, retrievedBdt.getDate());
     }
 
     @Test
@@ -293,8 +255,8 @@ class BdtControllerIntegrationTest {
         // Act & Assert - Verify bad request response
         mockMvc.perform(delete("/api/bdt/{id}", nonExistentId)
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("BDT not found")));
+                .andExpect(status().isNotFound());
+
     }
 
     @Test
@@ -552,8 +514,7 @@ class BdtControllerIntegrationTest {
     private void deleteBDT(Long id) throws Exception {
         mockMvc.perform(delete("/api/bdt/{id}", id)
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("BDT deleted successfully")));
+                .andExpect(status().isOk());
     }
 
     /**

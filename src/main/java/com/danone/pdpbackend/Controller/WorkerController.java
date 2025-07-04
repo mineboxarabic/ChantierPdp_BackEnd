@@ -25,18 +25,29 @@ public class WorkerController {
     }
     @GetMapping
     public ResponseEntity<ApiResponse<List<WorkerDTO>>> getAllWorkers() {
-        //return new ApiResponse<>(risqueService.getAllRisques(), "Risques fetched");
+        if(workerService.getAll().isEmpty()) {
+            return ResponseEntity.ok(new ApiResponse<>(List.of(), "No workers found"));
+        }
         return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTOList(workerService.getAll()), "Workers fetched"));
     }
 
     @PostMapping("/")
     public ResponseEntity<ApiResponse<WorkerDTO>> createWorker(@RequestBody WorkerDTO worker) {
+        if(!workerService.filters(worker)) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Worker already exists"));
+        }
         return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTO(workerService.create(workerMapper.toEntity(worker))), "Worker created"));
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<ApiResponse<WorkerDTO>> updateWorker(@PathVariable Long id, @RequestBody WorkerDTO workerDetails) {
         try {
+            if(!workerService.filters(workerDetails)){
+                return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Error in the fields"));
+            }
+            if (!workerService.exists(id)) {
+                return ResponseEntity.notFound().build();
+            }
             return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTO(workerService.update(id, workerMapper.toEntity(workerDetails))), "Worker updated"));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -45,12 +56,19 @@ public class WorkerController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Boolean>> deleteWorker(@PathVariable Long id) {
+
+        if(!workerService.exists(id)) {
+            return ResponseEntity.notFound().build();
+        }
         workerService.delete(id);
         return ResponseEntity.ok(new ApiResponse<>(true, "Worker deleted"));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<WorkerDTO>> getWorkerById(@PathVariable Long id) {
+        if(!workerService.exists(id)) {
+            return ResponseEntity.notFound().build();
+        }
         return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTO(workerService.getById(id)), "Worker fetched"));
     }
 

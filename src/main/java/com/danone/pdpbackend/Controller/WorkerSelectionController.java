@@ -36,23 +36,14 @@ public class WorkerSelectionController {
     private ChantierMapper chantierMapper;
 
     @PostMapping("/select")
-    public ResponseEntity<ApiResponse<WorkerChantierSelectionDTO>> selectWorker(@RequestBody Map<String, Object> request) {
-
-        Long workerId = Long.valueOf(request.get("workerId").toString());
-        Long chantierId = Long.valueOf(request.get("chantierId").toString());
-        String note = request.get("note") != null ? request.get("note").toString() : null;
-
-        WorkerChantierSelectionDTO selection = workerChantierSelectionMapper.toDTO(selectionService.selectWorkerForChantier(workerId, chantierId, note));
-
+    public ResponseEntity<ApiResponse<WorkerChantierSelectionDTO>> selectWorker(@RequestBody WorkerChantierSelectionDTO workerChantierSelectionDTO) {
+        WorkerChantierSelectionDTO selection = workerChantierSelectionMapper.toDTO(selectionService.selectWorkerForChantier(workerChantierSelectionDTO.getWorker(), workerChantierSelectionDTO.getChantier(), workerChantierSelectionDTO.getSelectionNote()));
         return ResponseEntity.ok(new ApiResponse<>(selection, "Worker selected successfully"));
     }
 
     @PostMapping("/deselect")
-    public ResponseEntity<ApiResponse<?>> deselectWorker(@RequestBody Map<String, Object> request) {
-        Long workerId = Long.valueOf(request.get("workerId").toString());
-        Long chantierId = Long.valueOf(request.get("chantierId").toString());
-
-        selectionService.deselectWorkerFromChantier(workerId, chantierId);
+    public ResponseEntity<ApiResponse<WorkerChantierSelectionDTO>> deselectWorker(@RequestBody WorkerChantierSelectionDTO workerChantierSelectionDTO) {
+        selectionService.deselectWorkerFromChantier(workerChantierSelectionDTO.getWorker(), workerChantierSelectionDTO.getChantier());
         return ResponseEntity.ok(new ApiResponse<>(null, "deslected"));
     }
 

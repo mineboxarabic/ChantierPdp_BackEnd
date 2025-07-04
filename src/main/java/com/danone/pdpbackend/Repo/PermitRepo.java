@@ -19,4 +19,6 @@ public interface PermitRepo extends Repository<Permit, Long> {
     void deleteById(Long id);
 
     List<Permit> findPermitByIdIn(Collection<Long> ids);
+
+    boolean existsById(Long id);
 }

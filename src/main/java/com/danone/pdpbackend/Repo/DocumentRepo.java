@@ -5,6 +5,7 @@ import com.danone.pdpbackend.entities.Document;
 import com.danone.pdpbackend.entities.Pdp;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -41,4 +42,14 @@ public interface DocumentRepo extends Repository<Document, Integer> {
     List<Document> findByStatusInAndCreationDateBefore(List<DocumentStatus> ready, LocalDate oneYearAgo);
 
     List<Document> findDocumentsByIdIn(List<Long> ids);
+
+    // New method for documents currently needing action
+    Long countByStatus(DocumentStatus status);
+     @Query("SELECT COUNT(d.id) FROM Document d WHERE d.status = :status AND d.lastUpdate >= :monthStart AND d.lastUpdate < :monthEnd")
+     Long countDocumentsBecameStatusInMonth(@Param("status") DocumentStatus status, @Param("monthStart") java.time.LocalDate monthStart, @Param("monthEnd") java.time.LocalDate monthEnd);
+
+    // New method for documents in a specific status
+    Long countByStatusIn(List<DocumentStatus> statuses);
+
+    void deleteAll();
 }

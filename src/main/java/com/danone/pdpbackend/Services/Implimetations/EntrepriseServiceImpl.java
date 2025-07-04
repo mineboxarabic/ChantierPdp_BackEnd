@@ -4,6 +4,8 @@ import com.danone.pdpbackend.Repo.EntrepriseRepo;
 import com.danone.pdpbackend.Services.EntrepriseService;
 import com.danone.pdpbackend.entities.Entreprise;
 import com.danone.pdpbackend.entities.Worker;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -58,13 +60,12 @@ public class EntrepriseServiceImpl implements EntrepriseService {
     }
 
     @Override
-    public Boolean delete(Long id) {
-        Entreprise entreprise = entrepriseRepo.findEntrepriseById(id);
-        if (entreprise == null) {
-            return false;
+    @Transactional
+    public void delete(Long id) {
+        if(!entrepriseRepo.existsById(id)){
+            throw new EntityNotFoundException("Entreprise with id " + id + " not found");
         }
-        entrepriseRepo.delete(entreprise);
-        return true;
+        entrepriseRepo.deleteById(id);
     }
 
     @Override

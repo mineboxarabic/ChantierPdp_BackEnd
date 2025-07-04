@@ -2,13 +2,13 @@ package com.danone.pdpbackend.Services.Implimetations;
 
 import com.danone.pdpbackend.Repo.ChantierRepo;
 import com.danone.pdpbackend.Repo.EntrepriseRepo;
-import com.danone.pdpbackend.Services.BdtService;
-import com.danone.pdpbackend.Services.ChantierService;
-import com.danone.pdpbackend.Services.PdpService;
-import com.danone.pdpbackend.Services.WorkerSelectionService;
+import com.danone.pdpbackend.Services.*;
 import com.danone.pdpbackend.Utils.ChantierStatus;
 import com.danone.pdpbackend.Utils.DocumentStatus;
+import com.danone.pdpbackend.Utils.NotificationType;
+import com.danone.pdpbackend.config.SecurityConfiguration;
 import com.danone.pdpbackend.entities.*;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -30,13 +30,19 @@ public class ChantierServiceImpl implements ChantierService {
     private final PdpService pdpService;
     private final BdtService bdtService;
     private final WorkerSelectionService workerSelectionService;
+    private final NotificationService notificationService;
+    private final ActivityLogService activityLogService;
+    private final SecurityConfiguration securityConfiguration;
 
-    public ChantierServiceImpl(ChantierRepo chantierRepo, EntrepriseRepo entrepriseRepo, @Lazy PdpService pdpService, @Lazy BdtService bdtService, WorkerSelectionService workerSelectionService) {
+    public ChantierServiceImpl(ChantierRepo chantierRepo, EntrepriseRepo entrepriseRepo, @Lazy PdpService pdpService, @Lazy BdtService bdtService, WorkerSelectionService workerSelectionService, NotificationService notificationService, ActivityLogService activityLogService, SecurityConfiguration securityConfiguration) {
         this.chantierRepo = chantierRepo;
         this.entrepriseRepo = entrepriseRepo;
         this.pdpService = pdpService;
         this.bdtService = bdtService;
         this.workerSelectionService = workerSelectionService;
+        this.notificationService = notificationService;
+        this.activityLogService = activityLogService;
+        this.securityConfiguration = securityConfiguration;
     }
 
     @Override
@@ -50,13 +56,32 @@ public class ChantierServiceImpl implements ChantierService {
 
         Chantier savedChantier = chantierRepo.save(updatedChantier);
         updateAssociatedDocumentStatuses(savedChantier); // Then update documents based on new chantier state
+
+            activityLogService.logActivity(
+                    "chantier.updated",
+                    savedChantier.getId(),
+                    "Chantier",
+                    "Chantier '" + savedChantier.getNom() != null ? savedChantier.getNom() : "No name"  + "' créé.",
+                    Map.of()
+            );
+
+
         return savedChantier;
     }
 
     @Override
     public Chantier create(Chantier chantier) {
         chantier.setStatus(calculateChantierStatus(chantier));
-        return chantierRepo.save(chantier);
+
+        Chantier savedChantier = chantierRepo.save(chantier);
+            activityLogService.logActivity(
+                    "chantier.created",
+                    savedChantier.getId(),
+                    "Chantier",
+                    "Chantier '" + savedChantier.getNom() != null ? savedChantier.getNom() : "No name"  + "' créé.",
+                    Map.of()
+            );
+        return savedChantier;
     }
 
     @Override
@@ -65,13 +90,12 @@ public class ChantierServiceImpl implements ChantierService {
     }
 
     @Override
-    public Boolean delete(Long id) {
-        Optional<Chantier> chantierOpt = chantierRepo.findById(id);
-        if (chantierOpt.isEmpty()) {
-            return false;
+    @Transactional
+    public void delete(Long id) {
+        if(!chantierRepo.existsById(id)){
+            throw new EntityNotFoundException("Chantier with id " + id + " not found");
         }
         chantierRepo.deleteById(id);
-        return true;
     }
 
     @Override
@@ -90,7 +114,10 @@ public class ChantierServiceImpl implements ChantierService {
 
     @Override
     public List<Chantier> getRecent() {
-        List<Chantier> chantiers = chantierRepo.findAll();
+        List<Chantier> chantiers = chantierRepo.findRecent();
+
+
+
         return chantiers.size() <= 10 ? chantiers : chantiers.subList(chantiers.size() - 10, chantiers.size());
     }
 
@@ -129,13 +156,6 @@ public class ChantierServiceImpl implements ChantierService {
         chantier.getBdts().add(bdt);
         chantier.setStatus(calculateChantierStatus(chantier)); // Update status after adding BDT
         chantierRepo.save(chantier);
-    }
-
-    @Override
-    public List<Worker> getWorkersByChantier(Long chantierId) {
-        Chantier chantier = chantierRepo.findById(chantierId)
-                .orElseThrow(() -> new IllegalArgumentException("Chantier with id " + chantierId + " not found"));
-        return chantier.getWorkers();
     }
 
 
@@ -186,6 +206,7 @@ public class ChantierServiceImpl implements ChantierService {
                     .filter(pdp ->pdpService.calculateDocumentState(pdp).getStatus() == DocumentStatus.ACTIVE).toList();
 
             if (activePdps.isEmpty()) {
+                notificationService.createNotification(NotificationType.CHANTIER_PENDING_BDT, "Le chantier '" + chantier.getNom() + "' manque un PDP actif.", chantier.getId(), "Chantier", "/view/chantier/" + chantier.getId(), "Chantier: " + chantier.getNom());
                 return ChantierStatus.PENDING_PDP;
             }
 
@@ -204,11 +225,15 @@ public class ChantierServiceImpl implements ChantierService {
             if (bdt.getStatus() == DocumentStatus.ACTIVE) { // Check if BDT is signed/ready
                 return ChantierStatus.ACTIVE;
             } else {
+                     String message = String.format("Le chantier '%s' est inactif aujourd'hui mais devrait être actif.", chantier.getNom());
+                     notificationService.createNotification(NotificationType.CHANTIER_STATUS_BAD, message, chantier.getId(), "Chantier", "/chantiers/" + chantier.getId(), "Chantier: " + chantier.getNom());
+
                 // BDT exists but isn't ready (e.g., DRAFT, NEEDS_SIGNATURES, PERMIT_NEEDED)
                 return ChantierStatus.INACTIVE_TODAY; // Work cannot proceed today
             }
         } else {
             // If past start date but no BDT, it's ready but inactive today
+            notificationService.createNotification(NotificationType.CHANTIER_PENDING_BDT, "Le chantier '" + chantier.getNom() + "' est inactif aujourd'hui mais devrait être actif.", chantier.getId(), "Chantier", "/chantiers/" + chantier.getId(), "Chantier: " + chantier.getNom());
             return ChantierStatus.PENDING_BDT; // Pending BDT
         }
 

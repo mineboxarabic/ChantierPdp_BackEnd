@@ -43,7 +43,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional // Rollback DB changes after each test
-    @Disabled
 // @TestMethodOrder(MethodOrderer.OrderAnnotation.class) // Removed order dependency
 class WorkerSelectionControllerIntegrationTest {
 
@@ -108,27 +107,30 @@ class WorkerSelectionControllerIntegrationTest {
 
     // Helper method to perform the selection API call
     private ResultActions selectWorker(Long workerId, Long chantierId, String note) throws Exception {
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("workerId", workerId);
-        requestBody.put("chantierId", chantierId);
-        requestBody.put("note", note);
+
+        WorkerChantierSelectionDTO selectionDTO = new WorkerChantierSelectionDTO();
+        selectionDTO.setWorker(workerId);
+        selectionDTO.setChantier(chantierId);
+        selectionDTO.setSelectionNote(note);
 
         return mockMvc.perform(post("/api/worker-selection/select")
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody)));
+                .content(objectMapper.writeValueAsString(selectionDTO)));
     }
 
     // Helper method to perform the deselection API call
     private ResultActions deselectWorker(Long workerId, Long chantierId) throws Exception {
-        Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("workerId", workerId);
-        requestBody.put("chantierId", chantierId);
+
+
+        WorkerChantierSelectionDTO selectionDTO = new WorkerChantierSelectionDTO();
+        selectionDTO.setWorker(workerId);
+        selectionDTO.setChantier(chantierId);
 
         return mockMvc.perform(post("/api/worker-selection/deselect")
                 .header("Authorization", "Bearer " + authToken)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody)));
+                .content(objectMapper.writeValueAsString(selectionDTO)));
     }
 
 
@@ -159,9 +161,9 @@ class WorkerSelectionControllerIntegrationTest {
         workerData.setPrenom(""+System.nanoTime());
 
         workerData.setEntreprise(testEntrepriseId);
-        this.testWorkerId = createResourceViaApi("/api/worker", workerData, new TypeReference<ApiResponse<WorkerDTO>>() {}, "id");
+        this.testWorkerId = createResourceViaApi("/api/worker/", workerData, new TypeReference<ApiResponse<WorkerDTO>>() {}, "id");
 
-        // 3. Create Chantier
+        // 3. Create ChantierE
         Map<String, Object> chantierData = new HashMap<>();
         chantierData.put("nom", "Selection Test Chantier " + System.nanoTime());
         this.testChantierId = createResourceViaApi("/api/chantier/", chantierData, new TypeReference<ApiResponse<Chantier>>() {}, "id");
@@ -295,36 +297,4 @@ class WorkerSelectionControllerIntegrationTest {
                 .andExpect(jsonPath("$.data[?(@.worker == %d && @.chantier == %d)].selectionNote", testWorkerId, testChantierId).value(updatedNote));
     }
 
-    // --- Optional Error Handling Tests ---
-    /*
-     @Test
-     void selectWorker_withInvalidWorkerId_shouldReturnNotFound() throws Exception {
-         // Arrange
-         Long invalidWorkerId = 9999L;
-         Map<String, Object> requestBody = new HashMap<>();
-         requestBody.put("workerId", invalidWorkerId);
-         requestBody.put("chantierId", testChantierId);
-         requestBody.put("note", "Should fail");
-
-         // Act & Assert
-         mockMvc.perform(post("/api/worker-selection/select")
-                         .header("Authorization", "Bearer " + authToken)
-                         .contentType(MediaType.APPLICATION_JSON)
-                         .content(objectMapper.writeValueAsString(requestBody)))
-                 .andExpect(status().isNotFound()); // Or BadRequest depending on your global exception handling
-     }
-
-    @Test
-    void getWorkersForChantier_withInvalidChantierId_shouldReturnNotFoundOrEmpty() throws Exception {
-        // Arrange
-        Long invalidChantierId = 9999L;
-
-        // Act & Assert
-        mockMvc.perform(get("/api/worker-selection/chantier/{chantierId}/workers", invalidChantierId)
-                        .header("Authorization", "Bearer " + authToken))
-                 .andExpect(status().isOk()) // Service might return empty list leading to OK
-                 .andExpect(jsonPath("$.data").isEmpty()); // Expect empty data array
-                 // Or .andExpect(status().isNotFound()); if service throws exception for not found chantier
-     }
-     */
 }

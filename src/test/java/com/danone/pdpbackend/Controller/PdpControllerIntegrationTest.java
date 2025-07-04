@@ -5,11 +5,10 @@ import com.danone.pdpbackend.Controller.auth.AuthenticationResponse;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
+import com.danone.pdpbackend.entities.Permit;
+import com.danone.pdpbackend.entities.Risque;
 import com.danone.pdpbackend.entities.Worker;
-import com.danone.pdpbackend.entities.dto.ChantierDTO;
-import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
-import com.danone.pdpbackend.entities.dto.PdpDTO;
-import com.danone.pdpbackend.entities.dto.WorkerDTO;
+import com.danone.pdpbackend.entities.dto.*;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -40,9 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ActiveProfiles("test")
 @DisplayName("PDP Controller Integration Tests")
 class PdpControllerIntegrationTest {
 
@@ -114,20 +111,6 @@ class PdpControllerIntegrationTest {
         assertEquals("Test PDP Details", retrievedPdp.getHorairesDetails());
     }
 
-    @Test
-    @DisplayName("Get workers by PDP ID - should return associated workers")
-    void getWorkersByPdpId_ShouldReturnAssociatedWorkers() throws Exception {
-        // Arrange - Use existing PDP
-        Long pdpId = testPdpId;
-
-        // Act & Assert - Get workers for PDP
-        mockMvc.perform(get("/api/pdp/{pdpId}/workers", pdpId)
-                        .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("Workers fetched")));
-
-        // Note: We don't assert on the number of workers as that would depend on test data setup
-    }
 
     @Test
     @DisplayName("Get non-existent PDP - should return 404")
@@ -222,31 +205,8 @@ class PdpControllerIntegrationTest {
         // Act & Assert - Verify bad request response
         mockMvc.perform(delete("/api/pdp/{id}", nonExistentId)
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("Pdp not found")));
+                .andExpect(status().isNotFound());
     }
-
-/*
-    @Test
-    @DisplayName("PDP Status - should update after signing")
-    void pdpStatus_ShouldUpdateAfterSigning() throws Exception {
-        // Arrange - Create a PDP that needs signatures
-        PdpDTO pdpWithSignatures = buildPdpDTO(testChantierId, testEntrepriseId, "PDP needing signatures");
-        pdpWithSignatures.setStatus(DocumentStatus.ACTION_NEEDS_SIGNATURES);
-        PdpDTO createdPdp = createPdp(pdpWithSignatures);
-        Long pdpId = createdPdp.getId();
-
-        // Act - Sign the PDP
-        signPdp(pdpId);
-
-        // Assert - Check if PDP was signed
-        PdpDTO updatedPdp = getPdpById(pdpId);
-        // Note: Update the assertion based on your actual implementation
-        // This test assumes signing a PDP somehow changes its data
-        assertNotNull(updatedPdp, "Signed PDP should still exist");
-    }
-*/
-
     @Test
     @DisplayName("Get Object Answered by PDP ID - should return items for the given object type")
     void getObjectAnsweredByPdpId_ShouldReturnItemsForGivenObjectType() throws Exception {
@@ -373,6 +333,7 @@ class PdpControllerIntegrationTest {
     private WorkerDTO buildWorkerDTO(String name, Long entrepriseId) {
         WorkerDTO dto = new WorkerDTO();
         dto.setNom(name);
+        dto.setPrenom("Test");
         dto.setEntreprise(entrepriseId);
         // Set any other required fields
         return dto;
@@ -466,8 +427,7 @@ class PdpControllerIntegrationTest {
     private void deletePdp(Long id) throws Exception {
         mockMvc.perform(delete("/api/pdp/{id}", id)
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("Pdp deleted successfully")));
+                .andExpect(status().isOk());
     }
 
     /**
@@ -499,6 +459,43 @@ class PdpControllerIntegrationTest {
         );
     }
 
+    private Risque createRisqueViaApi(String title, Boolean travailleDangereux, Boolean travaillePermit, Long permitId) throws Exception {
+        Risque risqueRequest = new Risque();
+        risqueRequest.setTitle(title);
+        risqueRequest.setTravailleDangereux(travailleDangereux);
+        risqueRequest.setTravaillePermit(travaillePermit);
+        if (permitId != null) {
+            risqueRequest.setPermitId(permitId);
+        }
+
+        MvcResult result = mockMvc.perform(post("/api/risque")
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(risqueRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+        ApiResponse<Risque> apiResponse = parseResponse(result, new TypeReference<ApiResponse<Risque>>() {});
+        assertNotNull(apiResponse.getData(), "Risque data should not be null in response");
+        assertNotNull(apiResponse.getData().getId(), "Created Risque should have an ID");
+        return apiResponse.getData();
+    }
+
+    private Permit createPermitViaApi(String title) throws Exception {
+        Permit permitRequest = new Permit();
+        permitRequest.setTitle(title);
+        // Set other Permit fields if necessary, e.g., type
+
+        MvcResult result = mockMvc.perform(post("/api/permit")
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(permitRequest)))
+                .andExpect(status().isOk())
+                .andReturn();
+        ApiResponse<Permit> apiResponse = parseResponse(result, new TypeReference<ApiResponse<Permit>>() {});
+        assertNotNull(apiResponse.getData(), "Permit data should not be null in response");
+        assertNotNull(apiResponse.getData().getId(), "Created Permit should have an ID");
+        return apiResponse.getData();
+    }
     /**
      * Parses API response into specified type
      */
@@ -529,4 +526,99 @@ class PdpControllerIntegrationTest {
                 objectMapper.getTypeFactory().constructCollectionType(List.class, clazz)
         );
     }
+
+
+    @Test
+    @DisplayName("Get Risques Without Permits - Should return risque that needs permit and has none")
+    void getRisquesWithoutPermits_shouldReturnRisqueNeedingPermitAndHasNone() throws Exception {
+        // 1. Create a Risque that is dangerous and needs a permit (travailleDangereux=true, permitId=null)
+        Risque risqueNeedingPermit = createRisqueViaApi("Dangerous Risque No Permit " + System.nanoTime(), true, true, null);
+
+        // 2. Create a Risque that is dangerous but has a permit
+        Permit permit = createPermitViaApi("Permit for Test " + System.nanoTime());
+        Risque risqueWithPermit = createRisqueViaApi("Dangerous Risque With Permit " + System.nanoTime(), true, true, permit.getId());
+
+        // 3. Create a Risque that is not dangerous
+        Risque risqueNotDangerous = createRisqueViaApi("Safe Risque " + System.nanoTime(), false, false, null);
+
+        // 4. Link these risques to the testPdpId
+        PdpDTO pdpToUpdate = getPdpById(testPdpId);
+        pdpToUpdate.setRelations(Arrays.asList(
+                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueNeedingPermit.getId()).answer(true).build(),
+                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueWithPermit.getId()).answer(true).build(),
+                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueNotDangerous.getId()).answer(true).build()
+        ));
+        updatePdp(testPdpId, pdpToUpdate);
+
+        // 5. Call the endpoint
+        MvcResult result = mockMvc.perform(get("/api/pdp/{pdpId}/risques-without-permits", testPdpId)
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message", is("items fetched")))
+                .andExpect(jsonPath("$.data", hasSize(1))) // Expecting only one
+                .andExpect(jsonPath("$.data[0].objectId", is(risqueNeedingPermit.getId().intValue())))
+                .andExpect(jsonPath("$.data[0].objectType", is("RISQUE")))
+                .andReturn();
+    }
+
+    @Test
+    @DisplayName("Get Risques Without Permits - Should return empty if all dangerous risques have permits")
+    void getRisquesWithoutPermits_shouldReturnEmptyIfAllDangerousRisquesHavePermits() throws Exception {
+        // 1. Create a Risque that is dangerous and has a permit
+        Permit permit1 = createPermitViaApi("Permit 1 " + System.nanoTime());
+        Risque risqueWithPermit1 = createRisqueViaApi("Dangerous Risque With Permit 1 " + System.nanoTime(), true, true, permit1.getId());
+
+        // 2. Create another Risque that is dangerous and also has a permit
+        Permit permit2 = createPermitViaApi("Permit 2 " + System.nanoTime());
+        Risque risqueWithPermit2 = createRisqueViaApi("Dangerous Risque With Permit 2 " + System.nanoTime(), true, true, permit2.getId());
+
+        // 3. Link these risques to the testPdpId
+        PdpDTO pdpToUpdate = getPdpById(testPdpId);
+        pdpToUpdate.setRelations(Arrays.asList(
+                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueWithPermit1.getId()).answer(true).build(),
+                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueWithPermit2.getId()).answer(true).build()
+        ));
+        updatePdp(testPdpId, pdpToUpdate);
+
+        // 4. Call the endpoint
+        mockMvc.perform(get("/api/pdp/{pdpId}/risques-without-permits", testPdpId)
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message", is("items fetched")))
+                .andExpect(jsonPath("$.data", hasSize(0))); // Expecting empty list
+    }
+
+    @Test
+    @DisplayName("Get Risques Without Permits - Should return empty if no dangerous risques")
+    void getRisquesWithoutPermits_shouldReturnEmptyIfNoDangerousRisques() throws Exception {
+        // 1. Create a Risque that is not dangerous
+        Risque safeRisque = createRisqueViaApi("Safe Risque Only " + System.nanoTime(), false, false, null);
+
+        // 2. Link this risque to the testPdpId
+        PdpDTO pdpToUpdate = getPdpById(testPdpId);
+        pdpToUpdate.setRelations(Collections.singletonList(
+                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(safeRisque.getId()).answer(true).build()
+        ));
+        updatePdp(testPdpId, pdpToUpdate);
+
+        // 3. Call the endpoint
+        mockMvc.perform(get("/api/pdp/{pdpId}/risques-without-permits", testPdpId)
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message", is("items fetched")))
+                .andExpect(jsonPath("$.data", hasSize(0))); // Expecting empty list
+    }
+
+    @Test
+    @DisplayName("Get Risques Without Permits - Should return empty if PDP has no risques linked")
+    void getRisquesWithoutPermits_shouldReturnEmptyIfPdpHasNoRisques() throws Exception {
+        // PDP is created in @BeforeEach without any relations initially.
+        // Call the endpoint
+        mockMvc.perform(get("/api/pdp/{pdpId}/risques-without-permits", testPdpId)
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message", is("items fetched")))
+                .andExpect(jsonPath("$.data", hasSize(0))); // Expecting empty list
+    }
+
 }

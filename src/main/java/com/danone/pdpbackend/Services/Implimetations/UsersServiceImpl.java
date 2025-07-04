@@ -98,4 +98,9 @@ public class UsersServiceImpl implements UserService {
     public User findById(Long id) {
         return usersRepo.findAllById(id).get(0);
     }
+
+    @Override
+    public User findByUsername(String username) {
+        return usersRepo.findByUsername(username).orElse(null); // Or findByUsername, depending on your User entity and UserService
+    }
 }

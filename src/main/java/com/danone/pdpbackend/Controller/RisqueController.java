@@ -17,7 +17,6 @@ public class RisqueController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Risque>>> getAllRisques() {
-        //return new ApiResponse<>(risqueService.getAllRisques(), "Risques fetched");
         return ResponseEntity.ok(new ApiResponse<>(risqueService.getAllRisques(), "Risques fetched"));
     }
 
@@ -41,12 +40,8 @@ public class RisqueController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Boolean>> deleteRisque(@PathVariable Long id) {
-
-        if (!risqueService.deleteRisque(id)) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(new ApiResponse<>(true, "Risque deleted"));
+    public void deleteRisque(@PathVariable Long id) {
+        risqueService.deleteRisque(id);
     }
 
     //Get Risques from a list of ids
@@ -55,4 +50,8 @@ public class RisqueController {
         List<Risque> risques = risqueService.getRisquesByIds(ids);
         return ResponseEntity.ok(new ApiResponse<>(risques, "Risques fetched"));
     }
+
+
+
+
 }

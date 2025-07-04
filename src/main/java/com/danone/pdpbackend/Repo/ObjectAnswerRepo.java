@@ -26,4 +26,6 @@ public interface ObjectAnswerRepo extends Repository<ObjectAnswered, Long> {
     List<ObjectAnswered> save(List<ObjectAnswered> list);
 
     List<ObjectAnswered> findObjectAnsweredByIdIn(List<Long> ids);
+
+    List<ObjectAnswered> findObjectAnsweredByDocumentId(Long documentId);
 }

@@ -5,7 +5,9 @@ import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.entities.BDT.ComplementOuRappel;
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -17,6 +19,8 @@ import java.util.List;
 @Entity(name = "BDT")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Bdt extends Document {
 
 
@@ -27,4 +31,9 @@ public class Bdt extends Document {
     private List<ComplementOuRappel> complementOuRappels;
 
     private LocalDate date;
+
+    public Bdt(long l) {
+        super.setId(l);
+
+    }
 }

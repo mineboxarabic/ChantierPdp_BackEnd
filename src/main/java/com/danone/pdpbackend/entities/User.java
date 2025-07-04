@@ -29,9 +29,9 @@ public class User implements UserDetails {
     private String username;
     private String password;
 
-    @OneToMany(mappedBy = "donneurDOrdre")
-    @JsonIgnore
-    private List<Chantier> chantiers;
+    public User(long l) {
+        this.id = l;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

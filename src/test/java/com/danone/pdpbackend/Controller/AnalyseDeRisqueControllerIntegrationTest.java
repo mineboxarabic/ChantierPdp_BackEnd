@@ -247,10 +247,7 @@ class AnalyseDeRisqueControllerIntegrationTest {
         // When & Then
         mockMvc.perform(delete("/api/analyseDeRisque/{id}", existingId)
                         .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("AnalyseDeRisque deleted")))
-                .andExpect(jsonPath("$.data", is(true)));
-
+                .andExpect(status().isOk());
         // Verify database state
         assertFalse(analyseDeRisqueRepo.existsById(existingId), "Entity should not exist after delete");
 

@@ -5,6 +5,8 @@ import com.danone.pdpbackend.Controller.auth.AuthenticationResponse;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.ChantierStatus;
 import com.danone.pdpbackend.entities.dto.ChantierDTO;
+import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
+import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -38,7 +40,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@ActiveProfiles("test")
 @DisplayName("Chantier Controller Integration Tests")
 class ChantierControllerIntegrationTest {
 
@@ -51,10 +52,13 @@ class ChantierControllerIntegrationTest {
     private String authToken;
     private ChantierDTO testChantier;
 
+    private HelperMethods helperMethods;
+
     @BeforeAll
-    void setup() {
+    void setup() throws Exception {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd"));
+        helperMethods = new HelperMethods(mockMvc);
     }
 
     @BeforeEach
@@ -262,8 +266,7 @@ class ChantierControllerIntegrationTest {
         // Act & Assert - Verify bad request response
         mockMvc.perform(delete("/api/chantier/{id}", nonExistentId)
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message", is("Chantier not found")));
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -312,7 +315,61 @@ class ChantierControllerIntegrationTest {
                 "Last ID should be >= our last created chantier ID");
     }
 
+
+
+
+
+    @Test
+    @DisplayName("Get all workers that are linked to a chantier - should return non-empty list")
+    void getAllWorkersByChantier_ShouldReturnNonEmptyList() throws Exception {
+        // Arrange - Create a chantier with workers
+        ChantierDTO chantier = createChantier(buildChantierDTO(
+                "Workers Chantier",
+                "Workers Operation",
+                100,
+                false
+        ));
+
+
+        EntrepriseDTO entreprise1 = helperMethods.createEntrepriseAPI("EntrepriseTest");
+        EntrepriseDTO entreprise2 = helperMethods.createEntrepriseAPI("EntrepriseTest2");
+
+
+        List<WorkerDTO> listEntreprise1 = helperMethods.createWorkers(5, entreprise1.getId());
+        List<WorkerDTO> listEntreprise2 = helperMethods.createWorkers(3, entreprise2.getId());
+
+        entreprise1.setWorkers(listEntreprise1.stream().map(WorkerDTO::getId).toList()); // Create 5 workers
+        entreprise2.setWorkers(listEntreprise2.stream().map(WorkerDTO::getId).toList()); // Create 5 workers
+
+
+        chantier.setEntrepriseExterieurs(new ArrayList<>(List.of(entreprise1.getId(), entreprise2.getId())));
+
+        ChantierDTO chantierWithWorkers = updateChantier(chantier.getId(), chantier);
+
+
+
+        // Act - Get workers by chantier ID
+        MvcResult res = mockMvc.perform(get("/api/chantier/{id}/workers", chantierWithWorkers.getId())
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message", is("Workers fetched successfully"))).andReturn();
+
+        ApiResponse<List<WorkerDTO>> response = parseResponse(res, new TypeReference<ApiResponse<List<WorkerDTO>>>() {});
+        List<WorkerDTO> workers = response.getData();
+        // Assert - Verify the list contains workers
+        assertNotNull(workers, "Should return a non-null list of workers");
+        assertFalse(workers.isEmpty(), "Should return a non-empty list of workers");
+        assertTrue(workers.size() >= 8, "Should return at least 8 workers");
+        assertTrue(workers.stream().anyMatch(w -> w.getId().equals(listEntreprise1.get(0).getId())), "Should contain workers from entreprise 1");
+        assertTrue(workers.stream().anyMatch(w -> w.getId().equals(listEntreprise2.get(0).getId())), "Should contain workers from entreprise 2");
+    }
+
+
+
+
     // ==================== Helper Methods ====================
+
+
 
     /**
      * Authenticates with the API and returns the JWT token
@@ -419,8 +476,9 @@ class ChantierControllerIntegrationTest {
     private void deleteChantier(Long id) throws Exception {
         mockMvc.perform(delete("/api/chantier/{id}", id)
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("Chantier deleted successfully")));
+                .andExpect(status().isOk());
+
+
     }
 
     /**

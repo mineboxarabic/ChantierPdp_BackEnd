@@ -5,10 +5,11 @@ import com.danone.pdpbackend.Repo.ObjectAnswerEntreprisesRepo;
 import com.danone.pdpbackend.Repo.RisqueRepo;
 import com.danone.pdpbackend.Utils.mappers.AnalyseDeRisqueMapper;
 import com.danone.pdpbackend.entities.AnalyseDeRisque;
-import com.danone.pdpbackend.entities.ObjectAnsweredEntreprises;
 import com.danone.pdpbackend.entities.Risque;
 import com.danone.pdpbackend.entities.dto.AnalyseDeRisqueDTO;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,12 +67,12 @@ class AnalyseDeRisqueServiceImplTest {
     }
 
     @Test
-    void getAllAnalyseDeRisques() {
+    void getAll() {
         // Given: Configure the mock repository to return a list of entities
         when(analyseDeRisqueRepo.findAll()).thenReturn(List.of(analyseDeRisque));
 
         // When: Call the service method
-        List<AnalyseDeRisque> result = analyseDeRisqueService.getAllAnalyseDeRisques();
+        List<AnalyseDeRisque> result = analyseDeRisqueService.getAll();
 
         // Then: Assert the result
         assertNotNull(result);
@@ -83,12 +83,12 @@ class AnalyseDeRisqueServiceImplTest {
     }
 
     @Test
-    void getAnalyseDeRisqueById_ExistingId_ShouldReturnEntity() {
+    void getById_ExistingId_ShouldReturnEntity() {
         // Given: Configure mock repository to return the entity
         when(analyseDeRisqueRepo.findAnalyseDeRisqueById(anyLong())).thenReturn(analyseDeRisque);
 
         // When: Call the service method
-        AnalyseDeRisque result = analyseDeRisqueService.getAnalyseDeRisqueById(1L);
+        AnalyseDeRisque result = analyseDeRisqueService.getById(1L);
 
         // Then: Assert the result
         assertNotNull(result);
@@ -98,12 +98,12 @@ class AnalyseDeRisqueServiceImplTest {
     }
 
     @Test
-    void getAnalyseDeRisqueById_NonExistingId_ShouldReturnNull() {
+    void getById_NonExistingId_ShouldReturnNull() {
         // Given: Configure mock repository to return null (or Optional.empty() if repo returns Optional)
         when(analyseDeRisqueRepo.findAnalyseDeRisqueById(anyLong())).thenReturn(null);
 
         // When: Call the service method
-        AnalyseDeRisque result = analyseDeRisqueService.getAnalyseDeRisqueById(99L);
+        AnalyseDeRisque result = analyseDeRisqueService.getById(99L);
 
         // Then: Assert the result is null
         assertNull(result);
@@ -112,7 +112,7 @@ class AnalyseDeRisqueServiceImplTest {
     }
 
     @Test
-    void createAnalyseDeRisque() {
+    void create() {
         // Given: Configure the mock repository's save method
         // ArgumentCaptor can be used to capture the saved entity if needed for complex assertions
         when(analyseDeRisqueRepo.save(any(AnalyseDeRisque.class))).thenReturn(analyseDeRisque);
@@ -123,7 +123,7 @@ class AnalyseDeRisqueServiceImplTest {
         newAnalyse.setDeroulementDesTaches("New Tasks");
         newAnalyse.setRisque(risque);
 
-        AnalyseDeRisque result = analyseDeRisqueService.createAnalyseDeRisque(newAnalyse);
+        AnalyseDeRisque result = analyseDeRisqueService.create(newAnalyse);
 
         // Then: Assert the result
         assertNotNull(result);
@@ -134,7 +134,7 @@ class AnalyseDeRisqueServiceImplTest {
     }
 
     @Test
-    void updateAnalyseDeRisque() {
+    void update() {
         // Given: Prepare updated details and configure mock save
         AnalyseDeRisque updatedDetails = new AnalyseDeRisque();
         updatedDetails.setId(1L); // Must match the ID being updated
@@ -146,7 +146,7 @@ class AnalyseDeRisqueServiceImplTest {
         when(analyseDeRisqueRepo.save(any(AnalyseDeRisque.class))).thenReturn(updatedDetails);
 
         // When: Call the service update method
-        AnalyseDeRisque result = analyseDeRisqueService.updateAnalyseDeRisque(1L, updatedDetails);
+        AnalyseDeRisque result = analyseDeRisqueService.update(1L, updatedDetails);
 
         // Then: Assert the result matches the updated details
         assertNotNull(result);
@@ -159,33 +159,43 @@ class AnalyseDeRisqueServiceImplTest {
 
 
     @Test
-    void deleteAnalyseDeRisque_ExistingId_ShouldReturnTrue() {
-        // Given: Mock existsById to return true and doNothing for the void deleteById
-        when(analyseDeRisqueRepo.existsById(1L)).thenReturn(true); // Simulate finding the entity via existence check
+    @DisplayName("deleteAnalyseDeRisque - When AnalyseDeRisque Exists - Should Delete Successfully")
+    void deleteAnalyseDeRisque_WhenAnalyseDeRisqueExists_ShouldDeleteSuccessfully() {
+        Long existingId = 1L; // ID of the entity to delete
+        // Given: Mock existsById to return true
+        when(analyseDeRisqueRepo.existsById(existingId)).thenReturn(true);
+        // Mock deleteById to do nothing (it's void)
+        doNothing().when(analyseDeRisqueRepo).deleteById(existingId);
 
-        // CORRECTED MOCKING: Use doNothing for the void method
-        doNothing().when(analyseDeRisqueRepo).deleteById(1L);
+        // When: Call the service delete method and assert no exception is thrown
+        assertDoesNotThrow(() -> {
+            analyseDeRisqueService.delete(existingId); // Corrected method name
+        }, "Deletion should not throw an exception when entity exists, nom d'un chien! (Good heavens!)");
 
-        // When: Call the service delete method
-        Boolean result = analyseDeRisqueService.deleteAnalyseDeRisque(1L);
-
-        // Then: Assert the result is true and verify interactions
-        assertTrue(result);
-        verify(analyseDeRisqueRepo, times(1)).existsById(1L); // Verify existence check
-        verify(analyseDeRisqueRepo, times(1)).deleteById(1L); // Verify delete was called
+        // Then: Verify interactions
+        verify(analyseDeRisqueRepo, times(1)).existsById(existingId);
+        verify(analyseDeRisqueRepo, times(1)).deleteById(existingId);
     }
 
     @Test
-    void deleteAnalyseDeRisque_NonExistingId_ShouldReturnFalse() {
+    @DisplayName("deleteAnalyseDeRisque - When AnalyseDeRisque Does Not Exist - Should Throw EntityNotFoundException")
+    void deleteAnalyseDeRisque_WhenAnalyseDeRisqueDoesNotExist_ShouldThrowEntityNotFoundException() {
         // Given: Mock existsById to return false
-        when(analyseDeRisqueRepo.existsById(99L)).thenReturn(false); // Simulate not finding
+        Long nonExistingId = 99L; // ID of the entity that does not exist
+        when(analyseDeRisqueRepo.existsById(nonExistingId)).thenReturn(false);
 
-        // When: Call the service delete method
-        Boolean result = analyseDeRisqueService.deleteAnalyseDeRisque(99L);
+        // When & Then: Call the service delete method and assert EntityNotFoundException is thrown
+        EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () -> {
+            analyseDeRisqueService.delete(nonExistingId); // Corrected method name
+        }, "Should throw EntityNotFoundException if entity does not exist. Sacrebleu!");
 
-        // Then: Assert the result is false and verify deleteById was NOT called
-        assertFalse(result);
-        verify(analyseDeRisqueRepo, times(1)).existsById(99L); // Verify existence check
-        verify(analyseDeRisqueRepo, never()).deleteById(anyLong()); // Verify delete was NOT called
+        assertTrue(exception.getMessage().contains("Analyse De RisqueRepo with id " + nonExistingId + " not found"));
+
+        // Verify that existsById was called
+        verify(analyseDeRisqueRepo, times(1)).existsById(nonExistingId);
+        // Verify that deleteById was NOT called
+        verify(analyseDeRisqueRepo, never()).deleteById(anyLong());
     }
+
+
 }

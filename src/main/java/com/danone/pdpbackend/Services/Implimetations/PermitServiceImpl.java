@@ -3,6 +3,8 @@ package com.danone.pdpbackend.Services.Implimetations;
 import com.danone.pdpbackend.Repo.PermitRepo;
 import com.danone.pdpbackend.Services.PermitService;
 import com.danone.pdpbackend.entities.Permit;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -51,10 +53,12 @@ public class PermitServiceImpl implements PermitService {
     }
 
     @Override
-    public boolean deletePermit(Long id) {
-        log.info("Deleting permit with id: " + id);
-        permitRepo.deleteById(id);
-        return true;
+    @Transactional
+    public void delete(Long id) {
+            if(!permitRepo.existsById(id)){
+                throw new EntityNotFoundException("Permi with id " + id + " not found");
+            }
+            permitRepo.deleteById(id);
     }
 
     @Override

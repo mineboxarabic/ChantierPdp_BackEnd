@@ -7,8 +7,4 @@ public enum ChantierStatus {
     COMPLETED, //This completed is for the chantier (So that we know the chantier of this  is completed)
     CANCELED, //If the chantier is canceled
     INACTIVE_TODAY, //BDT is not present or not signed
-
-    //Might Add in the fututre
-    //EXPIRED, //If the chantier is expired
-    //SUSPENDED, //If the chantier is suspended
 }

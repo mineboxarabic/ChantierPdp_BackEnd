@@ -14,6 +14,7 @@ public interface UsersRepo extends Repository<User, Long>
     List<User> findAll();
     List<User> findAllBy();
 
+    Optional<User> findById(Long id);
 
     Optional<User> findByUsername(String username);
     

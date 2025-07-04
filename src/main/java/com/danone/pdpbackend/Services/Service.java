@@ -11,7 +11,7 @@ public interface Service<T> {
 
     T update(Long id, T entityDetails);
 
-    Boolean delete(Long id);
+    void delete(Long id);
 
     List<T> getByIds(List<Long> ids);
 }
