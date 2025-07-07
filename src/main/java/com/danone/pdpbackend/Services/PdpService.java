@@ -1,17 +1,13 @@
 package com.danone.pdpbackend.Services;
 
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
-import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.Utils.Image.ImageModel;
 import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.ObjectAnswered;
 import com.danone.pdpbackend.entities.dto.PdpDTO;
-import com.danone.pdpbackend.entities.dto.DocumentSignatureStatusDTO;
 import jakarta.transaction.Transactional;
-import org.springframework.security.core.parameters.P;
 
 import java.util.List;
-import java.util.Map;
 
 public interface PdpService extends CommonDocumentServiceInterface<Pdp> {
     Pdp update(Long id, Pdp pdp);
@@ -35,22 +31,5 @@ public interface PdpService extends CommonDocumentServiceInterface<Pdp> {
 
 
 
-    /**
-     * Manually triggers the check for expired PDPs and initiates renewal if needed.
-     * (Alternatively, this logic could be in a separate scheduled service).
-     */
-    void triggerPdpRenewalCheck();
 
-    List<ObjectAnswered> getRisquesWithoutPermits(Long pdpId);
-
-    // Signature methods
-    @Transactional
-    Pdp signDocument(Long pdpId, Long workerId, ImageModel signatureImage);
-
-    @Transactional
-    Pdp removeSignature(Long pdpId, Long signatureId);
-
-    DocumentSignatureStatusDTO getSignatureStatus(Long pdpId);
-
-    boolean isDocumentFullySigned(Long pdpId);
 }

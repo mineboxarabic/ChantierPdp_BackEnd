@@ -1,12 +1,14 @@
 package com.danone.pdpbackend.Controller;
 
 
+import com.danone.pdpbackend.Services.SignatureService;
 import com.danone.pdpbackend.Services.WorkerService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.mappers.WorkerMapper;
-import com.danone.pdpbackend.entities.Worker;
+import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
 import com.danone.pdpbackend.entities.dto.WorkerDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,11 +20,14 @@ import java.util.List;
 public class WorkerController {
     private final WorkerService workerService;
     private final WorkerMapper workerMapper;
+    private final SignatureService signatureService;
 
-    public WorkerController(WorkerService workerService, WorkerMapper workerMapper) {
+    public WorkerController(WorkerService workerService, WorkerMapper workerMapper, SignatureService signatureService) {
         this.workerService = workerService;
         this.workerMapper = workerMapper;
+        this.signatureService = signatureService;
     }
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<WorkerDTO>>> getAllWorkers() {
         if(workerService.getAll().isEmpty()) {
@@ -72,6 +77,27 @@ public class WorkerController {
         return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTO(workerService.getById(id)), "Worker fetched"));
     }
 
+    @PostMapping("/{workerId}/sign")
+    public ResponseEntity<ApiResponse<String>> signDocument(@PathVariable Long workerId,
+            @RequestBody SignatureRequestDTO signatureRequest) {
+        try {
+            signatureRequest.setWorkerId(workerId);
+            signatureService.signDocument(signatureRequest);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(null,"Document signed successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(null,e.getMessage()));
+        }
+    }
 
-
+    @DeleteMapping("/{workerId}/unsign/{signatureId}")
+    public ResponseEntity<ApiResponse<String>> unsignDocument(
+            @PathVariable Long workerId,
+            @PathVariable Long signatureId) {
+        try {
+            signatureService.unSignDocument(workerId, signatureId);
+            return ResponseEntity.ok(new ApiResponse<>(null,"Document unsigned successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(null,e.getMessage()));
+        }
+    }
 }

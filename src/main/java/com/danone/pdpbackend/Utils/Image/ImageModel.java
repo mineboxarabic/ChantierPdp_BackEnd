@@ -18,4 +18,12 @@ public class ImageModel {
     @JsonProperty("imageData")
     @Column(name = "image_data")
     private byte[] imageData;
+
+    public ImageModel(byte[] signatureImageBytes) {
+        this.imageData = signatureImageBytes;
+    }
+
+    public ImageModel() {
+
+    }
 }

@@ -5,14 +5,12 @@ import com.danone.pdpbackend.Repo.*;
 import com.danone.pdpbackend.Services.*;
 
 import com.danone.pdpbackend.Utils.ActionType;
-import com.danone.pdpbackend.Utils.ChantierStatus;
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.Utils.Image.ImageModel;
 import com.danone.pdpbackend.Utils.mappers.PdpMapper;
 import com.danone.pdpbackend.entities.*;
 import com.danone.pdpbackend.entities.dto.PdpDTO;
-import com.danone.pdpbackend.entities.dto.DocumentSignatureStatusDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -188,6 +186,11 @@ public class PdpServiceImpl implements PdpService {
     }
 
     @Override
+    public Document addSignature(Long documentId, DocumentSignature documentSignature) {
+        return null;
+    }
+
+    @Override
     public Pdp calculateDocumentState(Long documentId) {
         Pdp document = pdpRepo.findById(documentId).orElse(null);
         if (document == null) {
@@ -201,181 +204,8 @@ public class PdpServiceImpl implements PdpService {
 
 
 
-    @Override
-    @Transactional
-    public void triggerPdpRenewalCheck() {
-        // This implements the logic directly. Alternatively, call PdpMaintenanceService.
-        log.info("Starting annual PDP check...");
-        LocalDate oneYearAgo = LocalDate.now().minusYears(1);
 
-        // Find PDPs to renew (needs custom query or filter)
-        // Example: Find READY or COMPLETED ones older than a year
-        List<Pdp> pdpsToRenew = pdpRepo.findByStatusInAndCreationDateBefore(
-                List.of(DocumentStatus.ACTIVE, DocumentStatus.COMPLETED), oneYearAgo
-        );
-        // Fallback filter if no custom query:
-         /*
-         List<Pdp> pdpsToRenew = pdpRepo.findAll().stream()
-             .filter(pdp -> pdp.getCreationDate() != null && pdp.getCreationDate().isBefore(oneYearAgo))
-             .filter(pdp -> pdp.getStatus() == DocumentStatus.READY || pdp.getStatus() == DocumentStatus.COMPLETED)
-             .toList();
-         */
 
-        log.info("Found {} PDPs requiring renewal.", pdpsToRenew.size());
-
-        for (Pdp oldPdp : pdpsToRenew) {
-            try {
-                log.info("Renewing PDP ID {}.", oldPdp.getId());
-                oldPdp.setStatus(DocumentStatus.EXPIRED); // Mark old one as expired
-                pdpRepo.save(oldPdp);
-
-                Pdp newPdp = copyPdpForRenewal(oldPdp);
-                create(newPdp); // Use the create method to save the new one (handles relations, initial status etc)
-                log.info("Renewal complete for old PDP ID {}. New PDP created.", oldPdp.getId());
-                // updateAndSavePdpStatus(createdNewPdp.getId()); // Ensure status is correct after creation if needed
-
-            } catch (Exception e) {
-                log.error("Error renewing PDP ID {}: {}", oldPdp.getId(), e.getMessage(), e);
-            }
-        }
-        log.info("Finished annual PDP check.");
-    }
-
-    @Override
-    public List<ObjectAnswered> getRisquesWithoutPermits(Long pdpId) {
-        return objectAnswerRepo.findRisquesWithoutPermitsByPdpId(pdpId);
-    }
-
-    // Signature methods implementation
-    @Override
-    @Transactional
-    public Pdp signDocument(Long pdpId, Long workerId, ImageModel signatureImage) {
-        Pdp pdp = pdpRepo.findById(pdpId)
-                .orElseThrow(() -> new EntityNotFoundException("PDP not found with id: " + pdpId));
-
-        Worker worker = workerSelectionService.getWorkerById(workerId);
-        if (worker == null) {
-            throw new IllegalArgumentException("Worker not found with id: " + workerId);
-        }
-
-        // Check if worker is assigned to this chantier
-        if (!workerSelectionService.isWorkerAssignedToChantier(workerId, pdp.getChantier().getId())) {
-            throw new IllegalArgumentException("Worker is not assigned to this chantier");
-        }
-
-        // Check if worker has already signed this document
-        boolean alreadySigned = pdp.getSignatures().stream()
-                .anyMatch(sig -> sig.getWorker().getId().equals(workerId) && sig.isActive());
-
-        if (alreadySigned) {
-            throw new IllegalArgumentException("Worker has already signed this document");
-        }
-
-        // Create signature
-        DocumentSignature signature = new DocumentSignature();
-        signature.setDocument(pdp);
-        signature.setWorker(worker);
-        signature.setSignatureVisual(signatureImage);
-        signature.setActive(true);
-
-        pdp.getSignatures().add(signature);
-
-        // Update document status based on signature completion
-        updateDocumentStatusAfterSignature(pdp);
-
-        return pdpRepo.save(pdp);
-    }
-
-    @Override
-    @Transactional
-    public Pdp removeSignature(Long pdpId, Long signatureId) {
-        Pdp pdp = pdpRepo.findById(pdpId)
-                .orElseThrow(() -> new EntityNotFoundException("PDP not found with id: " + pdpId));
-
-        DocumentSignature signature = pdp.getSignatures().stream()
-                .filter(sig -> sig.getId().equals(signatureId))
-                .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Signature not found with id: " + signatureId));
-
-        signature.setActive(false);
-
-        // Update document status after removing signature
-        updateDocumentStatusAfterSignature(pdp);
-
-        return pdpRepo.save(pdp);
-    }
-
-    @Override
-    public DocumentSignatureStatusDTO getSignatureStatus(Long pdpId) {
-        Pdp pdp = pdpRepo.findById(pdpId)
-                .orElseThrow(() -> new EntityNotFoundException("PDP not found with id: " + pdpId));
-
-        List<Worker> requiredWorkers = workerSelectionService.getWorkersByChantier(pdp.getChantier().getId());
-
-        List<DocumentSignatureStatusDTO.SignatureInfoDTO> signatures = pdp.getSignatures().stream()
-                .filter(DocumentSignature::isActive)
-                .map(sig -> new DocumentSignatureStatusDTO.SignatureInfoDTO(
-                        sig.getId(),
-                        sig.getWorker().getId(),
-                        sig.getWorker().getNom() + " " + sig.getWorker().getPrenom(),
-                        sig.getSignatureDate().toString(),
-                        sig.isActive()
-                ))
-                .collect(Collectors.toList());
-
-        List<DocumentSignatureStatusDTO.WorkerSignatureStatusDTO> workerStatuses = requiredWorkers.stream()
-                .map(worker -> {
-                    boolean hasSigned = pdp.getSignatures().stream()
-                            .anyMatch(sig -> sig.getWorker().getId().equals(worker.getId()) && sig.isActive());
-
-                    return new DocumentSignatureStatusDTO.WorkerSignatureStatusDTO(
-                            worker.getId(),
-                            worker.getNom() + " " + worker.getPrenom(),
-                            worker.getRole(),
-                            hasSigned
-                    );
-                })
-                .collect(Collectors.toList());
-
-        List<DocumentSignatureStatusDTO.WorkerSignatureStatusDTO> missingSignatures = workerStatuses.stream()
-                .filter(ws -> !ws.isHasSigned())
-                .collect(Collectors.toList());
-
-        int requiredSignatures = requiredWorkers.size();
-        int currentSignatures = signatures.size();
-        boolean isFullySigned = currentSignatures >= requiredSignatures;
-
-        return new DocumentSignatureStatusDTO(
-                pdpId,
-                "PDP",
-                requiredSignatures,
-                currentSignatures,
-                isFullySigned,
-                signatures,
-                missingSignatures
-        );
-    }
-
-    @Override
-    public boolean isDocumentFullySigned(Long pdpId) {
-        DocumentSignatureStatusDTO status = getSignatureStatus(pdpId);
-        return status.isFullySigned();
-    }
-
-    private void updateDocumentStatusAfterSignature(Pdp pdp) {
-        boolean isFullySigned = isDocumentFullySigned(pdp.getId());
-
-        if (isFullySigned) {
-            pdp.setStatus(DocumentStatus.SIGNED);
-            pdp.setActionType(ActionType.NONE);
-
-            // Update chantier status if needed
-            updateChantierStatusAfterDocumentSigned(pdp);
-        } else {
-            pdp.setStatus(DocumentStatus.NEEDS_SIGNATURES);
-            pdp.setActionType(ActionType.SIGN);
-        }
-    }
 
     private void updateChantierStatusAfterDocumentSigned(Pdp pdp) {
         Chantier chantier = pdp.getChantier();

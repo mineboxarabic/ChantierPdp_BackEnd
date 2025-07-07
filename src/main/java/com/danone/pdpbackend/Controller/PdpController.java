@@ -10,7 +10,6 @@ import com.danone.pdpbackend.entities.Pdp;
 import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
 import com.danone.pdpbackend.entities.dto.PdpDTO;
 import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
-import com.danone.pdpbackend.entities.dto.DocumentSignatureStatusDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -96,42 +95,10 @@ public class PdpController {
     }
 
 
-    @PostMapping("/sign/{pdpId}")
-    public ResponseEntity<ApiResponse<PdpDTO>> signPdp(@PathVariable Long pdpId, @RequestBody SignatureRequestDTO signatureRequest)
-    {
-        try {
-            Pdp signedPdp = pdpService.signDocument(pdpId, signatureRequest.getWorkerId(), signatureRequest.getSignatureImage());
-            return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(signedPdp), "PDP signed successfully"));
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid signature request for PDP {}: {}", pdpId, e.getMessage());
-            return ResponseEntity.badRequest().body(new ApiResponse<>(null, e.getMessage()));
-        } catch (Exception e) {
-            log.error("Error signing PDP {}", pdpId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(null, "Error signing PDP"));
-        }
-    }
 
-    @GetMapping("/{pdpId}/signature-status")
-    public ResponseEntity<ApiResponse<DocumentSignatureStatusDTO>> getPdpSignatureStatus(@PathVariable Long pdpId) {
-        try {
-            DocumentSignatureStatusDTO status = pdpService.getSignatureStatus(pdpId);
-            return ResponseEntity.ok(new ApiResponse<>(status, "PDP signature status retrieved"));
-        } catch (Exception e) {
-            log.error("Error getting PDP signature status for {}", pdpId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(null, "Error getting signature status"));
-        }
-    }
 
-    @DeleteMapping("/{pdpId}/signatures/{signatureId}")
-    public ResponseEntity<ApiResponse<PdpDTO>> removePdpSignature(@PathVariable Long pdpId, @PathVariable Long signatureId) {
-        try {
-            Pdp pdp = pdpService.removeSignature(pdpId, signatureId);
-            return ResponseEntity.ok(new ApiResponse<>(pdpMapper.toDTO(pdp), "Signature removed successfully"));
-        } catch (Exception e) {
-            log.error("Error removing signature {} from PDP {}", signatureId, pdpId, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(null, "Error removing signature"));
-        }
-    }
+
+
 
 
 
@@ -142,9 +109,6 @@ public class PdpController {
     }
 
 
-    @GetMapping("/{pdpId}/risques-without-permits")
-    public ResponseEntity<ApiResponse<List<ObjectAnsweredDTO>>> getRisquesWithoutPermits(@PathVariable Long pdpId) {
-        return ResponseEntity.ok(new ApiResponse<>(objectAnsweredMapper.toDTOList(pdpService.getRisquesWithoutPermits(pdpId)), "items fetched"));
-    }
+
 
 }

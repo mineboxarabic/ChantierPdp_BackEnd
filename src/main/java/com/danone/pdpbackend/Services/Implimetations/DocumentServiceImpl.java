@@ -183,40 +183,31 @@ public class DocumentServiceImpl implements DocumentService{
         if (document == null) {
             throw new IllegalArgumentException("Document not found");
         }
-        //1.Check if the document has a chantier first
+
+        // 1. Check if the document has a chantier first
         if (document.getChantier() != null) {
             try {
-                // Get the chantier from the db and check it's status, and apply it to the document
                 chantierStatus = chantierService.getById(document.getChantier().getId()).getStatus();
                 if (chantierStatus == ChantierStatus.COMPLETED) {
                     document.setStatus(DocumentStatus.COMPLETED);
                     document.setActionType(ActionType.NONE);
                     return document;
-                }
-                else if (chantierStatus == ChantierStatus.CANCELED){
+                } else if (chantierStatus == ChantierStatus.CANCELED) {
                     document.setStatus(DocumentStatus.CANCELED);
                     document.setActionType(ActionType.NONE);
                     return document;
-
                 }
             } catch (Exception e) {
                 log.warn("Could not determine status for Chantier {} linked to Document {}", document.getChantier(), document.getId(), e);
             }
-        }else{
+        } else {
             log.warn("Document {} has no associated chantier ID.", document.getId());
             document.setStatus(DocumentStatus.DRAFT);
             document.setActionType(ActionType.NONE);
             return document;
-
         }
 
-
-        //TODO:Check Expiry for PDP not BDT
-
-
-
-
-        // 2. Check Signatures - signatures has the priority over permits
+        // 2. Check Signatures - signatures have priority over permits
         List<Worker> assignedWorkers = List.of();
         if (document.getChantier() != null) {
             try {
@@ -258,7 +249,7 @@ public class DocumentServiceImpl implements DocumentService{
                 .filter(r -> r.getObjectType() == ObjectAnsweredObjects.RISQUE)
                 .map(r -> {
                     try { return risqueService.getRisqueById(r.getObjectId()); }
-                    catch (Exception e) { log.warn("Could not find Risque {} for PDP {}", r.getObjectId(), document.getId()); return null; }
+                    catch (Exception e) { log.warn("Could not find Risque {} for Document {}", r.getObjectId(), document.getId()); return null; }
                 })
                 .filter(Objects::nonNull)
                 .filter(risque -> risque.getTravaillePermit() != null && risque.getTravaillePermit())
@@ -275,7 +266,7 @@ public class DocumentServiceImpl implements DocumentService{
                 .filter(r -> r.getObjectType() == ObjectAnsweredObjects.RISQUE)
                 .map(r -> {
                     try { return risqueService.getRisqueById(r.getObjectId()); }
-                    catch (Exception e) { log.warn("Could not find Risque {} for PDP {}", r.getObjectId(), document.getId()); return null; }
+                    catch (Exception e) { log.warn("Could not find Risque {} for Document {}", r.getObjectId(), document.getId()); return null; }
                 })
                 .filter(Objects::nonNull)
                 .filter(risque -> risque.getTravaillePermit() != null && risque.getTravaillePermit())
@@ -284,21 +275,19 @@ public class DocumentServiceImpl implements DocumentService{
 
         if (!requiredPermitIds.isEmpty()) {
             Set<Long> linkedPermitObjectIds = document.getRelations().stream()
-                    .filter(r -> r.getObjectType() == ObjectAnsweredObjects.PERMIT && r.getAnswer() != null && r.getAnswer()) // Check if linked and marked as addressed/valid
+                    .filter(r -> r.getObjectType() == ObjectAnsweredObjects.PERMIT && r.getAnswer() != null && r.getAnswer())
                     .map(ObjectAnswered::getObjectId)
                     .collect(Collectors.toSet());
 
-            // Check if all *required* permits (based on risks) are linked and marked valid in the PDP relations
             permitsNeeded = !requiredPermitIds.stream().allMatch(linkedPermitObjectIds::contains);
-            // This is a simplified check. You might need to fetch Permit entities and check their validity dates/status.
         }
 
         if (permitsNeeded) {
             document.setStatus(DocumentStatus.NEEDS_ACTION);
             document.setActionType(ActionType.PERMIT_MISSING);
             return document;
-
         }
+
         // 4. If not Completed, Permit Needed, or Needs Signatures -> Ready
         document.setStatus(DocumentStatus.ACTIVE);
         document.setActionType(ActionType.NONE);

@@ -30,5 +30,11 @@ public class ObjectAnswered {
 
     Boolean eu;
 
-
+    public ObjectAnswered(long id, ObjectAnsweredObjects objectType, boolean answer, long objectId, Boolean ee) {
+        this.id = id;
+        this.objectType = objectType;
+        this.answer = answer;
+        this.objectId = objectId;
+        this.ee = ee;
+    }
 }

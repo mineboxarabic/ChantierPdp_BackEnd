@@ -1,0 +1,22 @@
+package com.danone.pdpbackend.Controller;
+
+import com.danone.pdpbackend.Services.SignatureService;
+import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/signature")
+@RequiredArgsConstructor
+public class SignatureController {
+
+    private final SignatureService signatureService;
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<String>> signDocument(@RequestBody SignatureRequestDTO signatureRequest) {
+        signatureService.signDocument(signatureRequest);
+        return ResponseEntity.ok(new ApiResponse<>(null,"Signature saved successfully"));
+    }
+}

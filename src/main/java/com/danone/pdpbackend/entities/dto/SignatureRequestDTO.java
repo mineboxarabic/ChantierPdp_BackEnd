@@ -1,10 +1,12 @@
 package com.danone.pdpbackend.entities.dto;
 
-import com.danone.pdpbackend.Utils.Image.ImageModel;
 import lombok.Data;
 
 @Data
 public class SignatureRequestDTO {
     private Long workerId;
-    private ImageModel signatureImage;
+    private Long documentId;
+    private String name;
+    private String lastName;
+    private String signatureImage; // Base64 encoded image
 }

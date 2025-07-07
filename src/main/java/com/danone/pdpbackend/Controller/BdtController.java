@@ -6,10 +6,8 @@ import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.mappers.BdtMapper;
 import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.dto.BdtDTO;
-import com.danone.pdpbackend.entities.dto.DocumentSignatureStatusDTO;
 import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -86,39 +84,5 @@ public class BdtController {
         return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTOList(bdts), "BDTs fetched successfully"));
     }
 
-    @PostMapping("/{bdtId}/sign")
-    public ResponseEntity<ApiResponse<BdtDTO>> signBdt(@PathVariable Long bdtId, @RequestBody SignatureRequestDTO signatureRequest) {
-        try {
-            Bdt signedBdt = bdtService.signDocument(bdtId, signatureRequest.getWorkerId(), signatureRequest.getSignatureImage());
-            return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTO(signedBdt), "BDT signed successfully"));
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid signature request for BDT {}: {}", bdtId, e.getMessage());
-            return ResponseEntity.badRequest().body(new ApiResponse<>(null, e.getMessage()));
-        } catch (Exception e) {
-            log.error("Error signing BDT {}", bdtId, e);
-            return ResponseEntity.status(500).body(new ApiResponse<>(null, "Error signing BDT"));
-        }
-    }
 
-    @GetMapping("/{bdtId}/signature-status")
-    public ResponseEntity<ApiResponse<DocumentSignatureStatusDTO>> getBdtSignatureStatus(@PathVariable Long bdtId) {
-        try {
-            DocumentSignatureStatusDTO status = bdtService.getSignatureStatus(bdtId);
-            return ResponseEntity.ok(new ApiResponse<>(status, "BDT signature status retrieved"));
-        } catch (Exception e) {
-            log.error("Error getting BDT signature status for {}", bdtId, e);
-            return ResponseEntity.status(500).body(new ApiResponse<>(null, "Error getting signature status"));
-        }
-    }
-
-    @DeleteMapping("/{bdtId}/signatures/{signatureId}")
-    public ResponseEntity<ApiResponse<BdtDTO>> removeBdtSignature(@PathVariable Long bdtId, @PathVariable Long signatureId) {
-        try {
-            Bdt bdt = bdtService.removeSignature(bdtId, signatureId);
-            return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTO(bdt), "Signature removed successfully"));
-        } catch (Exception e) {
-            log.error("Error removing signature {} from BDT {}", signatureId, bdtId, e);
-            return ResponseEntity.status(500).body(new ApiResponse<>(null, "Error removing signature"));
-        }
-    }
 }

@@ -45,6 +45,8 @@ create table localisation (
 
 create table chantier (
                           id bigint not null primary key,
+                          created_at timestamp, -- Added missing column
+                          updated_at timestamp, -- Added missing column
                           date_debut timestamp,
                           date_fin timestamp,
                           effectif_maxi_sur_chantier int,
@@ -72,7 +74,8 @@ create table document (
                           date date,
                           status varchar(255) check (status in ('DRAFT', 'ACTIVE', 'COMPLETED', 'EXPIRED', 'CANCELED', 'NEEDS_ACTION')),
                           chantier_id bigint references chantier,
-                          entreprise_exterieure_id bigint references entreprise
+                          entreprise_exterieure_id bigint references entreprise,
+                          last_update date
 );
 
 create table bdt (

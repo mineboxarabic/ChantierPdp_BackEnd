@@ -1,7 +1,7 @@
 package com.danone.pdpbackend.Repo;
 
-import com.danone.pdpbackend.entities.User;
 import com.danone.pdpbackend.entities.Worker;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 
@@ -29,5 +29,5 @@ public interface WorkerRepo extends Repository<Worker, Long> {
     List<Worker> findWorkersByIdIn(Collection<Long> ids);
 
 
-    Boolean existsById(Long id);
+    boolean existsById(Long id);
 }
