@@ -127,6 +127,7 @@ create table risque (
                         mime_type varchar(255),
                         title varchar(255),
                         permit_id bigint,
+                        permit_type varchar(255),
                         travaille_dangereux boolean,
                         travaille_permit boolean
 );

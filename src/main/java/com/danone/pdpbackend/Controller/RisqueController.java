@@ -3,6 +3,8 @@ package com.danone.pdpbackend.Controller;
 import com.danone.pdpbackend.Services.RisqueService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.entities.Risque;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/risque")
 public class RisqueController {
+    private static final Logger log = LoggerFactory.getLogger(RisqueController.class);
     @Autowired
     private RisqueService risqueService;
 
@@ -27,6 +30,7 @@ public class RisqueController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Risque>> createRisque(@RequestBody Risque risque) {
+    log.info("Creating new Risque: {}", risque);
         return ResponseEntity.ok(new ApiResponse<>(risqueService.createRisque(risque), "Risque created"));
     }
 
@@ -40,8 +44,9 @@ public class RisqueController {
     }
 
     @DeleteMapping("/{id}")
-    public void deleteRisque(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteRisque(@PathVariable Long id) {
         risqueService.deleteRisque(id);
+        return ResponseEntity.ok(new ApiResponse<>(null, "Risque deleted"));
     }
 
     //Get Risques from a list of ids

@@ -20,7 +20,6 @@ public class Risque extends InfoDeBase{
     public Long permitId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "permit_type")
     private PermiTypes permitType;
 
     private Date createdAt;

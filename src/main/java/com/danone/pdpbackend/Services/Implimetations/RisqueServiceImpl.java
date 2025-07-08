@@ -5,6 +5,8 @@ import com.danone.pdpbackend.Services.RisqueService;
 import com.danone.pdpbackend.entities.Risque;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,7 @@ import java.util.Optional;
 
 @Service
 public class RisqueServiceImpl implements RisqueService {
+    private static final Logger log = LoggerFactory.getLogger(RisqueServiceImpl.class);
     private final RisqueRepo risqueRepo;
 
 
@@ -34,7 +37,12 @@ public class RisqueServiceImpl implements RisqueService {
 
     @Override
     public Risque createRisque(Risque risque) {
-        return risqueRepo.save(risque);
+
+
+        log.info("Creating new Risque: {}", risque);
+        Risque savedRisque = risqueRepo.save(risque);
+        log.info("Risque created with PermitType: {}", savedRisque.getPermitType());
+        return savedRisque;
     }
 
     @Override
@@ -58,7 +66,7 @@ public class RisqueServiceImpl implements RisqueService {
             }
         }
 
-        return risqueRepo.save(risqueDetails);
+        return risqueRepo.save(risque.get()); // Fix: save the updated entity, not risqueDetails
     }
 
     @Override

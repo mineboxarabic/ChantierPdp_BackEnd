@@ -2,7 +2,6 @@ package com.danone.pdpbackend.Utils;
 
 import jakarta.persistence.Embeddable;
 
-@Embeddable
 public enum PermiTypes {
     NONE,
     FOUILLE, //Permis de travail spécifique en fouille
