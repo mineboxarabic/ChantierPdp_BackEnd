@@ -11,3 +11,4 @@ public enum PermiTypes {
     HAUTEUR, //Permis de travail spécifique en hauteur
     TOITURE; //Permis de travail spécifique en toiture
 }
+

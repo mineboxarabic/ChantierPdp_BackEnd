@@ -464,9 +464,7 @@ class PdpControllerIntegrationTest {
         risqueRequest.setTitle(title);
         risqueRequest.setTravailleDangereux(travailleDangereux);
         risqueRequest.setTravaillePermit(travaillePermit);
-        if (permitId != null) {
-            risqueRequest.setPermitId(permitId);
-        }
+
 
         MvcResult result = mockMvc.perform(post("/api/risque")
                         .header("Authorization", "Bearer " + authToken)

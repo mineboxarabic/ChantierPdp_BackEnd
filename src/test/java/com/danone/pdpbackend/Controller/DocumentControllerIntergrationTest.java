@@ -229,13 +229,12 @@ public class DocumentControllerIntergrationTest {
                 .andExpect(status().isOk());
     }
 
-    private Risque createRisqueAPI(String title, boolean travaillePermit, Long permitIdToLink) throws Exception {
+    private Risque createRisqueAPI(String title, boolean travaillePermit, PermiTypes permiType) throws Exception {
         Risque risque = new Risque();
         risque.setTitle(title);
         risque.setTravaillePermit(travaillePermit);
-        if (travaillePermit && permitIdToLink != null) {
-            risque.setPermitId(permitIdToLink);
-        }
+        risque.setPermitType(permiType);
+
         MvcResult result = mockMvc.perform(post("/api/risque")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(risque))
@@ -736,7 +735,7 @@ public class DocumentControllerIntergrationTest {
 
         // Create a Permit and a Risque that requires this permit
     //    Permit permitEntity = createPermitAPI("Test Permit For PDP", PermiTypes.FOUILLE);
-        Risque risqueEntity = createRisqueAPI("Risque Requiring Permit", true, null);
+        Risque risqueEntity = createRisqueAPI("Risque Requiring Permit", true, PermiTypes.ATEX);
         // Link the Risque to the PDP, but NOT the permit itself
 
 
@@ -744,6 +743,7 @@ public class DocumentControllerIntergrationTest {
         risqueRelation.setObjectType(ObjectAnsweredObjects.RISQUE);
         risqueRelation.setObjectId(risqueEntity.getId());
         risqueRelation.setAnswer(true);
+
 
 
         pdp.setRelations(Collections.singletonList(risqueRelation));
@@ -782,7 +782,7 @@ public class DocumentControllerIntergrationTest {
 
         // Create a Permit and a Risque that requires this permit
         //    Permit permitEntity = createPermitAPI("Test Permit For PDP", PermiTypes.FOUILLE);
-        Risque risqueEntity = createRisqueAPI("Risque Requiring Permit", true, null);
+        Risque risqueEntity = createRisqueAPI("Risque Requiring Permit", true, PermiTypes.ATEX);
         // Link the Risque to the PDP, but NOT the permit itself
 
 
@@ -863,7 +863,7 @@ public class DocumentControllerIntergrationTest {
 
         // Create a permit and risque with proper linking
         Permit permitEntity = createPermitAPI("Test Complete Permit", PermiTypes.FOUILLE);
-        Risque risqueEntity = createRisqueAPI("Risque With Valid Permit", true, permitEntity.getId());
+        Risque risqueEntity = createRisqueAPI("Risque With Valid Permit", true, PermiTypes.FOUILLE);
 
         // Link both the risque and permit to the document
         ObjectAnsweredDTO risqueRelation = new ObjectAnsweredDTO();
@@ -911,7 +911,7 @@ public class DocumentControllerIntergrationTest {
 
         // Create a permit and risque with proper linking
         Permit permitEntity = createPermitAPI("Test PermitsOk Permit", PermiTypes.FOUILLE);
-        Risque risqueEntity = createRisqueAPI("Risque With Valid Permit", true, permitEntity.getId());
+        Risque risqueEntity = createRisqueAPI("Risque With Valid Permit", true, PermiTypes.ATEX);
 
         // Link both the risque and permit to the document
         ObjectAnsweredDTO risqueRelation = new ObjectAnsweredDTO();
@@ -1020,14 +1020,178 @@ public class DocumentControllerIntergrationTest {
                 "PDP should prioritize missing signatures over missing permits");
     }
 
+    @Test
+    @DisplayName("Test deleting object answered in PDP by setting answer to null")
+    @Transactional
+    void testPdp_DeleteObjectAnsweredBySettingAnswerToNull() throws Exception {
+        // Create the necessary test data
+        ChantierDTO chantier = createChantierAPI("Chantier for ObjectAnswered Null Test", defaultEntrepriseId,
+                new Date(), new Date(System.currentTimeMillis() + 86400000 * 7),
+                50, false);
+
+        PdpDTO pdp = createPdpAPI(chantier.getId(), defaultEntrepriseId);
+
+        // Create a risk to be associated with the PDP
+        Risque risqueEntity = createRisqueAPI("Risque for Deletion Test", true, PermiTypes.ATEX);
+
+        // Create and add the risk relation to the PDP
+        ObjectAnsweredDTO risqueRelation = new ObjectAnsweredDTO();
+        risqueRelation.setObjectType(ObjectAnsweredObjects.RISQUE);
+        risqueRelation.setObjectId(risqueEntity.getId());
+        risqueRelation.setAnswer(true); // Initially, the risk is answered as true
+
+        pdp.setRelations(Collections.singletonList(risqueRelation));
+
+        // Update the PDP to add the relation
+        PdpDTO updatedPdp = updatePdpAPI(pdp.getId(), pdp);
+
+        // Verify that the relation was added successfully
+        PdpDTO fetchedPdp = getPdpByIdAPI(updatedPdp.getId());
+        assertEquals(1, fetchedPdp.getRelations().size(),
+                "PDP should have one relation");
+
+        // Now "delete" the relation by setting its answer to null
+        ObjectAnsweredDTO deletedRelation = fetchedPdp.getRelations().get(0);
+        deletedRelation.setAnswer(null);
+
+        // Create a new list with just the "deleted" relation
+        pdp.setRelations(Collections.singletonList(deletedRelation));
+
+        // Update the PDP with the "deleted" relation
+        PdpDTO pdpWithDeletedRelation = updatePdpAPI(pdp.getId(), pdp);
+
+        // Fetch the updated PDP and verify the relation was deleted
+        PdpDTO finalPdp = getPdpByIdAPI(pdpWithDeletedRelation.getId());
+
+        // The behavior should be that either:
+        // 1. The relation is completely removed from the list
+        // 2. OR the relation remains but with a null answer
+        if (!finalPdp.getRelations().isEmpty()) {
+            // If relations list is not empty, check that the answer is null
+            assertNull(finalPdp.getRelations().get(0).getAnswer(),
+                    "The relation's answer should be null");
+        } else {
+            // If relations list is empty, the relation was completely removed
+            assertEquals(0, finalPdp.getRelations().size(),
+                    "Relation should be removed when answer is set to null");
+        }
+    }
+
+    @Test
+    @DisplayName("Test deleting object answered in BDT by setting answer to null")
+    @Transactional
+    void testBdt_DeleteObjectAnsweredBySettingAnswerToNull() throws Exception {
+        // Create the necessary test data
+        ChantierDTO chantier = createChantierAPI("Chantier for BDT ObjectAnswered Null Test", defaultEntrepriseId,
+                new Date(), new Date(System.currentTimeMillis() + 86400000 * 7),
+                50, false);
+
+        BdtDTO bdt = createBdtAPI(chantier.getId(), defaultEntrepriseId, LocalDate.now());
+
+        // Create a risk to be associated with the BDT
+        Risque risqueEntity = createRisqueAPI("Risque for BDT Deletion Test", true, PermiTypes.ATEX);
+
+        // Create and add the risk relation to the BDT
+        ObjectAnsweredDTO risqueRelation = new ObjectAnsweredDTO();
+        risqueRelation.setObjectType(ObjectAnsweredObjects.RISQUE);
+        risqueRelation.setObjectId(risqueEntity.getId());
+        risqueRelation.setAnswer(true); // Initially, the risk is answered as true
+
+        bdt.setRelations(Collections.singletonList(risqueRelation));
+
+        // Update the BDT to add the relation
+        BdtDTO updatedBdt = updateBdtAPI(bdt.getId(), bdt);
+
+        // Verify that the relation was added successfully
+        BdtDTO fetchedBdt = getBdtByIdAPI(updatedBdt.getId());
+        assertEquals(1, fetchedBdt.getRelations().size(),
+                "BDT should have one relation");
+
+        // Now "delete" the relation by setting its answer to null
+        ObjectAnsweredDTO deletedRelation = fetchedBdt.getRelations().get(0);
+        deletedRelation.setAnswer(null);
+
+        // Create a new list with just the "deleted" relation
+        bdt.setRelations(Collections.singletonList(deletedRelation));
+
+        // Update the BDT with the "deleted" relation
+        BdtDTO bdtWithDeletedRelation = updateBdtAPI(bdt.getId(), bdt);
+
+        // Fetch the updated BDT and verify the relation was deleted
+        BdtDTO finalBdt = getBdtByIdAPI(bdtWithDeletedRelation.getId());
 
 
 
+            // If relations list is empty, the relation was completely removed
+            assertEquals(0, finalBdt.getRelations().size(),
+                    "Relation should be removed when answer is set to null");
+
+    }
+
+    @Test
+    @DisplayName("Test deleting multiple object answered in PDP by setting answer to null")
+    @Transactional
+    void testPdp_DeleteMultipleObjectAnsweredBySettingAnswerToNull() throws Exception {
+        // Create the necessary test data
+        ChantierDTO chantier = createChantierAPI("Chantier for Multiple ObjectAnswered Null Test", defaultEntrepriseId,
+                new Date(), new Date(System.currentTimeMillis() + 86400000 * 7),
+                50, false);
+
+        PdpDTO pdp = createPdpAPI(chantier.getId(), defaultEntrepriseId);
+
+        // Create multiple risks to be associated with the PDP
+        Risque risqueEntity1 = createRisqueAPI("Risque 1 for Deletion Test", true, PermiTypes.ATEX);
+        Risque risqueEntity2 = createRisqueAPI("Risque 2 for Deletion Test", false, null);
+
+        // Create and add risk relations to the PDP
+        ObjectAnsweredDTO risqueRelation1 = new ObjectAnsweredDTO();
+        risqueRelation1.setObjectType(ObjectAnsweredObjects.RISQUE);
+        risqueRelation1.setObjectId(risqueEntity1.getId());
+        risqueRelation1.setAnswer(true);
+
+        ObjectAnsweredDTO risqueRelation2 = new ObjectAnsweredDTO();
+        risqueRelation2.setObjectType(ObjectAnsweredObjects.RISQUE);
+        risqueRelation2.setObjectId(risqueEntity2.getId());
+        risqueRelation2.setAnswer(false);
+
+        List<ObjectAnsweredDTO> relations = new ArrayList<>();
+        relations.add(risqueRelation1);
+        relations.add(risqueRelation2);
+
+        pdp.setRelations(relations);
+
+        // Update the PDP to add the relations
+        PdpDTO updatedPdp = updatePdpAPI(pdp.getId(), pdp);
+
+        // Verify that both relations were added successfully
+        PdpDTO fetchedPdp = getPdpByIdAPI(updatedPdp.getId());
+        assertEquals(2, fetchedPdp.getRelations().size(),
+                "PDP should have two relations");
+
+        // Now "delete" only the first relation by setting its answer to null
+        List<ObjectAnsweredDTO> updatedRelations = new ArrayList<>(fetchedPdp.getRelations());
+        updatedRelations.get(0).setAnswer(null); // Set first relation's answer to null
+
+        pdp.setRelations(updatedRelations);
+
+        // Update the PDP with one "deleted" relation
+        PdpDTO pdpWithOneDeletedRelation = updatePdpAPI(pdp.getId(), pdp);
+
+        // Fetch the updated PDP and verify the correct relation was deleted
+        PdpDTO finalPdp = getPdpByIdAPI(pdpWithOneDeletedRelation.getId());
+
+        // Depending on implementation, either the relation is removed or its answer is null
+        if (finalPdp.getRelations().size() == 1) {
+            // If only one relation remains, it should be the second one
+            ObjectAnsweredDTO remainingRelation = finalPdp.getRelations().get(0);
+            assertEquals(risqueEntity2.getId(), remainingRelation.getObjectId(),
+                    "The remaining relation should be the second one (not deleted)");
+            assertFalse(remainingRelation.getAnswer(),
+                    "The remaining relation should have its original answer (false)");
+        }else{
+            fail("Expected only one relation to remain after deletion, but found: " + finalPdp.getRelations().size());
+        }
+    }
 
 
-    //Test two workers, the first signture is to one of them the second is to onother that is not to one of them what behevior we expect
-    //Test signed and permits are ok
-    //Test not signed and permits are ok
-    //Test signed and permits are not ok - DONE
-    //Test not signed and permits are not ok
 }

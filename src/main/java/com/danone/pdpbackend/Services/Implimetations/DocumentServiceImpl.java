@@ -27,7 +27,11 @@ public class DocumentServiceImpl implements DocumentService{
     private final NotificationService notificationService;
     private final SecurityConfiguration securityConfiguration;
     private final ActivityLogService activityLogService;
-    public DocumentServiceImpl(DocumentRepo documentRepo, ChantierService chantierService, ObjectAnswerRepo objectAnswerRepo, RisqueService risqueService, WorkerSelectionService workerSelectionService, NotificationService notificationService, SecurityConfiguration securityConfiguration, ActivityLogService activityLogService) {
+    private final PermitService permitService;
+
+    public DocumentServiceImpl(DocumentRepo documentRepo, ChantierService chantierService, ObjectAnswerRepo objectAnswerRepo,
+            RisqueService risqueService, WorkerSelectionService workerSelectionService, NotificationService notificationService,
+            SecurityConfiguration securityConfiguration, ActivityLogService activityLogService, PermitService permitService) {
         this.documentRepo = documentRepo;
         this.chantierService = chantierService;
         this.objectAnswerRepo = objectAnswerRepo;
@@ -36,6 +40,7 @@ public class DocumentServiceImpl implements DocumentService{
         this.notificationService = notificationService;
         this.securityConfiguration = securityConfiguration;
         this.activityLogService = activityLogService;
+        this.permitService = permitService;
     }
 
     @Override
@@ -243,43 +248,47 @@ public class DocumentServiceImpl implements DocumentService{
         }
 
 
-        // 3. Check Permits based on linked Risks
+        // 3. Check Permits based on linked permits to the document itself
         boolean permitsNeeded = false;
-        Boolean isThereNullPermits = document.getRelations().stream()
+        List<Risque> risquesWithPermitType = document.getRelations().stream()
                 .filter(r -> r.getObjectType() == ObjectAnsweredObjects.RISQUE)
                 .map(r -> {
                     try { return risqueService.getRisqueById(r.getObjectId()); }
-                    catch (Exception e) { log.warn("Could not find Risque {} for Document {}", r.getObjectId(), document.getId()); return null; }
+                    catch (Exception e) {
+                        log.warn("Could not find Risque {} for Document {}", r.getObjectId(), document.getId());
+                        return null;
+                    }
                 })
                 .filter(Objects::nonNull)
-                .filter(risque -> risque.getTravaillePermit() != null && risque.getTravaillePermit())
-                .map(Risque::getPermitId)
-                .anyMatch(Objects::isNull);
-
-        if (isThereNullPermits) {
-            document.setStatus(DocumentStatus.NEEDS_ACTION);
-            document.setActionType(ActionType.PERMIT_MISSING);
-            return document;
-        }
-
-        List<Long> requiredPermitIds = document.getRelations().stream()
-                .filter(r -> r.getObjectType() == ObjectAnsweredObjects.RISQUE)
-                .map(r -> {
-                    try { return risqueService.getRisqueById(r.getObjectId()); }
-                    catch (Exception e) { log.warn("Could not find Risque {} for Document {}", r.getObjectId(), document.getId()); return null; }
-                })
-                .filter(Objects::nonNull)
-                .filter(risque -> risque.getTravaillePermit() != null && risque.getTravaillePermit())
-                .map(Risque::getPermitId)
+                .filter(risque -> risque.getTravaillePermit() != null && risque.getTravaillePermit() && risque.getPermitType() != null)
                 .toList();
 
-        if (!requiredPermitIds.isEmpty()) {
-            Set<Long> linkedPermitObjectIds = document.getRelations().stream()
-                    .filter(r -> r.getObjectType() == ObjectAnsweredObjects.PERMIT && r.getAnswer() != null && r.getAnswer())
-                    .map(ObjectAnswered::getObjectId)
+        if (!risquesWithPermitType.isEmpty()) {
+            Set<PermiTypes> requiredPermitTypes = risquesWithPermitType.stream()
+                    .map(risque -> {
+                        try {
+                            return risque.getPermitType();
+                        } catch (IllegalArgumentException e) {
+                            log.warn("Invalid permit type {} for Risque {}", risque.getPermitType(), risque.getId());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
 
-            permitsNeeded = !requiredPermitIds.stream().allMatch(linkedPermitObjectIds::contains);
+            Set<PermiTypes> linkedPermitTypes = document.getRelations().stream()
+                    .filter(r -> r.getObjectType() == ObjectAnsweredObjects.PERMIT && r.getAnswer() != null && r.getAnswer())
+                    .map(r -> {
+                        try { return permitService.getPermitById(r.getObjectId()).getType(); }
+                        catch (Exception e) {
+                            log.warn("Could not find Permit {} for Document {}", r.getObjectId(), document.getId());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            permitsNeeded = !requiredPermitTypes.stream().allMatch(linkedPermitTypes::contains);
         }
 
         if (permitsNeeded) {

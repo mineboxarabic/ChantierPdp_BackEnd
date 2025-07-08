@@ -17,7 +17,6 @@ import java.util.List;
 public class Risque extends InfoDeBase{
     private Boolean travailleDangereux;
     private Boolean travaillePermit;
-    public Long permitId;
 
     @Enumerated(EnumType.STRING)
     private PermiTypes permitType;

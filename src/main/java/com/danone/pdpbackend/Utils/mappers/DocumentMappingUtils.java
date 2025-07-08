@@ -140,7 +140,9 @@ public class DocumentMappingUtils {
                 .filter(oa -> oa.getId() != null)
                 .collect(Collectors.toMap(ObjectAnswered::getId, Function.identity()));
 
-        List<ObjectAnswered> finalItems = newList.stream().map(newItem -> {
+        List<ObjectAnswered> finalItems = newList.stream()
+                .filter(item -> item.getAnswer() != null)
+                .map(newItem -> {
             if (newItem.getId() != null && existingMap.containsKey(newItem.getId())) {
                 ObjectAnswered existingItem = existingMap.get(newItem.getId());
                 // Manually update or use mapper

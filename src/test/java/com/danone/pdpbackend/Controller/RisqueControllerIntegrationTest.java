@@ -58,7 +58,6 @@ public class RisqueControllerIntegrationTest {
         testRisque = new Risque();
         testRisque.setTravailleDangereux(true);
         testRisque.setTravaillePermit(true);
-        testRisque.setPermitId(123L);
         testRisque.setPermitType(PermiTypes.ATEX);
     }
 
@@ -108,7 +107,6 @@ public class RisqueControllerIntegrationTest {
         Risque savedRisque = risqueRepo.findRisqueById(createdId);
         assertNotNull(savedRisque);
         assertEquals(PermiTypes.ATEX, savedRisque.getPermitType());
-        assertEquals(123L, savedRisque.getPermitId());
         assertTrue(savedRisque.getTravailleDangereux());
         assertTrue(savedRisque.getTravaillePermit());
     }
@@ -125,7 +123,6 @@ public class RisqueControllerIntegrationTest {
         // Create update data with new permitType
         Risque updateData = new Risque();
         updateData.setPermitType(PermiTypes.HAUTEUR);
-        updateData.setPermitId(456L);
         updateData.setTravailleDangereux(true);
         updateData.setTravaillePermit(true);
 
@@ -150,7 +147,6 @@ public class RisqueControllerIntegrationTest {
         Risque updatedRisque = risqueRepo.findRisqueById(savedRisque.getId());
         assertNotNull(updatedRisque);
         assertEquals(PermiTypes.HAUTEUR, updatedRisque.getPermitType());
-        assertEquals(456L, updatedRisque.getPermitId());
         assertTrue(updatedRisque.getTravailleDangereux());
         assertTrue(updatedRisque.getTravaillePermit());
     }
@@ -162,7 +158,6 @@ public class RisqueControllerIntegrationTest {
         initialRisque.setTravailleDangereux(false);
         initialRisque.setTravaillePermit(true);
         initialRisque.setPermitType(PermiTypes.ESPACE_CONFINE);
-        initialRisque.setPermitId(789L);
         Risque savedRisque = risqueRepo.save(initialRisque);
 
         // Create partial update data (without permitType)
@@ -190,7 +185,6 @@ public class RisqueControllerIntegrationTest {
         Risque updatedRisque = risqueRepo.findRisqueById(savedRisque.getId());
         assertNotNull(updatedRisque);
         assertEquals(PermiTypes.ESPACE_CONFINE, updatedRisque.getPermitType()); // Should remain unchanged
-        assertEquals(789L, updatedRisque.getPermitId()); // Should remain unchanged
         assertTrue(updatedRisque.getTravailleDangereux()); // Should be updated
         assertTrue(updatedRisque.getTravaillePermit()); // Should remain unchanged
     }
@@ -200,13 +194,11 @@ public class RisqueControllerIntegrationTest {
         // Given - Create initial risque with permitType
         Risque initialRisque = new Risque();
         initialRisque.setPermitType(PermiTypes.LEVAGE);
-        initialRisque.setPermitId(999L);
         Risque savedRisque = risqueRepo.save(initialRisque);
 
         // Create update data with explicitly null permitType
         Risque updateData = new Risque();
         updateData.setPermitType(null);
-        updateData.setPermitId(null);
 
         String updateJson = objectMapper.writeValueAsString(updateData);
 
@@ -223,7 +215,6 @@ public class RisqueControllerIntegrationTest {
         assertNotNull(updatedRisque);
         // The permitType should remain unchanged because null values are ignored
         assertEquals(PermiTypes.LEVAGE, updatedRisque.getPermitType());
-        assertEquals(999L, updatedRisque.getPermitId());
     }
 
     @Test
@@ -244,7 +235,6 @@ public class RisqueControllerIntegrationTest {
 
         assertNotNull(response.getData());
         assertEquals(PermiTypes.ATEX, response.getData().getPermitType());
-        assertEquals(123L, response.getData().getPermitId());
     }
 
     @Test
@@ -252,11 +242,9 @@ public class RisqueControllerIntegrationTest {
         // Given - Create multiple risques with different permitTypes
         Risque risque1 = new Risque();
         risque1.setPermitType(PermiTypes.ATEX);
-        risque1.setPermitId(111L);
 
         Risque risque2 = new Risque();
         risque2.setPermitType(PermiTypes.HAUTEUR);
-        risque2.setPermitId(222L);
 
         risqueRepo.save(risque1);
         risqueRepo.save(risque2);
@@ -282,10 +270,8 @@ public class RisqueControllerIntegrationTest {
         for (Risque risque : response.getData()) {
             if (PermiTypes.ATEX.equals(risque.getPermitType())) {
                 foundAtex = true;
-                assertEquals(111L, risque.getPermitId());
             } else if (PermiTypes.HAUTEUR.equals(risque.getPermitType())) {
                 foundHauteur = true;
-                assertEquals(222L, risque.getPermitId());
             }
         }
 

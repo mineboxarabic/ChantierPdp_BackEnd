@@ -73,7 +73,6 @@ class DocumentServiceImplTest {
         Risque risque1 = new Risque();
         risque1.setId(1L);
         risque1.setTravaillePermit(true);
-        risque1.setPermitId(null); // Missing permit
 
         Risque risque2 = new Risque();
         risque2.setId(2L);
@@ -100,7 +99,6 @@ class DocumentServiceImplTest {
         Risque risque1 = new Risque();
         risque1.setId(1L);
         risque1.setTravaillePermit(true);
-        risque1.setPermitId(100L); // Permit provided
 
         Risque risque2 = new Risque();
         risque2.setId(2L);
@@ -121,3 +119,5 @@ class DocumentServiceImplTest {
         verify(risqueService, times(1)).getRisqueById(2L);
     }
 }
+
+

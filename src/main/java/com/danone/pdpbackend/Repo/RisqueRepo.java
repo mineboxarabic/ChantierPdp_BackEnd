@@ -29,6 +29,4 @@ public interface RisqueRepo extends Repository<Risque,Long> {
         Long count();
 
     boolean existsById(Long id);
-
-    List<Risque> findRisqueByTravailleDangereuxIsTrueAndPermitIdIsNull();
 }
