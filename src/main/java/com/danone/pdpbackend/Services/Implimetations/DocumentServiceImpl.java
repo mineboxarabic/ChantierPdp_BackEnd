@@ -28,10 +28,11 @@ public class DocumentServiceImpl implements DocumentService{
     private final SecurityConfiguration securityConfiguration;
     private final ActivityLogService activityLogService;
     private final PermitService permitService;
+    private final DocumentSignatureService documentSignatureService;
 
     public DocumentServiceImpl(DocumentRepo documentRepo, ChantierService chantierService, ObjectAnswerRepo objectAnswerRepo,
-            RisqueService risqueService, WorkerSelectionService workerSelectionService, NotificationService notificationService,
-            SecurityConfiguration securityConfiguration, ActivityLogService activityLogService, PermitService permitService) {
+                               RisqueService risqueService, WorkerSelectionService workerSelectionService, NotificationService notificationService,
+                               SecurityConfiguration securityConfiguration, ActivityLogService activityLogService, PermitService permitService, DocumentSignatureService documentSignatureService) {
         this.documentRepo = documentRepo;
         this.chantierService = chantierService;
         this.objectAnswerRepo = objectAnswerRepo;
@@ -41,6 +42,7 @@ public class DocumentServiceImpl implements DocumentService{
         this.securityConfiguration = securityConfiguration;
         this.activityLogService = activityLogService;
         this.permitService = permitService;
+        this.documentSignatureService = documentSignatureService;
     }
 
     @Override
@@ -232,14 +234,12 @@ public class DocumentServiceImpl implements DocumentService{
         }
 
         if (!assignedWorkers.isEmpty()) {
-            List<Worker> signedWorkers = document.getSignatures().stream()
-                    .filter(signature -> signature.getWorker() != null)
-                    .map(DocumentSignature::getWorker).toList();
+            List<Worker> signedWorkers = documentSignatureService.getSignedWorkersByDocument(document.getId());
 
             Set<Long> assignedWorkerIds = assignedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
             Set<Long> signedWorkerIds = signedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
 
-            boolean allSigned = assignedWorkerIds.stream().allMatch(signedWorkerIds::contains);
+            boolean allSigned = signedWorkerIds.containsAll(assignedWorkerIds);
             if (!allSigned) {
                 document.setStatus(DocumentStatus.NEEDS_ACTION);
                 document.setActionType(ActionType.SIGHNATURES_MISSING);

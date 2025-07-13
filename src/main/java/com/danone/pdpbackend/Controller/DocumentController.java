@@ -1,6 +1,6 @@
 package com.danone.pdpbackend.Controller;
 
-import com.danone.pdpbackend.Services.SignatureService;
+import com.danone.pdpbackend.Services.DocumentSignatureService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 public class DocumentController {
 
-    private final SignatureService signatureService;
+    private final DocumentSignatureService documentSignatureService;
 
     @PostMapping("/{documentId}/sign")
     public ResponseEntity<ApiResponse<String>> signDocument(
@@ -23,7 +23,7 @@ public class DocumentController {
             @RequestBody SignatureRequestDTO signatureRequest) {
         try {
             signatureRequest.setDocumentId(documentId);
-            signatureService.signDocument(signatureRequest);
+            documentSignatureService.signDocument(signatureRequest);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(null, "Document signed successfully"));
         } catch (IllegalArgumentException e) {
@@ -36,13 +36,13 @@ public class DocumentController {
         }
     }
 
-    @DeleteMapping("/{documentId}/unsign/{signatureId}")
+
+    @DeleteMapping("/worker/{workerId}/unsign/{signatureId}")
     public ResponseEntity<ApiResponse<String>> unsignDocument(
-            @PathVariable Long documentId,
             @PathVariable Long signatureId,
-            @RequestParam Long workerId) {
+            @PathVariable Long workerId) {
         try {
-            signatureService.unSignDocument(workerId, signatureId);
+            documentSignatureService.unSignDocument(workerId, signatureId);
             return ResponseEntity.ok(new ApiResponse<>(null,"Document unsigned successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -54,17 +54,15 @@ public class DocumentController {
         }
     }
 
-    @PostMapping("/{documentId}/sign/worker/{workerId}")
-    public ResponseEntity<ApiResponse<String>> signDocumentByWorker(
-            @PathVariable Long documentId,
-            @PathVariable Long workerId,
-            @RequestBody SignatureRequestDTO signatureRequest) {
+    @PostMapping("/worker/sign")
+    public ResponseEntity<ApiResponse<Long>> signDocumentByWorker(
+            @RequestBody SignatureRequestDTO signatureRequest) 
+            {
+                
         try {
-            signatureRequest.setDocumentId(documentId);
-            signatureRequest.setWorkerId(workerId);
-            signatureService.signDocument(signatureRequest);
+            Long signatureId = documentSignatureService.signDocumentByWorkerAndReturnId(signatureRequest);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse<>(null,"Document signed by worker successfully"));
+                    .body(new ApiResponse<>(signatureId,"Document signed by worker successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(null,e.getMessage()));
@@ -74,4 +72,39 @@ public class DocumentController {
                     .body(new ApiResponse<>(null,"Internal server error"));
         }
     }
+
+    @PostMapping("/user/sign")
+    public ResponseEntity<ApiResponse<Long>> signDocumentByUser(
+            @RequestBody SignatureRequestDTO signatureRequest) {
+        try {
+            Long signatureId = documentSignatureService.signDocumentByUser(signatureRequest);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse<>(signatureId,"Document signed by user successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(null,e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error signing document by user: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null,"Internal server error"));
+        }
+    }
+
+    @DeleteMapping("/user/{userId}/unsign/{signatureId}")
+    public ResponseEntity<ApiResponse<String>> unsignDocumentByUser(
+            @PathVariable Long signatureId,
+            @PathVariable Long userId) {
+        try {
+            documentSignatureService.unSignDocumentByUser(userId, signatureId);
+            return ResponseEntity.ok(new ApiResponse<>(null,"Document unsigned by user successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(null,e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error unsigning document by user: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null,"Internal server error"));
+        }
+    }
+
 }

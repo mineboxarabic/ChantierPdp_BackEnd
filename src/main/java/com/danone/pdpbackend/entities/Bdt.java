@@ -34,6 +34,5 @@ public class Bdt extends Document {
 
     public Bdt(long l) {
         super.setId(l);
-
     }
 }

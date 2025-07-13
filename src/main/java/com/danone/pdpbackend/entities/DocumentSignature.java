@@ -25,8 +25,14 @@ public class DocumentSignature {
     private Document document; // Link back to the specific document (Pdp, Bdt, etc.)
 
     @ManyToOne(fetch = FetchType.LAZY) // Use Lazy fetching
-    @JoinColumn(name = "worker_id", nullable = false)
+    @JoinColumn(name = "worker_id", nullable = true)
     private Worker worker; // Link to the worker who signed
+
+
+    @ManyToOne(fetch = FetchType.LAZY) // Use Lazy fetching
+    @JoinColumn(name = "user_id", nullable = true)
+    private User user; // Link to the user who performed the signing action
+
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false)
@@ -35,9 +41,6 @@ public class DocumentSignature {
     @Embedded // Embed the visual signature data
     private ImageModel signatureVisual;
 
-    // Optional: Add a field to denote the role if needed for specific cases
-    // E.g., for BDTs, you might still want to know if it was 'ChargeDeTravail'
-    // private String signerRole;
 
     @Column(nullable = false)
     private boolean active = true; // Flag to handle "unsigning"

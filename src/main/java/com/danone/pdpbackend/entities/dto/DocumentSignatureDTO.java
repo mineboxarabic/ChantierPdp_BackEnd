@@ -15,6 +15,7 @@ public class DocumentSignatureDTO {
     private Long id;
     private Long documentId; // ID of the Document (Pdp, Bdt, etc.)
     private Long workerId; // ID of the Worker who signed
+    private Long userId; // ID of the User who performed the signing action
     private String workerName; // Optional: For display purposes on the frontend
     private Date signatureDate;
     private ImageModel signatureVisual; // The visual signature data
@@ -22,7 +23,7 @@ public class DocumentSignatureDTO {
     private boolean active = true; // Status of the signature
 
     // Constructor without workerName if not always needed immediately
-    public DocumentSignatureDTO(Long id, Long documentId, Long workerId, Date signatureDate, ImageModel signatureVisual, String signerRole, boolean active) {
+    public DocumentSignatureDTO(Long id, Long documentId, Long workerId, Date signatureDate, ImageModel signatureVisual, String signerRole, boolean active, Long userId) {
         this.id = id;
         this.documentId = documentId;
         this.workerId = workerId;
@@ -30,5 +31,6 @@ public class DocumentSignatureDTO {
         this.signatureVisual = signatureVisual;
         this.signerRole = signerRole;
         this.active = active;
+        this.userId = userId; // Initialize userId
     }
 }

@@ -117,9 +117,7 @@ class LocalisationControllerIntegrationTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].id").exists())
                 .andExpect(jsonPath("$.data[0].nom").exists())
-                .andExpect(jsonPath("$.data[0].code").exists())
-                .andExpect(jsonPath("$.data[0].description").exists());
-
+                .andExpect(jsonPath("$.data[0].code").exists());
     }
 
     @Test

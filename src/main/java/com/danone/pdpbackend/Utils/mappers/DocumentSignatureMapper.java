@@ -1,11 +1,13 @@
 package com.danone.pdpbackend.Utils.mappers;
 
+import com.danone.pdpbackend.Repo.UsersRepo;
 import com.danone.pdpbackend.Services.CommonDocumentServiceInterface; // Assuming a service to get Document by ID
 import com.danone.pdpbackend.Services.DocumentService;
 import com.danone.pdpbackend.Services.Implimetations.DocumentServiceImpl;
 import com.danone.pdpbackend.Services.WorkerService; // Assuming a service to get Worker by ID
 import com.danone.pdpbackend.entities.Document;
 import com.danone.pdpbackend.entities.DocumentSignature;
+import com.danone.pdpbackend.entities.User;
 import com.danone.pdpbackend.entities.Worker;
 import com.danone.pdpbackend.entities.dto.DocumentSignatureDTO;
 import lombok.RequiredArgsConstructor; // Use Lombok for constructor injection
@@ -23,6 +25,7 @@ public class DocumentSignatureMapper implements Mapper<DocumentSignatureDTO, Doc
     private final CommonDocumentServiceInterface<Document> commonDocumentServiceInterface; // Use generic if applicable
     private final WorkerService workerService;
     private final DocumentService documentService;
+    private final UsersRepo usersRepo;
 
     @Override
     public void setDTOFields(DocumentSignatureDTO dto, DocumentSignature entity) {
@@ -43,6 +46,12 @@ public class DocumentSignatureMapper implements Mapper<DocumentSignatureDTO, Doc
             dto.setWorkerId(entity.getWorker().getId());
             // Optionally set worker name for display
             dto.setWorkerName(entity.getWorker().getPrenom() + " " + entity.getWorker().getNom());
+        }
+
+        if(entity.getUser() != null){
+            dto.setUserId(entity.getUser().getId()); // Assuming User is a field in DocumentSignature
+        } else {
+            dto.setUserId(null);
         }
     }
 
@@ -83,6 +92,18 @@ public class DocumentSignatureMapper implements Mapper<DocumentSignatureDTO, Doc
             }
         } else {
             entity.setWorker(null); // Explicitly set to null if ID is null
+        }
+
+        if(dto.getUserId() != null){
+            // Only fetch if the user isn't already set or differs
+            if (entity.getUser() == null || !entity.getUser().getId().equals(dto.getUserId())) {
+                // Assuming a UserService exists to fetch User by ID
+                User user = usersRepo.findById(dto.getUserId())
+                        .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + dto.getUserId()));
+                entity.setUser(user);
+            }
+        }else{
+            entity.setUser(null); // Explicitly set to null if ID is null
         }
     }
 

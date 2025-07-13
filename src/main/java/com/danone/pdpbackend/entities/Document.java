@@ -14,7 +14,7 @@ import java.util.List;
 @Inheritance(strategy = InheritanceType.JOINED) // or SINGLE_TABLE if you prefer
 @Getter
 @Setter
-public abstract class Document {
+public class Document {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     private Long id;

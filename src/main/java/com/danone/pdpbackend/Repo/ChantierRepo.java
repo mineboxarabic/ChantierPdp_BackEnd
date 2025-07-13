@@ -56,4 +56,10 @@ public interface ChantierRepo extends Repository<Chantier, Integer> {
     //Query to find recent chantiers sorted by date
     @Query("SELECT c FROM Chantier c ORDER BY c.createdAt DESC")
     List<Chantier> findRecent();
+
+
+
+
+    @Query("SELECT c FROM Chantier c WHERE :documentId MEMBER OF c.pdps OR :documentId MEMBER OF c.bdts")
+    Optional<Chantier> findChantierByDocumentId(Long documentId);
 }

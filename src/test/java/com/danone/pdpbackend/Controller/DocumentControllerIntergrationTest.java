@@ -6,6 +6,7 @@ import com.danone.pdpbackend.entities.Permit;
 import com.danone.pdpbackend.entities.Risque;
 import com.danone.pdpbackend.entities.dto.*;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.transaction.Transactional;
@@ -18,6 +19,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+
+import static org.junit.jupiter.api.Assertions.*;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.time.LocalDate;
@@ -220,6 +223,7 @@ public class DocumentControllerIntergrationTest {
         WorkerChantierSelectionDTO requestDTO = new WorkerChantierSelectionDTO();
         requestDTO.setWorker(workerId);
         requestDTO.setChantier(chantierId);
+        requestDTO.setIsSelected(true);
 
 
         mockMvc.perform(post("/api/worker-selection/select")
@@ -257,11 +261,12 @@ public class DocumentControllerIntergrationTest {
         return objectMapper.readValue(result.getResponse().getContentAsString(), new TypeReference<ApiResponse<Permit>>() {}).getData();
     }
 
-    private DocumentSignatureDTO createSignatureDTO(Long workerId,Long documentId, String role) {
+    private DocumentSignatureDTO createSignatureDTO(Long workerId, Long documentId, String role, Long userId) {
         DocumentSignatureDTO signatureDTO = new DocumentSignatureDTO();
         signatureDTO.setWorkerId(workerId);
         signatureDTO.setSignatureDate(new Date());
         signatureDTO.setDocumentId(documentId); // Link to the document (PDP or BDT)
+        signatureDTO.setUserId(userId); // Link to the user who performed the signing action
         // Mock visual data if necessary, or ensure your backend handles null gracefully if not strictly needed for status change
         ImageModel visual = new ImageModel();
         visual.setMimeType("image/png");
@@ -271,7 +276,115 @@ public class DocumentControllerIntergrationTest {
         signatureDTO.setActive(true);
         return signatureDTO;
     }
+    private DocumentSignatureDTO createSignatureDTO(Long workerId, Long documentId, String role) {
+        return createSignatureDTO(workerId, documentId, role, defaultDonneurDOrdreId);
+    }
 
+    // --- SIGNATURE API HELPER METHODS ---
+    
+    private void signDocumentAPI(Long documentId, Long workerId, String name, String lastName) throws Exception {
+        SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
+        signatureRequest.setWorkerId(workerId);
+        signatureRequest.setDocumentId(documentId);
+        signatureRequest.setName(name);
+        signatureRequest.setLastName(lastName);
+        // Create a simple base64 encoded image (1x1 pixel PNG)
+        String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+        signatureRequest.setSignatureImage(base64Image);
+
+        mockMvc.perform(post("/api/document/{documentId}/sign", documentId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signatureRequest))
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isCreated());
+    }
+
+    private Long signDocumentByWorkerAPI(Long documentId, Long workerId, String name, String lastName) throws Exception {
+        SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
+        signatureRequest.setWorkerId(workerId);
+        signatureRequest.setDocumentId(documentId);
+        signatureRequest.setName(name);
+        signatureRequest.setLastName(lastName);
+        // Create a simple base64 encoded image (1x1 pixel PNG)
+        String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+        signatureRequest.setSignatureImage(base64Image);
+
+        MvcResult result = mockMvc.perform(post("/api/document/worker/sign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signatureRequest))
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isCreated())
+                .andReturn();
+        
+        // Extract and return the signature ID from the response
+        String jsonResponse = result.getResponse().getContentAsString();
+        JsonNode responseNode = objectMapper.readTree(jsonResponse);
+        return responseNode.get("data").asLong();
+    }
+
+    private Long signDocumentByUserAPI(Long documentId, Long userId, String name, String lastName) throws Exception {
+        // For user signing, we need to create a worker since the database requires worker_id
+        // In a real scenario, this might be handled differently (e.g., users have associated worker records)
+        WorkerDTO userAsWorker = createWorkerAPI("UserAsWorker_" + userId, defaultEntrepriseId);
+        
+        SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
+        signatureRequest.setWorkerId(userAsWorker.getId()); // Required due to database constraints
+        signatureRequest.setUserId(userId);
+        signatureRequest.setDocumentId(documentId);
+        signatureRequest.setName(name);
+        signatureRequest.setLastName(lastName);
+        // Create a simple base64 encoded image (1x1 pixel PNG)
+        String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+        signatureRequest.setSignatureImage(base64Image);
+
+        MvcResult result = mockMvc.perform(post("/api/document/user/sign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signatureRequest))
+                        .header("Authorization", "Bearer " + authToken))
+                .andReturn();
+        
+        // Debug: Print the response if it's not 201
+        if (result.getResponse().getStatus() != 201) {
+            System.err.println("Expected 201 but got: " + result.getResponse().getStatus());
+            System.err.println("Response body: " + result.getResponse().getContentAsString());
+            System.err.println("Request body: " + objectMapper.writeValueAsString(signatureRequest));
+        }
+        
+        // Now assert the status
+        if (result.getResponse().getStatus() != 201) {
+            throw new AssertionError("Expected status 201 but was: " + result.getResponse().getStatus() + 
+                                   ". Response: " + result.getResponse().getContentAsString());
+        }
+
+        // Parse the response to get the signature ID
+        String jsonResponse = result.getResponse().getContentAsString();
+        com.fasterxml.jackson.databind.JsonNode responseNode = objectMapper.readTree(jsonResponse);
+        return responseNode.get("data").asLong();
+    }
+
+    private void unsignDocumentByUserAPI(Long userId, Long signatureId) throws Exception {
+        // Since we use the worker-based unsigning due to database constraints,
+        // we need to use the worker unsign endpoint instead
+        // For now, we'll use a placeholder workerId - in reality, you'd need to track
+        // which worker was created for the user
+        Long placeholderWorkerId = 1L; // This should be the actual worker ID created for the user
+        
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.delete("/api/document/user/{userId}/unsign/{signatureId}", userId, signatureId)
+                        .header("Authorization", "Bearer " + authToken))
+                .andReturn();
+        
+        // Debug: Print the response if it's not 200
+        if (result.getResponse().getStatus() != 200) {
+            System.err.println("Expected 200 but got: " + result.getResponse().getStatus());
+            System.err.println("Response body: " + result.getResponse().getContentAsString());
+        }
+        
+        // Now assert the status
+        if (result.getResponse().getStatus() != 200) {
+            throw new AssertionError("Expected status 200 but was: " + result.getResponse().getStatus() + 
+                                   ". Response: " + result.getResponse().getContentAsString());
+        }
+    }
 
     // --- TEST METHODS ---
     @Test
@@ -297,14 +410,14 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker1.getId(), updatedChantier.getId());
         selectWorkerForChantierAPI(worker2.getId(), updatedChantier.getId());
 
-        pdp.setSignatures(List.of(
-                createSignatureDTO(worker1.getId(), pdp.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), pdp.getId(), "TestRole2")
-        ));
+        // Sign the document using API endpoints instead of directly setting signatures
+        signDocumentByWorkerAPI(pdp.getId(), worker1.getId(), "Worker1", "ForCompletedPDP");
+        signDocumentByWorkerAPI(pdp.getId(), worker2.getId(), "Worker2", "ForCompletedPDP2");
 
-        pdp.setRelations(new ArrayList<>()); // No permit issues
-
-        PdpDTO updatedPdp = updatePdpAPI(pdp.getId(), pdp);
+        // Get the current state after signing, then update only the relations
+        PdpDTO currentPdp = getPdpByIdAPI(pdp.getId());
+        currentPdp.setRelations(new ArrayList<>()); // No permit issues
+        PdpDTO updatedPdp = updatePdpAPI(currentPdp.getId(), currentPdp);
 
         PdpDTO fetchedPdp = getPdpByIdAPI(updatedPdp.getId());
         assertEquals(DocumentStatus.COMPLETED, fetchedPdp.getStatus(),
@@ -334,14 +447,14 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker1.getId(), updatedChantier.getId());
         selectWorkerForChantierAPI(worker2.getId(), updatedChantier.getId());
 
-        bdt.setSignatures(List.of(
-                createSignatureDTO(worker1.getId(), bdt.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole2")
-        ));
+        // Sign the document using API endpoints instead of directly setting signatures
+        signDocumentByWorkerAPI(bdt.getId(), worker1.getId(), "Worker1", "ForCompletedBDT");
+        signDocumentByWorkerAPI(bdt.getId(), worker2.getId(), "Worker2", "ForCompletedBDT2");
 
-        bdt.setRelations(new ArrayList<>()); // No permit issues
-
-        BdtDTO updatedBdt = updateBdtAPI(bdt.getId(), bdt);
+        // Get the current state after signing, then update only the relations
+        BdtDTO currentBdt = getBdtByIdAPI(bdt.getId());
+        currentBdt.setRelations(new ArrayList<>()); // No permit issues
+        BdtDTO updatedBdt = updateBdtAPI(currentBdt.getId(), currentBdt);
 
         BdtDTO fetchedBdt = getBdtByIdAPI(updatedBdt.getId());
         assertEquals(DocumentStatus.COMPLETED, fetchedBdt.getStatus(),
@@ -430,14 +543,14 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker1.getId(), chantier.getId());
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
-        pdp.setSignatures(List.of(
-                createSignatureDTO(worker1.getId(), pdp.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), pdp.getId(), "TestRole2")
-        ));
+        // Sign the document using API endpoints instead of directly setting signatures
+        signDocumentByWorkerAPI(pdp.getId(), worker1.getId(), "Worker1", "ForTransitionPDP1");
+        signDocumentByWorkerAPI(pdp.getId(), worker2.getId(), "Worker2", "ForTransitionPDP2");
 
-        pdp.setRelations(new ArrayList<>()); // No permit issues
-
-        PdpDTO updatedPdp = updatePdpAPI(pdp.getId(), pdp);
+        // Get the current state after signing, then update only the relations
+        PdpDTO currentPdp = getPdpByIdAPI(pdp.getId());
+        currentPdp.setRelations(new ArrayList<>()); // No permit issues
+        PdpDTO updatedPdp = updatePdpAPI(currentPdp.getId(), currentPdp);
 
         // Verify PDP is ACTIVE
         PdpDTO fetchedPdp = getPdpByIdAPI(updatedPdp.getId());
@@ -472,14 +585,14 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker1.getId(), chantier.getId());
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
-        bdt.setSignatures(List.of(
-                createSignatureDTO(worker1.getId(), bdt.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole2")
-        ));
+        // Sign the document using API endpoints instead of directly setting signatures
+        signDocumentByWorkerAPI(bdt.getId(), worker1.getId(), "Worker1", "ForTransitionBDT1");
+        signDocumentByWorkerAPI(bdt.getId(), worker2.getId(), "Worker2", "ForTransitionBDT2");
 
-        bdt.setRelations(new ArrayList<>()); // No permit issues
-
-        BdtDTO updatedBdt = updateBdtAPI(bdt.getId(), bdt);
+        // Get the current state after signing, then update only the relations
+        BdtDTO currentBdt = getBdtByIdAPI(bdt.getId());
+        currentBdt.setRelations(new ArrayList<>()); // No permit issues
+        BdtDTO updatedBdt = updateBdtAPI(currentBdt.getId(), currentBdt);
 
         // Verify BDT is ACTIVE
         BdtDTO fetchedBdt = getBdtByIdAPI(updatedBdt.getId());
@@ -513,14 +626,14 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker1.getId(), chantier.getId());
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
-        pdp.setSignatures(List.of(
-                createSignatureDTO(worker1.getId(), pdp.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), pdp.getId(), "TestRole2")
-        ));
+        // Sign the document using API endpoints instead of directly setting signatures
+        signDocumentByWorkerAPI(pdp.getId(), worker1.getId(), "Worker1", "ForTransitionPDP1");
+        signDocumentByWorkerAPI(pdp.getId(), worker2.getId(), "Worker2", "ForTransitionPDP2");
 
-        pdp.setRelations(new ArrayList<>()); // No permit issues
-
-        PdpDTO updatedPdp = updatePdpAPI(pdp.getId(), pdp);
+        // Get the current state after signing, then update only the relations
+        PdpDTO currentPdp = getPdpByIdAPI(pdp.getId());
+        currentPdp.setRelations(new ArrayList<>()); // No permit issues
+        PdpDTO updatedPdp = updatePdpAPI(currentPdp.getId(), currentPdp);
 
         // Verify Pdp is ACTIVE
         PdpDTO fetchedBdt = getPdpByIdAPI(updatedPdp.getId());
@@ -556,14 +669,14 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker1.getId(), chantier.getId());
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
-        pdp.setSignatures(List.of(
-                createSignatureDTO(worker1.getId(), pdp.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), pdp.getId(), "TestRole2")
-        ));
+        // Sign the document using API endpoints instead of directly setting signatures
+        signDocumentByWorkerAPI(pdp.getId(), worker1.getId(), "Worker1xxxxxxxxx", "ForFuturePDP1");
+        signDocumentByWorkerAPI(pdp.getId(), worker2.getId(), "Worker2", "ForFuturePDP2");
 
-        pdp.setRelations(new ArrayList<>()); // No permit issues
-
-        PdpDTO updatedPdp = updatePdpAPI(pdp.getId(), pdp);
+        // Get the current state after signing, then update only the relations
+        PdpDTO currentPdp = getPdpByIdAPI(pdp.getId());
+        currentPdp.setRelations(new ArrayList<>()); // No permit issues
+        PdpDTO updatedPdp = updatePdpAPI(currentPdp.getId(), currentPdp);
 
         // Verify PDP is ACTIVE despite future chantier dates
         PdpDTO fetchedPdp = getPdpByIdAPI(updatedPdp.getId());
@@ -612,8 +725,8 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
         // Simulate fulfilling all conditions for ACTIVE
-        pdp.setSignatures(List.of(createSignatureDTO(worker.getId(), pdp.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), pdp.getId(), "TestRole"))); // Both workers sign
+        pdp.setSignatures(List.of(createSignatureDTO(worker.getId(), pdp.getId(), "TestRole", defaultDonneurDOrdreId),
+                createSignatureDTO(worker2.getId(), pdp.getId(), "TestRole", defaultDonneurDOrdreId))); // Both workers sign
 
         pdp.setRelations(new ArrayList<>()); // Assuming no permits needed for this simple case
 
@@ -641,8 +754,8 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
 
-        bdt.setSignatures(List.of(createSignatureDTO(worker.getId(), bdt.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole"))); // Both workers sign
+        bdt.setSignatures(List.of(createSignatureDTO(worker.getId(), bdt.getId(), "TestRole", defaultDonneurDOrdreId),
+                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole", defaultDonneurDOrdreId))); // Both workers sign
 
         bdt.setRelations(new ArrayList<>()); // Assuming no permits needed
 
@@ -829,8 +942,8 @@ public class DocumentControllerIntergrationTest {
 
         // Add signatures from one assigned worker and one non-assigned worker
         pdp.setSignatures(List.of(
-                createSignatureDTO(assignedWorker.getId(), pdp.getId(), "TestRole"),
-                createSignatureDTO(nonAssignedWorker.getId(), pdp.getId(), "TestRole2")
+                createSignatureDTO(assignedWorker.getId(), pdp.getId(), "TestRole", defaultDonneurDOrdreId),
+                createSignatureDTO(nonAssignedWorker.getId(), pdp.getId(), "TestRole2", defaultDonneurDOrdreId)
         ));
 
         pdp.setRelations(new ArrayList<>()); // No permit issues
@@ -878,8 +991,8 @@ public class DocumentControllerIntergrationTest {
 
         // Set signatures and relations
         bdt.setSignatures(List.of(
-                createSignatureDTO(worker1.getId(), bdt.getId(), "TestRole"),
-                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole2")
+                createSignatureDTO(worker1.getId(), bdt.getId(), "TestRole", defaultDonneurDOrdreId),
+                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole2", defaultDonneurDOrdreId)
         ));
 
         bdt.setRelations(List.of(risqueRelation, permitRelation));
@@ -1004,7 +1117,7 @@ public class DocumentControllerIntergrationTest {
         risqueRelation.setAnswer(true);
 
         // Add only one worker's signature
-        pdp.setSignatures(List.of(createSignatureDTO(worker1.getId(), pdp.getId(), "TestRole")));
+        pdp.setSignatures(List.of(createSignatureDTO(worker1.getId(), pdp.getId(), "TestRole", defaultDonneurDOrdreId)));
 
         pdp.setRelations(List.of(risqueRelation));
 
@@ -1191,6 +1304,152 @@ public class DocumentControllerIntergrationTest {
         }else{
             fail("Expected only one relation to remain after deletion, but found: " + finalPdp.getRelations().size());
         }
+    }
+
+    @Test
+    @DisplayName("User can sign document successfully")
+    void testUserSignDocument() throws Exception {
+        // Create a chantier that started 2 days ago and will end in 5 days
+        Date startDate = new Date(System.currentTimeMillis() - 86400000 * 2); // 2 days ago
+        Date endDate = new Date(System.currentTimeMillis() + 86400000 * 5); // 5 days from now
+        ChantierDTO chantier = createChantierAPI("Chantier for User Sign Test", defaultEntrepriseId, startDate, endDate, 50, false);
+
+        // Create a PDP
+        PdpDTO pdp = createPdpAPI(chantier.getId(), defaultEntrepriseId);
+
+        // Sign document as user - should succeed
+        Long signatureId = signDocumentByUserAPI(pdp.getId(), defaultDonneurDOrdreId, "User", "Manager");
+        assertNotNull(signatureId);
+    }
+
+    @Test
+    @DisplayName("User signing with non-existent user should fail")
+    void testUserSignDocumentWithNonExistentUser() throws Exception {
+        // Create a chantier and PDP
+        Date startDate = new Date(System.currentTimeMillis() - 86400000 * 2);
+        Date endDate = new Date(System.currentTimeMillis() + 86400000 * 5);
+        ChantierDTO chantier = createChantierAPI("Chantier for Non-Existent User Test", defaultEntrepriseId, startDate, endDate, 50, false);
+        PdpDTO pdp = createPdpAPI(chantier.getId(), defaultEntrepriseId);
+
+        // Try to sign with non-existent user
+        SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
+        signatureRequest.setUserId(9999L); // Non-existent user ID
+        signatureRequest.setDocumentId(pdp.getId());
+        signatureRequest.setName("NonExistent");
+        signatureRequest.setLastName("User");
+        String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+        signatureRequest.setSignatureImage(base64Image);
+
+        mockMvc.perform(post("/api/document/user/sign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signatureRequest))
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("User not found"));
+    }
+
+    @Test
+    @DisplayName("User signing with non-existent document should fail")
+    void testUserSignDocumentWithNonExistentDocument() throws Exception {
+        // Try to sign non-existent document
+        SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
+        signatureRequest.setUserId(defaultDonneurDOrdreId);
+        signatureRequest.setDocumentId(9999L); // Non-existent document ID
+        signatureRequest.setName("User");
+        signatureRequest.setLastName("Manager");
+        String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+        signatureRequest.setSignatureImage(base64Image);
+
+        mockMvc.perform(post("/api/document/user/sign")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signatureRequest))
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Document not found"));
+    }
+
+    @Test
+    @DisplayName("User can unsign their own signature successfully")
+    void testUserUnsignDocument() throws Exception {
+        // Create a chantier and PDP
+        Date startDate = new Date(System.currentTimeMillis() - 86400000 * 2);
+        Date endDate = new Date(System.currentTimeMillis() + 86400000 * 5);
+        ChantierDTO chantier = createChantierAPI("Chantier for User Unsign Test", defaultEntrepriseId, startDate, endDate, 50, false);
+        PdpDTO pdp = createPdpAPI(chantier.getId(), defaultEntrepriseId);
+
+        // First, sign the document as user and get the signature ID
+        Long signatureId = signDocumentByUserAPI(pdp.getId(), defaultDonneurDOrdreId, "User", "Manager");
+
+        // Unsign the document - should succeed
+        unsignDocumentByUserAPI(defaultDonneurDOrdreId, signatureId);
+    }
+
+    @Test
+    @DisplayName("User cannot unsign non-existent signature")
+    void testUserUnsignNonExistentSignature() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/document/user/{userId}/unsign/{signatureId}", 
+                        defaultDonneurDOrdreId, 9999L)
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Signature not found"));
+    }
+
+    @Test
+    @DisplayName("User cannot unsign another user's signature")
+    void testUserCannotUnsignOtherUserSignature() throws Exception {
+        // Create a chantier and PDP
+        Date startDate = new Date(System.currentTimeMillis() - 86400000 * 2);
+        Date endDate = new Date(System.currentTimeMillis() + 86400000 * 5);
+        ChantierDTO chantier = createChantierAPI("Chantier for Unauthorized Unsign Test", defaultEntrepriseId, startDate, endDate, 50, false);
+        PdpDTO pdp = createPdpAPI(chantier.getId(), defaultEntrepriseId);
+
+        // First, sign the document as the default user and get the actual signature ID
+        Long signatureId = signDocumentByUserAPI(pdp.getId(), defaultDonneurDOrdreId, "User", "Manager");
+
+        // Try to unsign with a different user ID (assuming user ID 2 exists but is different)
+        Long differentUserId = 2L;
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/document/user/{userId}/unsign/{signatureId}", 
+                        differentUserId, signatureId)
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Unauthorized to unsign"));
+    }
+
+    @Test
+    @DisplayName("Test worker unsign endpoint with success")
+    void testWorkerUnsignDocumentSuccess() throws Exception {
+        // Create a chantier and PDP
+        Date startDate = new Date(System.currentTimeMillis() - 86400000 * 2);
+        Date endDate = new Date(System.currentTimeMillis() + 86400000 * 5);
+        ChantierDTO chantier = createChantierAPI("Chantier for Worker Unsign Test", defaultEntrepriseId, startDate, endDate, 50, false);
+        
+        // Create a worker
+        WorkerDTO worker = createWorkerAPI("TestWorkerForUnsign", defaultEntrepriseId);
+        
+        PdpDTO pdp = createPdpAPI(chantier.getId(), defaultEntrepriseId);
+
+        // First, sign the document as worker and get the signature ID
+        Long signatureId = signDocumentByWorkerAPI(pdp.getId(), worker.getId(), "Worker", "Test");
+
+        // Unsign the document - should succeed
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/document/worker/{workerId}/unsign/{signatureId}", 
+                        worker.getId(), signatureId)
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Document unsigned successfully"));
+    }
+
+    @Test
+    @DisplayName("Test worker unsign endpoint with non-existent signature")
+    void testWorkerUnsignDocumentNonExistentSignature() throws Exception {
+        // Create a worker
+        WorkerDTO worker = createWorkerAPI("TestWorkerForFailedUnsign", defaultEntrepriseId);
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/document/worker/{workerId}/unsign/{signatureId}", 
+                        worker.getId(), 9999L)
+                        .header("Authorization", "Bearer " + authToken))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Signature not found"));
     }
 
 

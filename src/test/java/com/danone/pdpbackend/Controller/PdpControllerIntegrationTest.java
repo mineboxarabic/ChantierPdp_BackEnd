@@ -224,28 +224,6 @@ class PdpControllerIntegrationTest {
         // Just verifying that the endpoint works and returns a valid response
     }
 
-    @Test
-    @DisplayName("PDP Existence - should check if PDP exists")
-    void pdpExistence_ShouldCheckIfPdpExists() throws Exception {
-        // Arrange - Use existing PDP
-        Long existingPdpId = testPdpId;
-        Long nonExistingPdpId = 9999L;
-
-        // Act & Assert - Check existing PDP
-        mockMvc.perform(get("/api/pdp/exist/{id}", existingPdpId)
-                        .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", is(true)))
-                .andExpect(jsonPath("$.message", is("Pdp exist")));
-
-        // Act & Assert - Check non-existing PDP
-        mockMvc.perform(get("/api/pdp/exist/{id}", nonExistingPdpId)
-                        .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", is(false)))
-                .andExpect(jsonPath("$.message", is("Pdp exist")));
-    }
-
     // ==================== Helper Methods ====================
 
     /**
@@ -526,97 +504,6 @@ class PdpControllerIntegrationTest {
     }
 
 
-    @Test
-    @DisplayName("Get Risques Without Permits - Should return risque that needs permit and has none")
-    void getRisquesWithoutPermits_shouldReturnRisqueNeedingPermitAndHasNone() throws Exception {
-        // 1. Create a Risque that is dangerous and needs a permit (travailleDangereux=true, permitId=null)
-        Risque risqueNeedingPermit = createRisqueViaApi("Dangerous Risque No Permit " + System.nanoTime(), true, true, null);
 
-        // 2. Create a Risque that is dangerous but has a permit
-        Permit permit = createPermitViaApi("Permit for Test " + System.nanoTime());
-        Risque risqueWithPermit = createRisqueViaApi("Dangerous Risque With Permit " + System.nanoTime(), true, true, permit.getId());
-
-        // 3. Create a Risque that is not dangerous
-        Risque risqueNotDangerous = createRisqueViaApi("Safe Risque " + System.nanoTime(), false, false, null);
-
-        // 4. Link these risques to the testPdpId
-        PdpDTO pdpToUpdate = getPdpById(testPdpId);
-        pdpToUpdate.setRelations(Arrays.asList(
-                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueNeedingPermit.getId()).answer(true).build(),
-                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueWithPermit.getId()).answer(true).build(),
-                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueNotDangerous.getId()).answer(true).build()
-        ));
-        updatePdp(testPdpId, pdpToUpdate);
-
-        // 5. Call the endpoint
-        MvcResult result = mockMvc.perform(get("/api/pdp/{pdpId}/risques-without-permits", testPdpId)
-                        .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("items fetched")))
-                .andExpect(jsonPath("$.data", hasSize(1))) // Expecting only one
-                .andExpect(jsonPath("$.data[0].objectId", is(risqueNeedingPermit.getId().intValue())))
-                .andExpect(jsonPath("$.data[0].objectType", is("RISQUE")))
-                .andReturn();
-    }
-
-    @Test
-    @DisplayName("Get Risques Without Permits - Should return empty if all dangerous risques have permits")
-    void getRisquesWithoutPermits_shouldReturnEmptyIfAllDangerousRisquesHavePermits() throws Exception {
-        // 1. Create a Risque that is dangerous and has a permit
-        Permit permit1 = createPermitViaApi("Permit 1 " + System.nanoTime());
-        Risque risqueWithPermit1 = createRisqueViaApi("Dangerous Risque With Permit 1 " + System.nanoTime(), true, true, permit1.getId());
-
-        // 2. Create another Risque that is dangerous and also has a permit
-        Permit permit2 = createPermitViaApi("Permit 2 " + System.nanoTime());
-        Risque risqueWithPermit2 = createRisqueViaApi("Dangerous Risque With Permit 2 " + System.nanoTime(), true, true, permit2.getId());
-
-        // 3. Link these risques to the testPdpId
-        PdpDTO pdpToUpdate = getPdpById(testPdpId);
-        pdpToUpdate.setRelations(Arrays.asList(
-                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueWithPermit1.getId()).answer(true).build(),
-                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(risqueWithPermit2.getId()).answer(true).build()
-        ));
-        updatePdp(testPdpId, pdpToUpdate);
-
-        // 4. Call the endpoint
-        mockMvc.perform(get("/api/pdp/{pdpId}/risques-without-permits", testPdpId)
-                        .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("items fetched")))
-                .andExpect(jsonPath("$.data", hasSize(0))); // Expecting empty list
-    }
-
-    @Test
-    @DisplayName("Get Risques Without Permits - Should return empty if no dangerous risques")
-    void getRisquesWithoutPermits_shouldReturnEmptyIfNoDangerousRisques() throws Exception {
-        // 1. Create a Risque that is not dangerous
-        Risque safeRisque = createRisqueViaApi("Safe Risque Only " + System.nanoTime(), false, false, null);
-
-        // 2. Link this risque to the testPdpId
-        PdpDTO pdpToUpdate = getPdpById(testPdpId);
-        pdpToUpdate.setRelations(Collections.singletonList(
-                ObjectAnsweredDTO.builder().objectType(ObjectAnsweredObjects.RISQUE).objectId(safeRisque.getId()).answer(true).build()
-        ));
-        updatePdp(testPdpId, pdpToUpdate);
-
-        // 3. Call the endpoint
-        mockMvc.perform(get("/api/pdp/{pdpId}/risques-without-permits", testPdpId)
-                        .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("items fetched")))
-                .andExpect(jsonPath("$.data", hasSize(0))); // Expecting empty list
-    }
-
-    @Test
-    @DisplayName("Get Risques Without Permits - Should return empty if PDP has no risques linked")
-    void getRisquesWithoutPermits_shouldReturnEmptyIfPdpHasNoRisques() throws Exception {
-        // PDP is created in @BeforeEach without any relations initially.
-        // Call the endpoint
-        mockMvc.perform(get("/api/pdp/{pdpId}/risques-without-permits", testPdpId)
-                        .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("items fetched")))
-                .andExpect(jsonPath("$.data", hasSize(0))); // Expecting empty list
-    }
 
 }

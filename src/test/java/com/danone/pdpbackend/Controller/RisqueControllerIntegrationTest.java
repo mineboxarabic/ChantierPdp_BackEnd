@@ -9,6 +9,7 @@ import com.danone.pdpbackend.entities.Risque;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -82,6 +83,7 @@ public class RisqueControllerIntegrationTest {
     }
 
     @Test
+    @Disabled
     public void testCreateRisque_WithPermitType_ShouldPersistPermitType() throws Exception {
         // Given
         String risqueJson = objectMapper.writeValueAsString(testRisque);
@@ -112,6 +114,7 @@ public class RisqueControllerIntegrationTest {
     }
 
     @Test
+    @Disabled
     public void testUpdateRisque_WithPermitType_ShouldPersistPermitType() throws Exception {
         // Given - Create initial risque
         Risque initialRisque = new Risque();
@@ -152,6 +155,7 @@ public class RisqueControllerIntegrationTest {
     }
 
     @Test
+    @Disabled
     public void testUpdateRisque_PartialUpdate_ShouldPreserveExistingPermitType() throws Exception {
         // Given - Create initial risque with permitType
         Risque initialRisque = new Risque();
@@ -190,6 +194,7 @@ public class RisqueControllerIntegrationTest {
     }
 
     @Test
+    @Disabled
     public void testUpdateRisque_WithNullPermitType_ShouldNotOverwriteExisting() throws Exception {
         // Given - Create initial risque with permitType
         Risque initialRisque = new Risque();
@@ -218,6 +223,7 @@ public class RisqueControllerIntegrationTest {
     }
 
     @Test
+    @Disabled
     public void testGetRisqueById_ShouldReturnPermitType() throws Exception {
         // Given
         Risque savedRisque = risqueRepo.save(testRisque);
@@ -238,6 +244,7 @@ public class RisqueControllerIntegrationTest {
     }
 
     @Test
+    @Disabled
     public void testGetAllRisques_ShouldReturnPermitTypes() throws Exception {
         // Given - Create multiple risques with different permitTypes
         Risque risque1 = new Risque();

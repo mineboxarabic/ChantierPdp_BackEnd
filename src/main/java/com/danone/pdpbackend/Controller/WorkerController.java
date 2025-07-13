@@ -1,7 +1,7 @@
 package com.danone.pdpbackend.Controller;
 
 
-import com.danone.pdpbackend.Services.SignatureService;
+import com.danone.pdpbackend.Services.DocumentSignatureService;
 import com.danone.pdpbackend.Services.WorkerService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.mappers.WorkerMapper;
@@ -20,12 +20,12 @@ import java.util.List;
 public class WorkerController {
     private final WorkerService workerService;
     private final WorkerMapper workerMapper;
-    private final SignatureService signatureService;
+    private final DocumentSignatureService documentSignatureService;
 
-    public WorkerController(WorkerService workerService, WorkerMapper workerMapper, SignatureService signatureService) {
+    public WorkerController(WorkerService workerService, WorkerMapper workerMapper, DocumentSignatureService documentSignatureService) {
         this.workerService = workerService;
         this.workerMapper = workerMapper;
-        this.signatureService = signatureService;
+        this.documentSignatureService = documentSignatureService;
     }
 
     @GetMapping
@@ -82,7 +82,7 @@ public class WorkerController {
             @RequestBody SignatureRequestDTO signatureRequest) {
         try {
             signatureRequest.setWorkerId(workerId);
-            signatureService.signDocument(signatureRequest);
+            documentSignatureService.signDocument(signatureRequest);
             return ResponseEntity.status(HttpStatus.CREATED).body(new ApiResponse<>(null,"Document signed successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(null,e.getMessage()));
@@ -94,7 +94,7 @@ public class WorkerController {
             @PathVariable Long workerId,
             @PathVariable Long signatureId) {
         try {
-            signatureService.unSignDocument(workerId, signatureId);
+            documentSignatureService.unSignDocument(workerId, signatureId);
             return ResponseEntity.ok(new ApiResponse<>(null,"Document unsigned successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(null,e.getMessage()));

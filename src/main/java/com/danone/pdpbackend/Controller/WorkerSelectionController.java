@@ -1,6 +1,7 @@
 package com.danone.pdpbackend.Controller;
 
 
+import com.danone.pdpbackend.Repo.ChantierRepo;
 import com.danone.pdpbackend.Services.WorkerSelectionService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.Utils.mappers.ChantierMapper;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/worker-selection")
@@ -34,6 +36,8 @@ public class WorkerSelectionController {
     private WorkerMapper workerMapper;
     @Autowired
     private ChantierMapper chantierMapper;
+    @Autowired
+    private ChantierRepo chantierRepo;
 
     @PostMapping("/select")
     public ResponseEntity<ApiResponse<WorkerChantierSelectionDTO>> selectWorker(@RequestBody WorkerChantierSelectionDTO workerChantierSelectionDTO) {
@@ -49,6 +53,16 @@ public class WorkerSelectionController {
 
     @GetMapping("/chantier/{chantierId}/workers")
     public ResponseEntity<ApiResponse<List<WorkerDTO>>> getWorkersForChantier(@PathVariable Long chantierId) {
+
+        if (chantierId == null || chantierId <= 0) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Invalid chantier ID"));
+        }
+
+        List<Chantier> chantier = chantierRepo.getChantierById(chantierId);
+        if (chantier.isEmpty()) {
+            return ResponseEntity.status(404).body(new ApiResponse<>(null, "Chantier not found"));
+        }
+
         List<Worker> workers = selectionService.getWorkersForChantier(chantierId);
         log.info("Workers for chantier {}: {}", chantierId, workers);
         return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTOList(workers), "Workers fetched"));

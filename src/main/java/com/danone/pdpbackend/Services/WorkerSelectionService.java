@@ -83,11 +83,11 @@ public class WorkerSelectionService {
     public List<Worker> getWorkersForChantier(Long chantierId) {
         // Fetch the Chantier entity first
         Chantier chantier = chantierRepository.findById(chantierId)
-                .orElseThrow(() -> new RuntimeException("Chantier not found with id: " + chantierId));
+                .orElseThrow(() -> new IllegalArgumentException("Chantier not found with id: " + chantierId));
 
         // Query the selection repository for active selections for this chantier
         // Ensure you have a method like this in WorkerChantierSelectionRepo
-        List<WorkerChantierSelection> selections = selectionRepository.findByChantierAndIsSelectedTrue(chantier);
+        List<WorkerChantierSelection> selections = selectionRepository.findSelectedWorkersByChantier(chantier.getId());
 
         // Map the selections to Worker entities
         return selections.stream()
