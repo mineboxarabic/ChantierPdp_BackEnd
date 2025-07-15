@@ -2,12 +2,15 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.DocumentSignatureService;
 import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.entities.DocumentSignature;
 import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/document")
@@ -17,7 +20,7 @@ public class DocumentController {
 
     private final DocumentSignatureService documentSignatureService;
 
-    @PostMapping("/{documentId}/sign")
+/*    @PostMapping("/{documentId}/sign")
     public ResponseEntity<ApiResponse<String>> signDocument(
             @PathVariable Long documentId,
             @RequestBody SignatureRequestDTO signatureRequest) {
@@ -52,7 +55,7 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(null,"Internal server error"));
         }
-    }
+    }*/
 
     @PostMapping("/worker/sign")
     public ResponseEntity<ApiResponse<Long>> signDocumentByWorker(
@@ -104,6 +107,20 @@ public class DocumentController {
             log.error("Error unsigning document by user: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(null,"Internal server error"));
+        }
+    }
+
+
+    //TODO: create a method to get all signatures of a document
+    @GetMapping("/{documentId}/signatures")
+    public ResponseEntity<ApiResponse<List<Long>>> getSignaturesByDocumentId(@PathVariable Long documentId) {
+        try {
+            List<DocumentSignature> signatures = documentSignatureService.getSignaturesByDocumentId(documentId);
+            return ResponseEntity.ok(new ApiResponse<>(signatures.stream().map(s -> s.getWorker().getId()).toList(), "Signatures fetched successfully"));
+        } catch (Exception e) {
+            log.error("Error fetching signatures: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Internal server error"));
         }
     }
 

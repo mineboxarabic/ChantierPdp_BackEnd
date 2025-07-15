@@ -23,10 +23,13 @@ public class DocumentSignatureService {
     private final UsersRepo usersRepo;
     private final ChantierRepo chantierRepo;
 
+/*
     public void signDocument(SignatureRequestDTO signatureRequest) {
         signDocumentAndReturnId(signatureRequest);
     }
+*/
 
+/*
     public Long signDocumentAndReturnId(SignatureRequestDTO signatureRequest) {
         // Validate worker existence
         Worker worker = workerRepository.findById(signatureRequest.getWorkerId());
@@ -80,8 +83,9 @@ public class DocumentSignatureService {
 
         return savedSignature.getId();
     }
+*/
 
-    public void unSignDocument(Long workerId, Long signatureId) {
+   /* public void unSignDocument(Long workerId, Long signatureId) {
         Optional<DocumentSignature> signatureOpt = documentSignatureRepository.findById(signatureId);
         if (signatureOpt.isEmpty()) {
             throw new IllegalArgumentException("Signature not found");
@@ -93,7 +97,7 @@ public class DocumentSignatureService {
         }
         // Remove signature
         documentSignatureRepository.delete(signature);
-    }
+    }*/
 
     public List<Worker> getSignedWorkersByDocument(Long documentId){
         if(documentId == null ){
@@ -163,19 +167,36 @@ public class DocumentSignatureService {
         User user = usersRepo.findById(signatureRequest.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
-        // For user signing, we'll create a virtual "worker" concept or use the existing pattern
-        // Since the database constraint requires worker_id, we need to either:
-        // 1. Create a special "user worker" or
-        // 2. Require that users who want to sign must be associated with a worker
-        
-        // For now, let's use approach 2 and require a workerId to be provided
-        // The frontend/caller should provide a workerId representing the user as a worker
-        if (signatureRequest.getWorkerId() == null) {
-            throw new IllegalArgumentException("WorkerId is required for user signing due to database constraints");
+
+
+
+        // Decode and validate signature image
+        byte[] signatureImageBytes;
+        try {
+            signatureImageBytes = Base64.getDecoder().decode(signatureRequest.getSignatureImage());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid Base64 signature image format");
         }
-        
-        // Use the existing signDocument method which handles both worker and user
-        return signDocumentAndReturnId(signatureRequest);
+        if (signatureImageBytes.length == 0) {
+            throw new IllegalArgumentException("Invalid signature image");
+        }
+        // Create and save the DocumentSignature
+        DocumentSignature signature = new DocumentSignature();
+        signature.setWorker(null); // No worker for user signing
+        signature.setDocument(documentOpt.get());
+        signature.setSignatureDate(new java.util.Date());
+        signature.setSignatureVisual(new ImageModel(signatureImageBytes));
+        signature.setUser(user); // Set the user who signed
+        signature.setActive(true);
+        // Save signature and get the ID
+        DocumentSignature savedSignature = documentSignatureRepository.save(signature);
+        // Persist the signature
+        Document document = documentOpt.get();
+        document.getSignatures().add(savedSignature);
+        // Update document status after signing
+        updateDocumentStatus(document);
+        documentRepository.save(document);
+        return savedSignature.getId();
     }
 
     public void unSignDocumentByUser(Long userId, Long signatureId) {
@@ -309,5 +330,14 @@ public class DocumentSignatureService {
         // If all conditions are met, document is ACTIVE
         document.setStatus(DocumentStatus.ACTIVE);
         document.setActionType(ActionType.NONE);
+    }
+
+    public List<DocumentSignature> getSignaturesByDocumentId(Long documentId) {
+
+        if (documentId == null) {
+            return List.of();
+        }
+
+        return documentSignatureRepository.findDocumentSignatureByDocumentId(documentId);
     }
 }

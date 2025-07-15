@@ -77,7 +77,7 @@ public class WorkerController {
         return ResponseEntity.ok(new ApiResponse<>(workerMapper.toDTO(workerService.getById(id)), "Worker fetched"));
     }
 
-    @PostMapping("/{workerId}/sign")
+/*    @PostMapping("/{workerId}/sign")
     public ResponseEntity<ApiResponse<String>> signDocument(@PathVariable Long workerId,
             @RequestBody SignatureRequestDTO signatureRequest) {
         try {
@@ -87,9 +87,9 @@ public class WorkerController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(null,e.getMessage()));
         }
-    }
+    }*/
 
-    @DeleteMapping("/{workerId}/unsign/{signatureId}")
+  /*  @DeleteMapping("/{workerId}/unsign/{signatureId}")
     public ResponseEntity<ApiResponse<String>> unsignDocument(
             @PathVariable Long workerId,
             @PathVariable Long signatureId) {
@@ -99,5 +99,5 @@ public class WorkerController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse<>(null,e.getMessage()));
         }
-    }
+    }*/
 }

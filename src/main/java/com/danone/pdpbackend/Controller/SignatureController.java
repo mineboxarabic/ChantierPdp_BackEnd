@@ -14,9 +14,9 @@ public class SignatureController {
 
     private final DocumentSignatureService documentSignatureService;
 
-    @PostMapping
+/*    @PostMapping
     public ResponseEntity<ApiResponse<String>> signDocument(@RequestBody SignatureRequestDTO signatureRequest) {
         documentSignatureService.signDocument(signatureRequest);
         return ResponseEntity.ok(new ApiResponse<>(null,"Signature saved successfully"));
-    }
+    }*/
 }

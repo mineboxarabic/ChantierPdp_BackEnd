@@ -325,10 +325,10 @@ public class DocumentControllerIntergrationTest {
     private Long signDocumentByUserAPI(Long documentId, Long userId, String name, String lastName) throws Exception {
         // For user signing, we need to create a worker since the database requires worker_id
         // In a real scenario, this might be handled differently (e.g., users have associated worker records)
-        WorkerDTO userAsWorker = createWorkerAPI("UserAsWorker_" + userId, defaultEntrepriseId);
+        //WorkerDTO userAsWorker = createWorkerAPI("UserAsWorker_" + userId, defaultEntrepriseId);
         
         SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
-        signatureRequest.setWorkerId(userAsWorker.getId()); // Required due to database constraints
+        //signatureRequest.setWorkerId(userAsWorker.getId()); // Required due to database constraints
         signatureRequest.setUserId(userId);
         signatureRequest.setDocumentId(documentId);
         signatureRequest.setName(name);

@@ -17,4 +17,7 @@ public interface DocumentSignatureRepository extends JpaRepository<DocumentSigna
 
     @Query("SELECT ds.worker FROM document_signature ds WHERE ds.document.id = :documentId")
     List<Worker> findWorkersByDocumentId(@Param("documentId") Long documentId);
+
+    List<DocumentSignature> findDocumentSignatureByDocumentId(Long documentId);
+    
 }
