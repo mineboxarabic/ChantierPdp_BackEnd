@@ -3,7 +3,9 @@ package com.danone.pdpbackend.Controller;
 import com.danone.pdpbackend.Services.DocumentSignatureService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 import com.danone.pdpbackend.entities.DocumentSignature;
+import com.danone.pdpbackend.entities.dto.DocumentSignatureDTO;
 import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
+import com.danone.pdpbackend.entities.dto.SignatureResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/document")
@@ -38,14 +41,14 @@ public class DocumentController {
                     .body(new ApiResponse<>(null, "Internal server error"));
         }
     }
-
+*/
 
     @DeleteMapping("/worker/{workerId}/unsign/{signatureId}")
     public ResponseEntity<ApiResponse<String>> unsignDocument(
             @PathVariable Long signatureId,
             @PathVariable Long workerId) {
         try {
-            documentSignatureService.unSignDocument(workerId, signatureId);
+            documentSignatureService.unSignDocumentByWorker(workerId, signatureId);
             return ResponseEntity.ok(new ApiResponse<>(null,"Document unsigned successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
@@ -55,7 +58,7 @@ public class DocumentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(null,"Internal server error"));
         }
-    }*/
+    }
 
     @PostMapping("/worker/sign")
     public ResponseEntity<ApiResponse<Long>> signDocumentByWorker(
@@ -111,12 +114,11 @@ public class DocumentController {
     }
 
 
-    //TODO: create a method to get all signatures of a document
     @GetMapping("/{documentId}/signatures")
-    public ResponseEntity<ApiResponse<List<Long>>> getSignaturesByDocumentId(@PathVariable Long documentId) {
+    public ResponseEntity<ApiResponse<List<SignatureResponseDTO>>> getSignaturesByDocumentId(@PathVariable Long documentId) {
         try {
-            List<DocumentSignature> signatures = documentSignatureService.getSignaturesByDocumentId(documentId);
-            return ResponseEntity.ok(new ApiResponse<>(signatures.stream().map(s -> s.getWorker().getId()).toList(), "Signatures fetched successfully"));
+            List<SignatureResponseDTO> signatures = documentSignatureService.getSignaturesByDocumentId(documentId);
+            return ResponseEntity.ok(new ApiResponse<>(signatures, "Signatures fetched successfully"));
         } catch (Exception e) {
             log.error("Error fetching signatures: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -445,9 +445,9 @@ class ChantierControllerIntegrationTest {
     private List<ChantierDTO> getAllChantiers() throws Exception {
         MvcResult result = mockMvc.perform(get("/api/chantier/all")
                         .header("Authorization", "Bearer " + authToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message", is("Chantiers fetched successfully")))
-                .andReturn();
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.message", is("Chantiers fetched successfully")))
+                        .andReturn();
 
         return parseResponseDataList(result, ChantierDTO.class);
     }

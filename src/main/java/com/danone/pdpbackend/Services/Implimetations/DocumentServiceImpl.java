@@ -57,6 +57,11 @@ public class DocumentServiceImpl implements DocumentService{
 
     @Override
     public Document create(Document entity) {
+        // Set donneurDOrdre from chantier if not already set
+        if (entity.getChantier() != null && entity.getDonneurDOrdre() == null) {
+            entity.setDonneurDOrdre(entity.getChantier().getDonneurDOrdre());
+        }
+        
         Document document = documentRepo.save(entity);
 
         if(document.getChantier() != null) {
@@ -214,7 +219,7 @@ public class DocumentServiceImpl implements DocumentService{
             return document;
         }
 
-        // 2. Check Signatures - signatures have priority over permits
+        // 2. Check Signatures - Always check donneur d'ordre, plus workers if any are assigned
         List<Worker> assignedWorkers = List.of();
         if (document.getChantier() != null) {
             try {
@@ -233,18 +238,33 @@ public class DocumentServiceImpl implements DocumentService{
             }
         }
 
+        // Check worker signatures if workers are assigned
+        boolean allWorkersSigned = true;
         if (!assignedWorkers.isEmpty()) {
             List<Worker> signedWorkers = documentSignatureService.getSignedWorkersByDocument(document.getId());
 
             Set<Long> assignedWorkerIds = assignedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
             Set<Long> signedWorkerIds = signedWorkers.stream().map(Worker::getId).collect(Collectors.toSet());
 
-            boolean allSigned = signedWorkerIds.containsAll(assignedWorkerIds);
-            if (!allSigned) {
-                document.setStatus(DocumentStatus.NEEDS_ACTION);
-                document.setActionType(ActionType.SIGHNATURES_MISSING);
-                return document;
-            }
+            allWorkersSigned = signedWorkerIds.containsAll(assignedWorkerIds);
+        }
+        
+        // Always check if donneur d'ordre has signed (if one is assigned)
+        boolean donneurDOrdreSigned = false;
+        //User DonneurDOrdre = chantierService.getDonneurDOrdreForChantier(document.getChantier().getId());
+
+
+        assert document.getChantier() != null;
+        if (document.getChantier().getDonneurDOrdre() != null) {
+            List<User> signedUsers = documentSignatureService.getSignedUsersByDocument(document.getId());
+            donneurDOrdreSigned = signedUsers.stream()
+                .anyMatch(user -> user.getId().equals(document.getChantier().getDonneurDOrdre().getId()));
+        }
+        
+        if (!allWorkersSigned || !donneurDOrdreSigned) {
+            document.setStatus(DocumentStatus.NEEDS_ACTION);
+            document.setActionType(ActionType.SIGHNATURES_MISSING);
+            return document;
         }
 
 

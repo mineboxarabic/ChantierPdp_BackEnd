@@ -25,6 +25,10 @@ public class Document {
     @ManyToOne
     private Entreprise entrepriseExterieure;
 
+    @ManyToOne
+    @JoinColumn(name = "donneur_dordre_id")
+    private User donneurDOrdre;
+
     @Enumerated(EnumType.STRING)
     private DocumentStatus status = DocumentStatus.DRAFT;
 

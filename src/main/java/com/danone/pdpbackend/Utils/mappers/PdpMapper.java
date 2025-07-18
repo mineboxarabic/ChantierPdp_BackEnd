@@ -42,6 +42,11 @@ public class PdpMapper implements Mapper<PdpDTO, Pdp> {
         // Map PDP Specific Fields
         if(pdp.getChantier() != null) {
             pdpDTO.setChantier(pdp.getChantier().getId());
+            if(pdp.getChantier().getDonneurDOrdre() != null) {
+                pdpDTO.setDonneurDOrdre(pdp.getChantier().getDonneurDOrdre().getId());
+            } else {
+                pdpDTO.setDonneurDOrdre(null);
+            }
         }
         //pdpDTO.setChantier(pdp.getChantier().getId());
         pdpDTO.setDateInspection(pdp.getDateInspection());
@@ -81,6 +86,9 @@ public class PdpMapper implements Mapper<PdpDTO, Pdp> {
 
         if(pdpDTO.getChantier() != null) {
             pdp.setChantier(chantierService.getById(pdpDTO.getChantier()));
+            if(pdp.getChantier() != null){
+                pdp.setDonneurDOrdre(pdp.getChantier().getDonneurDOrdre());
+            }
         } else {
             pdp.setChantier(null);
         }

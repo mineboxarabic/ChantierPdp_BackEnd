@@ -27,11 +27,9 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -286,8 +284,8 @@ public class DocumentControllerIntergrationTest {
         SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
         signatureRequest.setWorkerId(workerId);
         signatureRequest.setDocumentId(documentId);
-        signatureRequest.setName(name);
-        signatureRequest.setLastName(lastName);
+        signatureRequest.setPrenom(name);
+        signatureRequest.setNom(lastName);
         // Create a simple base64 encoded image (1x1 pixel PNG)
         String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
         signatureRequest.setSignatureImage(base64Image);
@@ -303,8 +301,8 @@ public class DocumentControllerIntergrationTest {
         SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
         signatureRequest.setWorkerId(workerId);
         signatureRequest.setDocumentId(documentId);
-        signatureRequest.setName(name);
-        signatureRequest.setLastName(lastName);
+        signatureRequest.setPrenom(name);
+        signatureRequest.setNom(lastName);
         // Create a simple base64 encoded image (1x1 pixel PNG)
         String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
         signatureRequest.setSignatureImage(base64Image);
@@ -331,8 +329,8 @@ public class DocumentControllerIntergrationTest {
         //signatureRequest.setWorkerId(userAsWorker.getId()); // Required due to database constraints
         signatureRequest.setUserId(userId);
         signatureRequest.setDocumentId(documentId);
-        signatureRequest.setName(name);
-        signatureRequest.setLastName(lastName);
+        signatureRequest.setPrenom(name);
+        signatureRequest.setNom(lastName);
         // Create a simple base64 encoded image (1x1 pixel PNG)
         String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
         signatureRequest.setSignatureImage(base64Image);
@@ -1335,8 +1333,8 @@ public class DocumentControllerIntergrationTest {
         SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
         signatureRequest.setUserId(9999L); // Non-existent user ID
         signatureRequest.setDocumentId(pdp.getId());
-        signatureRequest.setName("NonExistent");
-        signatureRequest.setLastName("User");
+        signatureRequest.setPrenom("NonExistent");
+        signatureRequest.setNom("User");
         String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
         signatureRequest.setSignatureImage(base64Image);
 
@@ -1355,8 +1353,8 @@ public class DocumentControllerIntergrationTest {
         SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
         signatureRequest.setUserId(defaultDonneurDOrdreId);
         signatureRequest.setDocumentId(9999L); // Non-existent document ID
-        signatureRequest.setName("User");
-        signatureRequest.setLastName("Manager");
+        signatureRequest.setPrenom("User");
+        signatureRequest.setNom("Manager");
         String base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
         signatureRequest.setSignatureImage(base64Image);
 

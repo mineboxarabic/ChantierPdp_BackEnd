@@ -6,9 +6,11 @@ import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.Utils.Image.ImageModel;
 import com.danone.pdpbackend.entities.*;
 import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
+import com.danone.pdpbackend.entities.dto.SignatureResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -23,17 +25,13 @@ public class DocumentSignatureService {
     private final UsersRepo usersRepo;
     private final ChantierRepo chantierRepo;
 
-/*
     public void signDocument(SignatureRequestDTO signatureRequest) {
         signDocumentAndReturnId(signatureRequest);
     }
-*/
 
-/*
     public Long signDocumentAndReturnId(SignatureRequestDTO signatureRequest) {
         // Validate worker existence
         Worker worker = workerRepository.findById(signatureRequest.getWorkerId());
-
 
         User user = usersRepo.findById(signatureRequest.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -47,6 +45,7 @@ public class DocumentSignatureService {
         if (documentOpt.isEmpty()) {
             throw new IllegalArgumentException("Document not found");
         }
+
         Document document = documentOpt.get();
 
         // Decode and validate signature image
@@ -83,9 +82,8 @@ public class DocumentSignatureService {
 
         return savedSignature.getId();
     }
-*/
 
-   /* public void unSignDocument(Long workerId, Long signatureId) {
+    public void unSignDocument(Long workerId, Long signatureId) {
         Optional<DocumentSignature> signatureOpt = documentSignatureRepository.findById(signatureId);
         if (signatureOpt.isEmpty()) {
             throw new IllegalArgumentException("Signature not found");
@@ -97,7 +95,7 @@ public class DocumentSignatureService {
         }
         // Remove signature
         documentSignatureRepository.delete(signature);
-    }*/
+    }
 
     public List<Worker> getSignedWorkersByDocument(Long documentId){
         if(documentId == null ){
@@ -188,6 +186,8 @@ public class DocumentSignatureService {
         signature.setSignatureVisual(new ImageModel(signatureImageBytes));
         signature.setUser(user); // Set the user who signed
         signature.setActive(true);
+        signature.setPrenom(signatureRequest.getPrenom());
+        signature.setNom(signatureRequest.getNom());
         // Save signature and get the ID
         DocumentSignature savedSignature = documentSignatureRepository.save(signature);
         // Persist the signature
@@ -254,6 +254,8 @@ public class DocumentSignatureService {
         signature.setSignatureVisual(new ImageModel(signatureImageBytes));
         signature.setUser(null);
         signature.setActive(true);
+        signature.setPrenom(signatureRequest.getPrenom());
+        signature.setNom(signatureRequest.getNom());
 
         // Save signature and get the ID
         DocumentSignature savedSignature = documentSignatureRepository.save(signature);
@@ -264,7 +266,7 @@ public class DocumentSignatureService {
         // Update document status after signing
         updateDocumentStatus(document);
 
-        documentRepository.save(document);
+        Document doc = documentRepository.save(document);
         
         return savedSignature.getId();
     }
@@ -332,12 +334,51 @@ public class DocumentSignatureService {
         document.setActionType(ActionType.NONE);
     }
 
-    public List<DocumentSignature> getSignaturesByDocumentId(Long documentId) {
+    public List<SignatureResponseDTO> getSignaturesByDocumentId(Long documentId) {
 
         if (documentId == null) {
             return List.of();
         }
+    List<DocumentSignature> signatures = documentSignatureRepository.findDocumentSignatureByDocumentId(documentId);
+        List<SignatureResponseDTO> signatureResponseDTO = new ArrayList<>();
+        for (DocumentSignature signature : signatures) {
+            SignatureResponseDTO dto = new SignatureResponseDTO();
+            dto.setId(signature.getId());
+            dto.setDocumentId(signature.getDocument().getId());
+            dto.setWorkerId(signature.getWorker() != null ? signature.getWorker().getId() : null);
+            dto.setUserId(signature.getUser() != null ? signature.getUser().getId() : null);
+            dto.setSignatureDate(signature.getSignatureDate());
+            dto.setSignatureVisual(signature.getSignatureVisual());
+            dto.setPrenom(signature.getPrenom());
+            dto.setNom(signature.getNom());
+            signatureResponseDTO.add(dto);
+        }
 
-        return documentSignatureRepository.findDocumentSignatureByDocumentId(documentId);
+        if (signatures.isEmpty()) {
+            return List.of();
+        }
+
+        return signatureResponseDTO;
+    }
+
+    public void unSignDocumentByWorker(Long workerId, Long signatureId) {
+        Optional<DocumentSignature> signatureOpt = documentSignatureRepository.findById(signatureId);
+        if (signatureOpt.isEmpty()) {
+            throw new IllegalArgumentException("Signature not found");
+        }
+        DocumentSignature signature = signatureOpt.get();
+        if (signature.getWorker() == null || !signature.getWorker().getId().equals(workerId)) {
+            throw new IllegalArgumentException("Unauthorized to unsign");
+        }
+        // Remove signature
+        documentSignatureRepository.delete(signature);
+    }
+
+    public List<User> getSignedUsersByDocument(Long documentId) {
+        if (documentId == null) {
+            return List.of();
+        }
+
+        return documentSignatureRepository.findUsersByDocumentId(documentId);
     }
 }

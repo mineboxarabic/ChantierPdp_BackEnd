@@ -51,7 +51,8 @@ public class DocumentMappingUtils {
 
         // Use injected mappers for lists
         target.setRelations(objectAnsweredMapper.toDTOList(source.getRelations()));
-        target.setSignatures(documentSignatureMapper.toDTOList(source.getSignatures()));
+
+       // target.setSignatures(documentSignatureMapper.toDTOList(source.getSignatures()));
     }
 
     /**
@@ -96,7 +97,7 @@ public class DocumentMappingUtils {
 
         // Use helper methods to update collections (important for relationship management)
         updateObjectAnsweredCollection(target, target.getRelations(), objectAnsweredMapper.toEntityList(source.getRelations(), target));
-        updateDocumentSignatureCollection(target, target.getSignatures(), documentSignatureMapper.toEntityList(source.getSignatures(), target));
+       // updateDocumentSignatureCollection(target, target.getSignatures(), documentSignatureMapper.toEntityList(source.getSignatures(), target));
     }
 
     private static void updateDocumentSignatureCollection(Document parent, List<DocumentSignature> existingList, List<DocumentSignature> newList) {

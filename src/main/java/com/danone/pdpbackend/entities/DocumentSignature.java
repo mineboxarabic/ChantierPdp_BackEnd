@@ -41,6 +41,8 @@ public class DocumentSignature {
     @Embedded // Embed the visual signature data
     private ImageModel signatureVisual;
 
+    private String prenom;
+    private String nom;
 
     @Column(nullable = false)
     private boolean active = true; // Flag to handle "unsigning"

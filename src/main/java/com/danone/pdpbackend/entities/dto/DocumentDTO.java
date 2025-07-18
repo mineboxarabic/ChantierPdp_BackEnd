@@ -21,6 +21,8 @@ public class DocumentDTO {
 
     private Long entrepriseExterieure;
 
+    private Long donneurDOrdre;
+
     private DocumentStatus status = DocumentStatus.DRAFT;
     private ActionType actionType = ActionType.NONE;
 

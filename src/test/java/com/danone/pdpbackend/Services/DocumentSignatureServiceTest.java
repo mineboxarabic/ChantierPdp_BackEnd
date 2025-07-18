@@ -77,8 +77,8 @@ class DocumentSignatureServiceTest {
         validSignatureRequest.setWorkerId(1L);
         validSignatureRequest.setUserId(1L);
         validSignatureRequest.setDocumentId(1L);
-        validSignatureRequest.setName("John");
-        validSignatureRequest.setLastName("Doe");
+        validSignatureRequest.setPrenom("John");
+        validSignatureRequest.setNom("Doe");
         validSignatureRequest.setSignatureImage(validBase64Image);
     }
 
