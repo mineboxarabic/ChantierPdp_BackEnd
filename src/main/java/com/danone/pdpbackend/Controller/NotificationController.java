@@ -34,8 +34,6 @@ public class NotificationController {
         }
         String username = authentication.getName();
         return userService.findByUsername(username); // Or findByUsername, depending on your User entity and UserService
-        // Adjust if your User entity doesn't have findByEmail or if username is not email.
-        // Make sure this method in UserService returns a User or throws UsernameNotFoundException.
     }
 
     @GetMapping("")

@@ -1,5 +1,6 @@
 package com.danone.pdpbackend.Repo;
 
+import com.danone.pdpbackend.Utils.NotificationType;
 import com.danone.pdpbackend.entities.Notification;
 import com.danone.pdpbackend.entities.User;
 import org.springframework.data.domain.Page;
@@ -25,4 +26,6 @@ public interface NotificationRepo extends JpaRepository<Notification, Long> {
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.targetUser = :targetUser AND n.isRead = false")
     int markAllAsReadForUser(@Param("targetUser") User targetUser);
+    Boolean findByTargetUserAndTypeAndMessageAndRelatedEntityIdAndRelatedEntityType(User targetUser,
+            NotificationType type, String message, Long relatedEntityId, String relatedEntityType);
 }

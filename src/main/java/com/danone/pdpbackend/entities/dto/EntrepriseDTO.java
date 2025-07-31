@@ -20,6 +20,7 @@ public class EntrepriseDTO {
     private String description;
     private String numTel;
     private String raisonSociale;
+    private String address; // ✅ Address of the company
     private ImageModel image; // ✅ For storing binary data (e.g., logos)
     private MedecinDuTravailleEE medecinDuTravailleEE;
     private List<Long> pdps; // ✅ If this entreprise is an EE, it has PDPs

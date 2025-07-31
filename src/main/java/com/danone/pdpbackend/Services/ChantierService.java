@@ -2,9 +2,11 @@ package com.danone.pdpbackend.Services;
 
 import com.danone.pdpbackend.Utils.ChantierStatus;
 import com.danone.pdpbackend.entities.*;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface ChantierService extends Service<Chantier> {
 
@@ -62,5 +64,8 @@ public interface ChantierService extends Service<Chantier> {
      */
     Chantier setChantierStatusManually(Long chantierId, ChantierStatus newStatus);
 
+    User getDonneurDOrdreForChantier(Long chantierId);
 
+
+    //Optional<User> getDnneurDOrdreByChantierId(Long pdpId);
 }

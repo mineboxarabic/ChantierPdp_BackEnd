@@ -90,6 +90,13 @@ class DocumentSignatureServiceTest {
         when(usersRepo.findById(1L)).thenReturn(Optional.of(testUser));
         when(documentRepository.findById(1L)).thenReturn(Optional.of(testDocument));
         when(documentRepository.save(any(Document.class))).thenReturn(testDocument);
+        
+        // Mock DocumentSignatureRepository.save to return a valid signature with ID
+        when(documentSignatureRepository.save(any(DocumentSignature.class))).thenAnswer(invocation -> {
+            DocumentSignature signature = invocation.getArgument(0);
+            signature.setId(1L); // Set an ID to simulate a saved entity
+            return signature;
+        });
 
         // Act
         assertDoesNotThrow(() -> documentSignatureService.signDocument(validSignatureRequest));
@@ -278,6 +285,13 @@ class DocumentSignatureServiceTest {
         when(usersRepo.findById(1L)).thenReturn(Optional.of(testUser));
         when(documentRepository.findById(1L)).thenReturn(Optional.of(testDocument));
         when(documentRepository.save(any(Document.class))).thenReturn(testDocument);
+        
+        // Mock DocumentSignatureRepository.save to return a valid signature with ID
+        when(documentSignatureRepository.save(any(DocumentSignature.class))).thenAnswer(invocation -> {
+            DocumentSignature signature = invocation.getArgument(0);
+            signature.setId(2L); // Set a different ID for the new signature
+            return signature;
+        });
 
         // Act
         assertDoesNotThrow(() -> documentSignatureService.signDocument(validSignatureRequest));
@@ -300,6 +314,13 @@ class DocumentSignatureServiceTest {
         when(usersRepo.findById(2L)).thenReturn(Optional.of(differentUser));
         when(documentRepository.findById(1L)).thenReturn(Optional.of(testDocument));
         when(documentRepository.save(any(Document.class))).thenReturn(testDocument);
+        
+        // Mock DocumentSignatureRepository.save to return a valid signature with ID
+        when(documentSignatureRepository.save(any(DocumentSignature.class))).thenAnswer(invocation -> {
+            DocumentSignature signature = invocation.getArgument(0);
+            signature.setId(1L); // Set an ID to simulate a saved entity
+            return signature;
+        });
 
         validSignatureRequest.setUserId(2L);
 

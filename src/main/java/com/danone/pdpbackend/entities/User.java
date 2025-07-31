@@ -21,8 +21,10 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    //@Enumerated(EnumType.STRING)
-    //private Roles role = Roles.WORKER;
+    
+    
+    @Enumerated
+    private Roles role = Roles.USER;
     private String fonction;
     private String notel;
     private String email;
@@ -34,9 +36,9 @@ public class User implements UserDetails {
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-       // return List.of(new SimpleGrantedAuthority(role.name()));
-        return List.of();
+    @JsonIgnore
+    public List<SimpleGrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
     @Override
@@ -63,4 +65,5 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
     }
+
 }

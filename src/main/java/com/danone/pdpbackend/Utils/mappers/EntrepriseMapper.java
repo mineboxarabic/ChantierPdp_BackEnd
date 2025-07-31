@@ -36,6 +36,7 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
         entrepriseDTO.setDescription(entreprise.getDescription());
         entrepriseDTO.setNumTel(entreprise.getNumTel());
         entrepriseDTO.setRaisonSociale(entreprise.getRaisonSociale());
+        entrepriseDTO.setAddress(entreprise.getAddress());
         entrepriseDTO.setImage(entreprise.getImage());
         entrepriseDTO.setMedecinDuTravailleEE(entreprise.getMedecinDuTravailleEE());
         entrepriseDTO.setType(entreprise.getType());
@@ -73,6 +74,7 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
         entreprise.setDescription(entrepriseDTO.getDescription());
         entreprise.setNumTel(entrepriseDTO.getNumTel());
         entreprise.setRaisonSociale(entrepriseDTO.getRaisonSociale());
+        entreprise.setAddress(entrepriseDTO.getAddress());
         entreprise.setImage(entrepriseDTO.getImage());
         entreprise.setMedecinDuTravailleEE(entrepriseDTO.getMedecinDuTravailleEE());
         entreprise.setType(entrepriseDTO.getType());

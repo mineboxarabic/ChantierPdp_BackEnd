@@ -17,8 +17,12 @@ public interface AuditSecuRepo extends Repository<AuditSecu, Long> {
 
     List<AuditSecu> findAll();
 
+
+
     @Query("SELECT MAX(id) FROM AuditSecu")
     Long findMaxId();
+
+    List<AuditSecu> findByTypeOfAudit(String typeOfAudit);
 
     void deleteById(Long id);
 }

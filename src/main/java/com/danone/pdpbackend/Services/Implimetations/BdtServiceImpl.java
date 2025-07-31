@@ -49,10 +49,61 @@ public class BdtServiceImpl implements BdtService {
         return bdtRepo.findBDTsByIdIn(id);
     }
 
+    public boolean bdtExistsInChantier(Long chantierId) {
+        return bdtRepo.existsByChantierId(chantierId);
+    }
+
+    public Bdt getByChantierId(Long chantierId) {
+        List<Bdt> bdtList = bdtRepo.findBDTByChantierId(chantierId);
+        if (bdtList.isEmpty()) {
+            return null;
+        } else {
+            return bdtList.get(0);
+        }
+    }
 
     @Override
     public Bdt create(Bdt bdt) {
-        calculateDocumentState(bdt);
+   //     calculateDocumentState(bdt);
+
+        if(bdt.getChantier() != null && bdtExistsInChantier(bdt.getChantier().getId())) {
+            //Copy signatures from existing BDT
+            Bdt existingBdt = getByChantierId(bdt.getChantier().getId());
+            if (existingBdt != null && existingBdt.getSignatures() != null && !existingBdt.getSignatures().isEmpty()) {
+                log.info("Copying {} signatures from existing BDT for chantier ID: {}",
+                        existingBdt.getSignatures().size(), bdt.getChantier().getId());
+
+                for (DocumentSignature signature : existingBdt.getSignatures()) {
+                    // Only copy active signatures
+                    if (signature.isActive()) {
+                        DocumentSignature newSignature = new DocumentSignature();
+                        newSignature.setWorker(signature.getWorker());
+                        newSignature.setDocument(bdt);
+                        newSignature.setSignatureDate(signature.getSignatureDate());
+                        newSignature.setUser(signature.getUser());
+                        newSignature.setNom(signature.getNom());
+                        newSignature.setPrenom(signature.getPrenom());
+                        newSignature.setActive(signature.isActive());
+                        newSignature.setSignatureVisual(signature.getSignatureVisual()); // Copy the visual signature
+
+                        bdt.getSignatures().add(newSignature);
+
+                        log.debug("Copied signature for worker: {} {}",
+                                signature.getPrenom(), signature.getNom());
+                    }
+                }
+
+                log.info("Successfully copied {} active signatures to new BDT",
+                        bdt.getSignatures().size());
+            } else {
+                log.warn("No existing BDT found or no signatures available for chantier ID: {}",
+                        bdt.getChantier().getId());
+            }
+        } else {
+            log.info("No existing BDT found for chantier or chantier ID: {}",
+                    bdt.getChantier() != null ? bdt.getChantier().getId() : "null");
+        }
+
         return (Bdt) documentService.create(bdt);
     }
 

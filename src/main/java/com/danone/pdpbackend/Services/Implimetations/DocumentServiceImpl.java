@@ -6,6 +6,8 @@ import com.danone.pdpbackend.Services.*;
 import com.danone.pdpbackend.Utils.*;
 import com.danone.pdpbackend.config.SecurityConfiguration;
 import com.danone.pdpbackend.entities.*;
+import com.danone.pdpbackend.Utils.mappers.DocumentMapper;
+import com.danone.pdpbackend.entities.dto.DocumentDTO;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
@@ -29,10 +31,11 @@ public class DocumentServiceImpl implements DocumentService{
     private final ActivityLogService activityLogService;
     private final PermitService permitService;
     private final DocumentSignatureService documentSignatureService;
+    private final DocumentMapper documentMapper;
 
     public DocumentServiceImpl(DocumentRepo documentRepo, ChantierService chantierService, ObjectAnswerRepo objectAnswerRepo,
                                RisqueService risqueService, WorkerSelectionService workerSelectionService, NotificationService notificationService,
-                               SecurityConfiguration securityConfiguration, ActivityLogService activityLogService, PermitService permitService, DocumentSignatureService documentSignatureService) {
+                               SecurityConfiguration securityConfiguration, ActivityLogService activityLogService, PermitService permitService, DocumentSignatureService documentSignatureService, DocumentMapper documentMapper) {
         this.documentRepo = documentRepo;
         this.chantierService = chantierService;
         this.objectAnswerRepo = objectAnswerRepo;
@@ -43,6 +46,7 @@ public class DocumentServiceImpl implements DocumentService{
         this.activityLogService = activityLogService;
         this.permitService = permitService;
         this.documentSignatureService = documentSignatureService;
+        this.documentMapper = documentMapper;
     }
 
     @Override
@@ -251,16 +255,16 @@ public class DocumentServiceImpl implements DocumentService{
         
         // Always check if donneur d'ordre has signed (if one is assigned)
         boolean donneurDOrdreSigned = false;
-        //User DonneurDOrdre = chantierService.getDonneurDOrdreForChantier(document.getChantier().getId());
+        User DonneurDOrdre = chantierService.getDonneurDOrdreForChantier(document.getChantier().getId());
 
 
-        assert document.getChantier() != null;
-        if (document.getChantier().getDonneurDOrdre() != null) {
+
+        if (DonneurDOrdre != null) {
             List<User> signedUsers = documentSignatureService.getSignedUsersByDocument(document.getId());
             donneurDOrdreSigned = signedUsers.stream()
                 .anyMatch(user -> user.getId().equals(document.getChantier().getDonneurDOrdre().getId()));
         }
-        
+
         if (!allWorkersSigned || !donneurDOrdreSigned) {
             document.setStatus(DocumentStatus.NEEDS_ACTION);
             document.setActionType(ActionType.SIGHNATURES_MISSING);
@@ -335,5 +339,92 @@ public class DocumentServiceImpl implements DocumentService{
             }
         }
         return document;
+    }
+
+    @Override
+    @Transactional
+    public DocumentDTO duplicateDocument(Long documentId) {
+        // Find the original document
+        Document originalDocument = documentRepo.findById(documentId)
+                .orElseThrow(() -> new EntityNotFoundException("Document with id " + documentId + " not found"));
+
+        // Create a new document based on the type of the original
+        Document duplicatedDocument;
+
+        if (originalDocument instanceof Bdt) {
+            Bdt originalBdt = (Bdt) originalDocument;
+            Bdt newBdt = new Bdt();
+
+            // Copy BDT specific fields
+            newBdt.setNom(originalBdt.getNom());
+            newBdt.setComplementOuRappels(originalBdt.getComplementOuRappels());
+            newBdt.setDate(originalBdt.getDate());
+
+            duplicatedDocument = newBdt;
+        } else {
+            // For other document types, create a generic Document
+            duplicatedDocument = new Document();
+        }
+
+        // Copy common Document fields
+        duplicatedDocument.setChantier(originalDocument.getChantier());
+        duplicatedDocument.setEntrepriseExterieure(originalDocument.getEntrepriseExterieure());
+        duplicatedDocument.setDonneurDOrdre(originalDocument.getDonneurDOrdre());
+        duplicatedDocument.setDate(originalDocument.getDate());
+        duplicatedDocument.setStatus(originalDocument.getStatus()); // Reset status to DRAFT
+        duplicatedDocument.setActionType(originalDocument.getActionType()); // Reset action type
+        duplicatedDocument.setCreationDate(LocalDate.now());
+        duplicatedDocument.setLastUpdate(LocalDate.now());
+
+        // Copy relations (ObjectAnswered)
+        if (originalDocument.getRelations() != null) {
+            List<ObjectAnswered> duplicatedRelations = new ArrayList<>();
+            for (ObjectAnswered relation : originalDocument.getRelations()) {
+                ObjectAnswered newRelation = new ObjectAnswered();
+                newRelation.setObjectType(relation.getObjectType());
+                newRelation.setObjectId(relation.getObjectId());
+                newRelation.setAnswer(relation.getAnswer());
+                newRelation.setDocument(duplicatedDocument);
+                duplicatedRelations.add(newRelation);
+            }
+            duplicatedDocument.setRelations(duplicatedRelations);
+        }
+
+        // Handle signatures based on document type and business rules
+        if (originalDocument instanceof Bdt && !originalDocument.getSignatures().isEmpty()) {
+            // For BDT: if the original document has signatures, copy them
+            List<DocumentSignature> duplicatedSignatures = new ArrayList<>();
+            for (DocumentSignature signature : originalDocument.getSignatures()) {
+                DocumentSignature newSignature = new DocumentSignature();
+                newSignature.setDocument(duplicatedDocument);
+                newSignature.setWorker(signature.getWorker());
+                newSignature.setUser(signature.getUser());
+                newSignature.setSignatureDate(signature.getSignatureDate());
+                newSignature.setSignatureVisual(signature.getSignatureVisual());
+                newSignature.setPrenom(signature.getPrenom());
+                newSignature.setNom(signature.getNom());
+                newSignature.setActive(signature.isActive());
+                duplicatedSignatures.add(newSignature);
+            }
+            duplicatedDocument.setSignatures(duplicatedSignatures);
+        } else {
+            // For other document types: don't copy signatures (empty list)
+            duplicatedDocument.setSignatures(new ArrayList<>());
+        }
+
+
+       // calculateDocumentState(duplicatedDocument);
+        // Save the duplicated document
+        Document savedDocument = documentRepo.save(duplicatedDocument);
+
+
+        //TODO: Log the duplication activity
+        //TODO: Notify users about the duplication
+
+
+
+        log.info("Document {} duplicated successfully. New document ID: {}", documentId, savedDocument.getId());
+
+        return documentMapper.toDTO(savedDocument);
     }
 }

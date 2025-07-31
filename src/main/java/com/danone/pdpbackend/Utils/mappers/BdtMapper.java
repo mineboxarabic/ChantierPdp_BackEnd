@@ -46,6 +46,9 @@ public class BdtMapper implements Mapper<BdtDTO, Bdt> {
 
         bdtDTO.setNom(bdt.getNom());
         bdtDTO.setComplementOuRappels(bdt.getComplementOuRappels()); // Assuming direct copy is ok
+        bdtDTO.setPersonnelDansZone(bdt.getPersonnelDansZone());
+        bdtDTO.setHoraireDeTravaille(bdt.getHoraireDeTravaille());
+        bdtDTO.setTachesAuthoriser(bdt.getTachesAuthoriser());
         if (bdt.getChantier() != null) {
             bdtDTO.setChantier(bdt.getChantier().getId());
         }
@@ -88,6 +91,9 @@ public class BdtMapper implements Mapper<BdtDTO, Bdt> {
 
         bdt.setNom(bdtDTO.getNom());
         bdt.setComplementOuRappels(bdtDTO.getComplementOuRappels()); // Direct copy ok for JSON type?
+        bdt.setPersonnelDansZone(bdtDTO.getPersonnelDansZone());
+        bdt.setHoraireDeTravaille(bdtDTO.getHoraireDeTravaille());
+        bdt.setTachesAuthoriser(bdtDTO.getTachesAuthoriser());
 
         if (bdtDTO.getChantier() != null) {
             if (bdt.getChantier() == null || !bdt.getChantier().getId().equals(bdtDTO.getChantier())) {

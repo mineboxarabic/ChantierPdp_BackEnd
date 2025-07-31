@@ -26,6 +26,11 @@ public class BdtDTO extends DocumentDTO {
 
     private List<ComplementOuRappel> complementOuRappels;
 
-
     private LocalDate date;
+
+    private Boolean personnelDansZone;
+
+    private String horaireDeTravaille;
+
+    private String tachesAuthoriser;
 }

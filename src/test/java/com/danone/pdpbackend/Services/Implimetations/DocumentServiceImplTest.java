@@ -1,13 +1,15 @@
 package com.danone.pdpbackend.Services.Implimetations;
 
-import com.danone.pdpbackend.Services.ChantierService;
-import com.danone.pdpbackend.Services.DocumentSignatureService;
-import com.danone.pdpbackend.Services.RisqueService;
-import com.danone.pdpbackend.Services.WorkerSelectionService;
+import com.danone.pdpbackend.Repo.DocumentRepo;
+import com.danone.pdpbackend.Repo.ObjectAnswerRepo;
+import com.danone.pdpbackend.Services.*;
+import com.danone.pdpbackend.config.SecurityConfiguration;
+import com.danone.pdpbackend.Utils.mappers.DocumentMapper;
 import com.danone.pdpbackend.Utils.ActionType;
 import com.danone.pdpbackend.Utils.DocumentStatus;
 import com.danone.pdpbackend.Utils.ObjectAnsweredObjects;
 import com.danone.pdpbackend.entities.*;
+import com.danone.pdpbackend.entities.dto.DocumentDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 class DocumentServiceImplTest {
@@ -38,6 +41,27 @@ class DocumentServiceImplTest {
 
     @Mock
     private DocumentSignatureService documentSignatureService;
+
+    @Mock
+    private DocumentRepo documentRepo;
+
+    @Mock
+    private ObjectAnswerRepo objectAnswerRepo;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private SecurityConfiguration securityConfiguration;
+
+    @Mock
+    private ActivityLogService activityLogService;
+
+    @Mock
+    private PermitService permitService;
+
+    @Mock
+    private DocumentMapper documentMapper;
 
     private Document document;
     private Chantier chantier;
@@ -108,6 +132,7 @@ class DocumentServiceImplTest {
         // Mock signatures to be complete so permit check is reached
         when(documentSignatureService.getSignedWorkersByDocument(1L)).thenReturn(Arrays.asList(worker1, worker2));
         when(documentSignatureService.getSignedUsersByDocument(1L)).thenReturn(Arrays.asList(donneurDOrdre));
+        when(chantierService.getDonneurDOrdreForChantier(1L)).thenReturn(donneurDOrdre);
 
         // Call the method
         Document result = documentService.calculateDocumentState(document);
@@ -198,6 +223,7 @@ class DocumentServiceImplTest {
         // All workers AND donneur d'ordre signed
         when(documentSignatureService.getSignedWorkersByDocument(1L)).thenReturn(Arrays.asList(worker1, worker2));
         when(documentSignatureService.getSignedUsersByDocument(1L)).thenReturn(Arrays.asList(donneurDOrdre));
+        when(chantierService.getDonneurDOrdreForChantier(1L)).thenReturn(donneurDOrdre);
 
         Document result = documentService.calculateDocumentState(document);
 
@@ -244,6 +270,7 @@ class DocumentServiceImplTest {
         when(workerSelectionService.getWorkersForChantier(1L)).thenReturn(new ArrayList<>());
         when(documentSignatureService.getSignedWorkersByDocument(1L)).thenReturn(new ArrayList<>());
         when(documentSignatureService.getSignedUsersByDocument(1L)).thenReturn(Arrays.asList(donneurDOrdre)); // Donneur d'ordre signed
+        when(chantierService.getDonneurDOrdreForChantier(1L)).thenReturn(donneurDOrdre);
 
         Document result = documentService.calculateDocumentState(document);
 
@@ -269,6 +296,7 @@ class DocumentServiceImplTest {
         // All signatures present
         when(documentSignatureService.getSignedWorkersByDocument(1L)).thenReturn(Arrays.asList(worker1, worker2));
         when(documentSignatureService.getSignedUsersByDocument(1L)).thenReturn(Arrays.asList(donneurDOrdre));
+        when(chantierService.getDonneurDOrdreForChantier(1L)).thenReturn(donneurDOrdre);
 
         Document result = documentService.calculateDocumentState(document);
 
@@ -288,6 +316,78 @@ class DocumentServiceImplTest {
 
         when(risqueService.getRisqueById(1L)).thenReturn(risque1);
         when(risqueService.getRisqueById(2L)).thenReturn(risque2);
+    }
+
+    // Tests for duplicateDocument method
+    @Test
+    void testDuplicateDocument_ShouldReturnDocumentDTO() {
+        // This test demonstrates how to properly handle the DocumentDTO return type
+        // Given
+        Document sourceDocument = new Pdp();
+        sourceDocument.setId(1L);
+        sourceDocument.setChantier(chantier);
+        sourceDocument.setDonneurDOrdre(donneurDOrdre);
+        sourceDocument.setSignatures(new ArrayList<>());
+        sourceDocument.setRelations(new ArrayList<>());
+        
+        Document savedDocument = new Pdp();
+        savedDocument.setId(2L);
+        savedDocument.setChantier(chantier);
+        savedDocument.setDonneurDOrdre(donneurDOrdre);
+        
+        DocumentDTO resultDTO = new DocumentDTO();
+        resultDTO.setId(2L);
+        resultDTO.setChantier(chantier.getId());
+        resultDTO.setDonneurDOrdre(donneurDOrdre.getId());
+        
+        when(documentRepo.findById(1L)).thenReturn(java.util.Optional.of(sourceDocument));
+        when(documentRepo.save(any(Document.class))).thenReturn(savedDocument);
+        when(documentMapper.toDTO(savedDocument)).thenReturn(resultDTO);
+        
+        // When - calling duplicateDocument now returns DocumentDTO, not Document
+        DocumentDTO result = documentService.duplicateDocument(1L);
+        
+        // Then - assertions should work with DocumentDTO properties
+        assertNotNull(result);
+        assertEquals(2L, result.getId());
+        assertEquals(chantier.getId(), result.getChantier());
+        assertEquals(donneurDOrdre.getId(), result.getDonneurDOrdre());
+    }
+
+    @Test
+    void testDuplicateDocument_FixedVersionOfOldTest() {
+        // This shows how an old test expecting Document should be updated
+        
+        // Given
+        Document sourceDocument = new Pdp();
+        sourceDocument.setId(1L);
+        sourceDocument.setChantier(chantier);
+        sourceDocument.setDonneurDOrdre(donneurDOrdre);
+        sourceDocument.setSignatures(new ArrayList<>());
+        sourceDocument.setRelations(new ArrayList<>());
+        
+        Document savedDocument = new Pdp();
+        savedDocument.setId(3L);
+        savedDocument.setChantier(chantier);
+        savedDocument.setDonneurDOrdre(donneurDOrdre);
+        
+        DocumentDTO resultDTO = new DocumentDTO();
+        resultDTO.setId(3L);
+        resultDTO.setChantier(chantier.getId());
+        resultDTO.setDonneurDOrdre(donneurDOrdre.getId());
+        
+        when(documentRepo.findById(1L)).thenReturn(java.util.Optional.of(sourceDocument));
+        when(documentRepo.save(any(Document.class))).thenReturn(savedDocument);
+        when(documentMapper.toDTO(savedDocument)).thenReturn(resultDTO);
+        
+        // NEW WAY (correct):
+        DocumentDTO result = documentService.duplicateDocument(1L);
+        
+        // NEW WAY (correct for DTO):
+        assertEquals(chantier.getId(), result.getChantier()); // Compare IDs
+        assertEquals(donneurDOrdre.getId(), result.getDonneurDOrdre()); // Compare IDs
+        
+        assertNotNull(result);
     }
 }
 

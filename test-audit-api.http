@@ -1,0 +1,41 @@
+### Test AuditSecu API with typeOfAudit
+
+### Get all audits
+GET http://localhost:8080/api/auditsecu
+Accept: application/json
+
+###
+
+### Get audits by type - intervenant
+GET http://localhost:8080/api/auditsecu/type/intervenant
+Accept: application/json
+
+###
+
+### Get audits by type - outil
+GET http://localhost:8080/api/auditsecu/type/outil
+Accept: application/json
+
+###
+
+### Create a new audit with typeOfAudit
+POST http://localhost:8080/api/auditsecu
+Content-Type: application/json
+
+{
+  "title": "Test Intervenant",
+  "description": "Test audit for intervenant type",
+  "typeOfAudit": "intervenant"
+}
+
+###
+
+### Create a new audit with typeOfAudit
+POST http://localhost:8080/api/auditsecu
+Content-Type: application/json
+
+{
+  "title": "Test Outil",
+  "description": "Test audit for outil type",
+  "typeOfAudit": "outil"
+}

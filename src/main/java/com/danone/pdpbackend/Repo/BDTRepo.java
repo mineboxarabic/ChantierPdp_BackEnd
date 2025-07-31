@@ -25,4 +25,5 @@ public interface BDTRepo extends org.springframework.data.repository.Repository<
 
     List<Bdt> findBDTByChantierId(Long chantierId);
 
+    boolean existsByChantierId(Long chantierId);
 }

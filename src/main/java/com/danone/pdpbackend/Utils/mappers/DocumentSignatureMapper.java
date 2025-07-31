@@ -1,9 +1,7 @@
 package com.danone.pdpbackend.Utils.mappers;
 
+import com.danone.pdpbackend.Repo.DocumentRepo;
 import com.danone.pdpbackend.Repo.UsersRepo;
-import com.danone.pdpbackend.Services.CommonDocumentServiceInterface; // Assuming a service to get Document by ID
-import com.danone.pdpbackend.Services.DocumentService;
-import com.danone.pdpbackend.Services.Implimetations.DocumentServiceImpl;
 import com.danone.pdpbackend.Services.WorkerService; // Assuming a service to get Worker by ID
 import com.danone.pdpbackend.entities.Document;
 import com.danone.pdpbackend.entities.DocumentSignature;
@@ -21,10 +19,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor // Lombok annotation for constructor injection
 public class DocumentSignatureMapper implements Mapper<DocumentSignatureDTO, DocumentSignature> {
 
-    // Inject necessary services (ensure these services exist and have getById methods)
-    private final CommonDocumentServiceInterface<Document> commonDocumentServiceInterface; // Use generic if applicable
+    // Inject necessary services and repositories
     private final WorkerService workerService;
-    private final DocumentService documentService;
+    private final DocumentRepo documentRepo; // Use repository instead of service to avoid circular dependency
     private final UsersRepo usersRepo;
 
     @Override
@@ -71,7 +68,7 @@ public class DocumentSignatureMapper implements Mapper<DocumentSignatureDTO, Doc
         if (dto.getDocumentId() != null) {
             // Only fetch if the document isn't already set or differs
             if (entity.getDocument() == null || !entity.getDocument().getId().equals(dto.getDocumentId())) {
-                Document document = documentService.getById(dto.getDocumentId());
+                Document document = documentRepo.findById(dto.getDocumentId()).orElse(null);
                 if (document == null) {
                     throw new IllegalArgumentException("Document not found with ID: " + dto.getDocumentId());
                 }

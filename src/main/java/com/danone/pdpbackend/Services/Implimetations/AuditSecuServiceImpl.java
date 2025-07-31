@@ -4,9 +4,7 @@ import org.springframework.stereotype.Service;
 import com.danone.pdpbackend.Repo.AuditSecuRepo;
 import com.danone.pdpbackend.Services.AuditSecuService;
 import com.danone.pdpbackend.entities.AuditSecu;
-import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,31 +27,42 @@ public class AuditSecuServiceImpl implements AuditSecuService {
     }
 
     @Override
+    public List<AuditSecu> getAuditSecusByType(String typeOfAudit) {
+        return auditSecuRepo.findByTypeOfAudit(typeOfAudit);
+    }
+
+
+
+    @Override
     public AuditSecu createAuditSecu(AuditSecu auditSecu) {
         return auditSecuRepo.save(auditSecu);
     }
 
     @Override
     public AuditSecu updateAuditSecu(Long id, AuditSecu auditSecuDetails) {
-        Optional<AuditSecu> auditSecu = Optional.ofNullable(auditSecuRepo.findAuditSecuById(id));
+        Optional<AuditSecu> optionalAuditSecu = Optional.ofNullable(auditSecuRepo.findAuditSecuById(id));
 
-        if (auditSecu.isEmpty()) {
+        if (optionalAuditSecu.isEmpty()) {
             return null;
         }
 
-        for(Field field : AuditSecu.class.getDeclaredFields()){
-            field.setAccessible(true);
-            try {
-                Object value = field.get(auditSecuDetails);
-                if(value != null){
-                    field.set(auditSecu.get(), value);
-                }
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
+        AuditSecu existingAuditSecu = optionalAuditSecu.get();
+
+        // Update fields manually to avoid reflection issues
+        if (auditSecuDetails.getTitle() != null) {
+            existingAuditSecu.setTitle(auditSecuDetails.getTitle());
+        }
+        if (auditSecuDetails.getDescription() != null) {
+            existingAuditSecu.setDescription(auditSecuDetails.getDescription());
+        }
+        if (auditSecuDetails.getLogo() != null) {
+            existingAuditSecu.setLogo(auditSecuDetails.getLogo());
+        }
+        if (auditSecuDetails.getTypeOfAudit() != null) {
+            existingAuditSecu.setTypeOfAudit(auditSecuDetails.getTypeOfAudit());
         }
 
-        return auditSecuRepo.save(auditSecuDetails);
+        return auditSecuRepo.save(existingAuditSecu);
     }
 
     @Override
@@ -67,7 +76,5 @@ public class AuditSecuServiceImpl implements AuditSecuService {
             return true;
         }
     }
-
-
 
 }

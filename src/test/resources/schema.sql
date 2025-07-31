@@ -12,7 +12,8 @@ create table audit_secu (
                             description varchar(255),
                             image_data blob,
                             mime_type varchar(255),
-                            title varchar(255)
+                            title varchar(255),
+                            type_of_audit varchar(255)
 );
 
 create table dispositif (
@@ -33,6 +34,7 @@ create table entreprise (
                             nom varchar(255),
                             numerotelephone varchar(255),
                             raisonsociale varchar(255),
+                            address varchar(255),
                             type varchar(255) check (type in ('EU', 'EE'))
 );
 
@@ -81,6 +83,9 @@ create table document (
 create table bdt (
                      complement_ou_rappels clob,
                      nom varchar(255),
+                     personnel_dans_zone boolean,
+                     horaire_de_travaille varchar(255),
+                     taches_authoriser varchar(255),
                      id bigint not null primary key references document
 );
 

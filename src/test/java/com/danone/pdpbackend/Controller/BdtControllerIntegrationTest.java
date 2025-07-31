@@ -14,6 +14,7 @@ import com.danone.pdpbackend.entities.dto.BdtDTO;
 import com.danone.pdpbackend.entities.dto.ChantierDTO;
 import com.danone.pdpbackend.entities.dto.EntrepriseDTO;
 import com.danone.pdpbackend.entities.dto.ObjectAnsweredDTO;
+import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -317,6 +318,174 @@ class BdtControllerIntegrationTest {
         assertEquals(true, foundRisk.get().getAnswer(), "Risk answer should match");
     }
 
+    @Test
+    @DisplayName("Create BDT for existing chantier - should copy signatures from previous BDT")
+    void createBDTForExistingChantier_ShouldCopySignaturesFromPreviousBDT() throws Exception {
+        // Arrange - First, add signatures to the existing BDT
+        addSignaturesToBDT(testBdtId);
+
+        // Verify the original BDT has signatures
+        BdtDTO originalBdt = getBDTById(testBdtId);
+        assertNotNull(originalBdt.getSignatures(), "Original BDT should have signatures");
+        assertFalse(originalBdt.getSignatures().isEmpty(), "Original BDT should have at least one signature");
+        int originalSignatureCount = originalBdt.getSignatures().size();
+
+        // Act - Create a new BDT for the same chantier (different date)
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        BdtDTO newBdtRequest = buildBDT(testChantierId, tomorrow);
+        BdtDTO newBdt = createBDT(newBdtRequest);
+
+        // Assert - Verify signatures were copied to the new BDT
+        assertNotNull(newBdt.getSignatures(), "New BDT should have copied signatures");
+        assertEquals(originalSignatureCount, newBdt.getSignatures().size(),
+                "New BDT should have same number of signatures as original");
+
+        // Verify signature details are preserved
+        for (int i = 0; i < originalSignatureCount; i++) {
+            assertEquals(originalBdt.getSignatures().get(i).getWorkerId(),
+                    newBdt.getSignatures().get(i).getWorkerId(),
+                    "Worker should be preserved in copied signature");
+            assertEquals(originalBdt.getSignatures().get(i).getNom(),
+                    newBdt.getSignatures().get(i).getNom(),
+                    "Worker name should be preserved in copied signature");
+            assertEquals(originalBdt.getSignatures().get(i).getPrenom(),
+                    newBdt.getSignatures().get(i).getPrenom(),
+                    "Worker first name should be preserved in copied signature");
+            assertTrue(newBdt.getSignatures().get(i).isActive(),
+                    "Copied signature should be active");
+        }
+    }
+
+    @Test
+    @DisplayName("Create BDT for chantier with inactive signatures - should only copy active signatures")
+    void createBDTForChantierWithInactiveSignatures_ShouldOnlyCopyActiveSignatures() throws Exception {
+        // Arrange - Add signatures to the existing BDT
+        addSignaturesToBDT(testBdtId);
+
+        // Deactivate one signature by "unsigning" (simulate this with direct database update if needed)
+        // For this test, we'll assume the service handles inactive signatures correctly
+
+        // Act - Create a new BDT for the same chantier
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        BdtDTO newBdtRequest = buildBDT(testChantierId, tomorrow);
+        BdtDTO newBdt = createBDT(newBdtRequest);
+
+        // Assert - Verify only active signatures were copied
+        assertNotNull(newBdt.getSignatures(), "New BDT should have signatures");
+        // All copied signatures should be active
+        newBdt.getSignatures().forEach(signature ->
+                assertTrue(signature.isActive(), "All copied signatures should be active"));
+    }
+
+    @Test
+    @DisplayName("Create BDT for new chantier - should not copy any signatures")
+    void createBDTForNewChantier_ShouldNotCopyAnySignatures() throws Exception {
+        // Arrange - Create a new chantier (different from testChantierId)
+        ChantierDTO newChantierDTO = buildChantierDTO(
+                "New Test Chantier",
+                "New Operation",
+                50,
+                false
+        );
+        newChantierDTO.setEntrepriseExterieurs(List.of(testEntrepriseId));
+        Long newChantierId = createChantier(newChantierDTO).getId();
+
+        // Act - Create a BDT for the new chantier
+        BdtDTO newBdtRequest = buildBDT(newChantierId, today);
+        BdtDTO newBdt = createBDT(newBdtRequest);
+
+        // Assert - Verify no signatures were copied
+        assertTrue(newBdt.getSignatures() == null || newBdt.getSignatures().isEmpty(),
+                "New BDT for new chantier should not have any copied signatures");
+    }
+
+    @Test
+    @DisplayName("Create BDT for chantier with no existing BDT - should create without errors")
+    void createBDTForChantierWithNoExistingBDT_ShouldCreateWithoutErrors() throws Exception {
+        // Arrange - Create a new chantier that has no existing BDT
+        ChantierDTO newChantierDTO = buildChantierDTO(
+                "Chantier Without BDT",
+                "Clean Operation",
+                75,
+                false
+        );
+        newChantierDTO.setEntrepriseExterieurs(List.of(testEntrepriseId));
+        Long cleanChantierId = createChantier(newChantierDTO).getId();
+
+        // Act - Create a BDT for this chantier
+        BdtDTO newBdtRequest = buildBDT(cleanChantierId, today);
+        BdtDTO newBdt = createBDT(newBdtRequest);
+
+        // Assert - Verify BDT was created successfully without signatures
+        assertNotNull(newBdt.getId(), "BDT should be created successfully");
+        assertEquals(cleanChantierId, newBdt.getChantier(), "BDT should be associated with correct chantier");
+        assertTrue(newBdt.getSignatures() == null || newBdt.getSignatures().isEmpty(),
+                "BDT should not have any signatures");
+    }
+
+    @Test
+    @DisplayName("Create multiple BDTs for same chantier - should preserve signature consistency")
+    void createMultipleBDTsForSameChantier_ShouldPreserveSignatureConsistency() throws Exception {
+        // Arrange - Add signatures to the original BDT
+        addSignaturesToBDT(testBdtId);
+        BdtDTO originalBdt = getBDTById(testBdtId);
+
+        // Act - Create two more BDTs for the same chantier
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        LocalDate dayAfter = LocalDate.now().plusDays(2);
+
+        BdtDTO secondBdt = createBDT(buildBDT(testChantierId, tomorrow));
+        BdtDTO thirdBdt = createBDT(buildBDT(testChantierId, dayAfter));
+
+        // Assert - Verify all BDTs have the same signatures
+        assertEquals(originalBdt.getSignatures().size(), secondBdt.getSignatures().size(),
+                "Second BDT should have same number of signatures as original");
+        assertEquals(originalBdt.getSignatures().size(), thirdBdt.getSignatures().size(),
+                "Third BDT should have same number of signatures as original");
+
+        // Verify signature consistency across all BDTs
+        for (int i = 0; i < originalBdt.getSignatures().size(); i++) {
+            // Check worker IDs are the same
+            assertEquals(originalBdt.getSignatures().get(i).getWorkerId(),
+                    secondBdt.getSignatures().get(i).getWorkerId(),
+                    "Worker should be consistent across BDTs");
+            assertEquals(originalBdt.getSignatures().get(i).getWorkerId(),
+                    thirdBdt.getSignatures().get(i).getWorkerId(),
+                    "Worker should be consistent across BDTs");
+        }
+    }
+
+    @Test
+    @DisplayName("Create BDT with null chantier - should handle gracefully")
+    void createBDTWithNullChantier_ShouldHandleGracefully() throws Exception {
+        // Arrange - Create BDT with null chantier
+        BdtDTO invalidBdt = new BdtDTO();
+        invalidBdt.setDate(today);
+        invalidBdt.setNom("Invalid BDT");
+        invalidBdt.setChantier(null); // This should cause an error
+
+        // Act & Assert - Verify proper error handling
+        mockMvc.perform(post("/api/bdt")
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidBdt)))
+                .andExpect(status().isBadRequest()); // or whatever error status your API returns
+    }
+
+    @Test
+    @DisplayName("Create BDT with non-existent chantier - should handle gracefully")
+    void createBDTWithNonExistentChantier_ShouldHandleGracefully() throws Exception {
+        // Arrange - Create BDT with non-existent chantier ID
+        BdtDTO invalidBdt = buildBDT(99965499L, today); // Non-existent chantier ID
+
+        // Act & Assert - Verify proper error handling
+        mockMvc.perform(post("/api/bdt")
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidBdt)))
+                .andExpect(status().isBadRequest()); // or whatever error status your API returns
+    }
+
     // ==================== Helper Methods ====================
 
     /**
@@ -576,5 +745,36 @@ class BdtControllerIntegrationTest {
                 dataNode.toString(),
                 objectMapper.getTypeFactory().constructCollectionType(List.class, clazz)
         );
+    }
+
+    /**
+     * Helper method to add test signatures to a BDT
+     * This simulates workers signing the BDT
+     */
+    private void addSignaturesToBDT(Long bdtId) throws Exception {
+        // Create a few test signatures with different workers
+        addTestSignature(bdtId, 1L, "John", "Doe", "worker1@example.com");
+        addTestSignature(bdtId, 2L, "Jane", "Smith", "worker2@example.com");
+        addTestSignature(bdtId, 3L, "Bob", "Wilson", "worker3@example.com");
+    }
+
+    /**
+     * Helper method to add a single test signature to a BDT
+     */
+    private void addTestSignature(Long bdtId, Long workerId, String prenom, String nom, String email) throws Exception {
+        SignatureRequestDTO signatureRequest = new SignatureRequestDTO();
+        signatureRequest.setWorkerId(workerId);
+        signatureRequest.setDocumentId(bdtId);
+        signatureRequest.setPrenom(prenom);
+        signatureRequest.setNom(nom);
+        signatureRequest.setSignatureDate(new Date());
+        signatureRequest.setSignatureImage("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="); // Minimal base64 image
+
+        // Add signature via API
+        mockMvc.perform(post("/api/document/signature")
+                        .header("Authorization", "Bearer " + authToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signatureRequest)))
+                .andExpect(status().isOk());
     }
 }

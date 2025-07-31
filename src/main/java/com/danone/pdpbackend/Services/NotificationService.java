@@ -26,17 +26,4 @@ public interface NotificationService {
     int markAllAsRead(User currentUser);
 
     long getUnreadNotificationCount(User targetUser);
-
-    // --- Helper methods to trigger notifications from other services ---
-    void notifyChantierStatusProblem(Chantier chantier, String problemDetails);
-    void notifyChantierRequiresPdp(Chantier chantier);
-    void notifyChantierRequiresBdt(Chantier chantier);
-    void notifyChantierInactiveToday(Chantier chantier);
-
-    void notifyDocumentCompleted(Document document);
-    void notifyDocumentActionNeeded(Document document, String specificActionMessage, NotificationType type); // More specific
-    void notifyDocumentSignatureMissing(Document document, List<User> usersToSign);
-    void notifyDocumentPermitMissing(Document document);
-    void notifyDocumentExpired(Document document);
-
 }

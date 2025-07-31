@@ -21,7 +21,8 @@ public class DocumentSignatureDTO {
     private ImageModel signatureVisual; // The visual signature data
     private String signerRole; // Optional: Role during signing (e.g., "ChargeDeTravail")
     private boolean active = true; // Status of the signature
-
+    private String prenom;
+    private String nom;
     // Constructor without workerName if not always needed immediately
     public DocumentSignatureDTO(Long id, Long documentId, Long workerId, Date signatureDate, ImageModel signatureVisual, String signerRole, boolean active, Long userId) {
         this.id = id;

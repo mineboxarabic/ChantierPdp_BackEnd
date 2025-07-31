@@ -32,6 +32,12 @@ public class Bdt extends Document {
 
     private LocalDate date;
 
+    private Boolean personnelDansZone;
+
+    private String horaireDeTravaille;
+
+    private String tachesAuthoriser;
+
     public Bdt(long l) {
         super.setId(l);
     }

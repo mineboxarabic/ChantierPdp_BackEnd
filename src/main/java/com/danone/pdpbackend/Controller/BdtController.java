@@ -1,10 +1,12 @@
 package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.BdtService;
+import com.danone.pdpbackend.Services.ChantierService;
 import com.danone.pdpbackend.Utils.ApiResponse;
 
 import com.danone.pdpbackend.Utils.mappers.BdtMapper;
 import com.danone.pdpbackend.entities.Bdt;
+import com.danone.pdpbackend.entities.Chantier;
 import com.danone.pdpbackend.entities.dto.BdtDTO;
 import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +37,12 @@ public class BdtController {
 
     @PostMapping("")
     public ResponseEntity<ApiResponse<BdtDTO>> createBDT(@RequestBody BdtDTO bdt) {
+
         Bdt createdBdt = bdtService.create(bdtMapper.toEntity(bdt));
+
         return ResponseEntity.ok(new ApiResponse<>(bdtMapper.toDTO(createdBdt), "BDT created successfully"));
+
+
     }
 
     @GetMapping("/{id}")
@@ -77,7 +83,9 @@ public class BdtController {
 
     @GetMapping("/chantier/{chantierId}")
     public ResponseEntity<ApiResponse<List<BdtDTO>>> getBDTByChantier(@PathVariable Long chantierId) {
+
         List<Bdt> bdts = bdtService.findByChantierId(chantierId);
+
         if (bdts.isEmpty()) {
             return ResponseEntity.status(404).body(new ApiResponse<>(null, "No BDTs found for this chantier"));
         }

@@ -226,14 +226,14 @@ public class ChantierServiceImpl implements ChantierService {
                 return ChantierStatus.ACTIVE;
             } else {
                      String message = String.format("Le chantier '%s' est inactif aujourd'hui mais devrait être actif.", chantier.getNom());
-                     notificationService.createNotification(NotificationType.CHANTIER_STATUS_BAD, message, chantier.getId(), "Chantier", "/chantiers/" + chantier.getId(), "Chantier: " + chantier.getNom());
+                     notificationService.createNotification(NotificationType.CHANTIER_STATUS_BAD, message, chantier.getId(), "Chantier", "/view/chantier/" + chantier.getId(), "Chantier: " + chantier.getNom());
 
                 // BDT exists but isn't ready (e.g., DRAFT, NEEDS_SIGNATURES, PERMIT_NEEDED)
                 return ChantierStatus.INACTIVE_TODAY; // Work cannot proceed today
             }
         } else {
             // If past start date but no BDT, it's ready but inactive today
-            notificationService.createNotification(NotificationType.CHANTIER_PENDING_BDT, "Le chantier '" + chantier.getNom() + "' est inactif aujourd'hui mais devrait être actif.", chantier.getId(), "Chantier", "/chantiers/" + chantier.getId(), "Chantier: " + chantier.getNom());
+            notificationService.createNotification(NotificationType.CHANTIER_PENDING_BDT, "Le chantier '" + chantier.getNom() + "' est inactif aujourd'hui mais devrait être actif.", chantier.getId(), "Chantier", "/view/chantier/" + chantier.getId(), "Chantier: " + chantier.getNom());
             return ChantierStatus.PENDING_BDT; // Pending BDT
         }
 
@@ -310,6 +310,16 @@ public class ChantierServiceImpl implements ChantierService {
 
         chantier.setStatus(newStatus);
         return chantierRepo.save(chantier);
+    }
+
+    @Override
+    public User getDonneurDOrdreForChantier(Long chantierId) {
+        Chantier chantier = getById(chantierId);
+        if (chantier == null) {
+            throw new EntityNotFoundException("Chantier with id " + chantierId + " not found");
+        }
+
+        return chantier.getDonneurDOrdre();
     }
 
 

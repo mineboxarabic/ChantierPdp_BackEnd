@@ -28,6 +28,13 @@ public class NotificationServiceImpl implements NotificationService {
     private final UsersRepo usersRepo; // Assuming you'll get User entity if only username is passed
     private final NotificationMapper notificationMapper; // Inject your mapper
 
+
+
+    public Boolean isNotificationExists(User targetUser, NotificationType type, String message, Long relatedEntityId, String relatedEntityType) {
+        return notificationRepo.findByTargetUserAndTypeAndMessageAndRelatedEntityIdAndRelatedEntityType(targetUser, type, message, relatedEntityId, relatedEntityType);
+    } 
+
+
     @Override
     @Transactional
     public NotificationDTO createNotification(User targetUser, NotificationType type, String message, Long relatedEntityId, String relatedEntityType, String callToActionLink, String relatedEntityDescription) {
@@ -47,10 +54,20 @@ public class NotificationServiceImpl implements NotificationService {
                 .callToActionLink(callToActionLink)
                 .isRead(false)
                 .build(); // Timestamp is set by @PrePersist
-        Notification savedNotification = notificationRepo.save(notification);
-        log.info("Notification created for user {}: {}", targetUser.getUsername(), message);
+        
+            Boolean isNotificationExists = notificationRepo.findByTargetUserAndTypeAndMessageAndRelatedEntityIdAndRelatedEntityType(targetUser, type, message, relatedEntityId, relatedEntityType);
+   
+        if (isNotificationExists != null && isNotificationExists) {
+            log.warn("Notification already exists for user {}: type={}, message={}", targetUser.getUsername(), type, message);
+            return null; // Or throw an exception if you want to enforce uniqueness
+        }
+
+
+                Notification savedNotification = notificationRepo.save(notification);
+            log.info("Notification created for user {}: {}", targetUser.getUsername(), message);
         return notificationMapper.toDTO(savedNotification);
     }
+
 
     public User getCurrentActor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -60,6 +77,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return null;
     }
+
 
     @Override
     @Transactional
@@ -134,119 +152,6 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional(readOnly = true)
     public long getUnreadNotificationCount(User targetUser) {
         return notificationRepo.countByTargetUserAndIsReadFalse(targetUser);
-    }
-
-    // --- Implementation of Helper Methods ---
-
-    private String getDocumentTypeName(Document document) {
-        if (document instanceof Pdp) return "PDP";
-        if (document instanceof Bdt) return "BDT";
-        return "Document";
-    }
-
-    private String getDocumentLink(Document document) {
-        String typePath = (document instanceof Pdp) ? "pdp" : "bdt";
-        return String.format("/documents/%s/%d", typePath, document.getId());
-    }
-
-    private String getChantierDescription(Chantier chantier){
-        return String.format("Chantier '%s' (ID: %d)", chantier.getNom(), chantier.getId());
-    }
-
-    private String getDocumentDescription(Document document) {
-        String docType = getDocumentTypeName(document);
-        String chantierName = (document.getChantier() != null) ? document.getChantier().getNom() : "N/A";
-        return String.format("%s ID: %d (Chantier: %s)", docType, document.getId(), chantierName);
-    }
-
-
-    @Override
-    public void notifyChantierStatusProblem(Chantier chantier, String problemDetails) {
-        if (chantier == null || chantier.getDonneurDOrdre() == null) return;
-        String message = String.format("Problème avec le chantier '%s': %s. Statut actuel: %s.",
-                chantier.getNom(), problemDetails, chantier.getStatus());
-        createNotification(chantier.getDonneurDOrdre(), NotificationType.CHANTIER_STATUS_BAD, message,
-                chantier.getId(), "Chantier", "/chantiers/" + chantier.getId(), getChantierDescription(chantier));
-        // TODO: Notify other relevant parties (e.g., EE/EU managers)
-    }
-
-    @Override
-    public void notifyChantierRequiresPdp(Chantier chantier) {
-        if (chantier == null || chantier.getDonneurDOrdre() == null) return;
-        String message = String.format("Le chantier '%s' requiert un PDP.", chantier.getNom());
-        createNotification(chantier.getDonneurDOrdre(), NotificationType.CHANTIER_PENDING_PDP, message,
-                chantier.getId(), "Chantier", "/chantiers/" + chantier.getId() + "/pdp/new", getChantierDescription(chantier));
-    }
-
-    @Override
-    public void notifyChantierRequiresBdt(Chantier chantier) {
-        if (chantier == null || chantier.getDonneurDOrdre() == null) return;
-        String message = String.format("Le chantier '%s' requiert un BDT pour aujourd'hui.", chantier.getNom());
-        createNotification(chantier.getDonneurDOrdre(), NotificationType.CHANTIER_PENDING_BDT, message,
-                chantier.getId(), "Chantier", "/chantiers/" + chantier.getId() + "/bdt/today", getChantierDescription(chantier));
-    }
-
-    @Override
-    public void notifyChantierInactiveToday(Chantier chantier) {
-        if (chantier == null || chantier.getDonneurDOrdre() == null) return;
-        String message = String.format("Le chantier '%s' est inactif aujourd'hui (BDT manquant ou non signé).", chantier.getNom());
-        createNotification(chantier.getDonneurDOrdre(), NotificationType.CHANTIER_INACTIVE_TODAY, message,
-                chantier.getId(), "Chantier", "/chantiers/" + chantier.getId() + "/bdt/today", getChantierDescription(chantier));
-    }
-
-
-    @Override
-    public void notifyDocumentCompleted(Document document) {
-        if (document == null || document.getChantier() == null || document.getChantier().getDonneurDOrdre() == null) return;
-        String docType = getDocumentTypeName(document);
-        String message = String.format("Le %s pour le chantier '%s' est complété.", docType, document.getChantier().getNom());
-        createNotification(document.getChantier().getDonneurDOrdre(), NotificationType.DOCUMENT_COMPLETED, message,
-                document.getId(), docType, getDocumentLink(document), getDocumentDescription(document));
-    }
-
-    @Override
-    public void notifyDocumentActionNeeded(Document document, String specificActionMessage, NotificationType type) {
-        if (document == null || document.getChantier() == null || document.getChantier().getDonneurDOrdre() == null) return;
-        String docType = getDocumentTypeName(document);
-        String message = String.format("Action requise pour le %s du chantier '%s': %s.",
-                docType, document.getChantier().getNom(), specificActionMessage);
-        createNotification(document.getChantier().getDonneurDOrdre(), type, message,
-                document.getId(), docType, getDocumentLink(document), getDocumentDescription(document));
-        // Potentially notify other users based on specificActionMessage or document state.
-    }
-
-    @Override
-    public void notifyDocumentSignatureMissing(Document document, List<User> usersToSign) {
-        if (document == null || usersToSign == null || usersToSign.isEmpty()) return;
-        String docType = getDocumentTypeName(document);
-        String chantierName = document.getChantier() != null ? document.getChantier().getNom() : "N/A";
-        String message = String.format("Votre signature est requise pour le %s du chantier '%s'.", docType, chantierName);
-
-        for (User user : usersToSign) {
-            createNotification(user, NotificationType.DOCUMENT_SIGNATURE_MISSING, message,
-                    document.getId(), docType, getDocumentLink(document), getDocumentDescription(document));
-        }
-    }
-
-    @Override
-    public void notifyDocumentPermitMissing(Document document) {
-        if (document == null || document.getChantier() == null || document.getChantier().getDonneurDOrdre() == null) return;
-        // Logic to determine who is responsible for permits (e.g., DonneurDOrdre or EE manager)
-        User responsibleUser = document.getChantier().getDonneurDOrdre(); // Example
-        String docType = getDocumentTypeName(document);
-        String message = String.format("Un permis est manquant pour le %s du chantier '%s'.", docType, document.getChantier().getNom());
-
-        createNotification(responsibleUser, NotificationType.DOCUMENT_PERMIT_MISSING, message,
-                document.getId(), docType, getDocumentLink(document) + "/permits", getDocumentDescription(document));
-    }
-
-    @Override
-    public void notifyDocumentExpired(Document document) {
-        if (document == null || document.getChantier() == null || document.getChantier().getDonneurDOrdre() == null) return;
-        String docType = getDocumentTypeName(document);
-        String message = String.format("Le %s pour le chantier '%s' a expiré et nécessite une révision/renouvellement.", docType, document.getChantier().getNom());
-        createNotification(document.getChantier().getDonneurDOrdre(), NotificationType.DOCUMENT_EXPIRED, message,
-                document.getId(), docType, getDocumentLink(document), getDocumentDescription(document));
     }
 
 }

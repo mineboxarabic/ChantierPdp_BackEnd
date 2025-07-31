@@ -60,7 +60,7 @@ public class DocumentControllerIntergrationTest {
         MvcResult loginResult = mockMvc.perform(post("/api/auth/authenticate")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\": \"Yassin4\", \"password\": \"Zaqwe123!\"}"))
-                .andExpect(status().isOk())
+                                                                                                                                                                                                                                      .andExpect(status().isOk())
                 .andReturn();
         String loginResponseJson = loginResult.getResponse().getContentAsString();
         ApiResponse<Map<String, Object>> authResponse = objectMapper.readValue(loginResponseJson, new TypeReference<>() {});
@@ -544,7 +544,7 @@ public class DocumentControllerIntergrationTest {
         // Sign the document using API endpoints instead of directly setting signatures
         signDocumentByWorkerAPI(pdp.getId(), worker1.getId(), "Worker1", "ForTransitionPDP1");
         signDocumentByWorkerAPI(pdp.getId(), worker2.getId(), "Worker2", "ForTransitionPDP2");
-
+        signDocumentByUserAPI(pdp.getId(), defaultDonneurDOrdreId, "Donneur", "DOrdre"); // Simulate a user signing
         // Get the current state after signing, then update only the relations
         PdpDTO currentPdp = getPdpByIdAPI(pdp.getId());
         currentPdp.setRelations(new ArrayList<>()); // No permit issues
@@ -586,12 +586,12 @@ public class DocumentControllerIntergrationTest {
         // Sign the document using API endpoints instead of directly setting signatures
         signDocumentByWorkerAPI(bdt.getId(), worker1.getId(), "Worker1", "ForTransitionBDT1");
         signDocumentByWorkerAPI(bdt.getId(), worker2.getId(), "Worker2", "ForTransitionBDT2");
+        signDocumentByUserAPI(bdt.getId(), defaultDonneurDOrdreId, "Donneur", "DOrdre"); // Simulate a user signing
 
         // Get the current state after signing, then update only the relations
         BdtDTO currentBdt = getBdtByIdAPI(bdt.getId());
         currentBdt.setRelations(new ArrayList<>()); // No permit issues
         BdtDTO updatedBdt = updateBdtAPI(currentBdt.getId(), currentBdt);
-
         // Verify BDT is ACTIVE
         BdtDTO fetchedBdt = getBdtByIdAPI(updatedBdt.getId());
         assertEquals(DocumentStatus.ACTIVE, fetchedBdt.getStatus(),
@@ -627,6 +627,7 @@ public class DocumentControllerIntergrationTest {
         // Sign the document using API endpoints instead of directly setting signatures
         signDocumentByWorkerAPI(pdp.getId(), worker1.getId(), "Worker1", "ForTransitionPDP1");
         signDocumentByWorkerAPI(pdp.getId(), worker2.getId(), "Worker2", "ForTransitionPDP2");
+        signDocumentByUserAPI(pdp.getId(), defaultDonneurDOrdreId, "Donneur", "DOrdre"); // Simulate a user signing
 
         // Get the current state after signing, then update only the relations
         PdpDTO currentPdp = getPdpByIdAPI(pdp.getId());
@@ -671,6 +672,7 @@ public class DocumentControllerIntergrationTest {
         signDocumentByWorkerAPI(pdp.getId(), worker1.getId(), "Worker1xxxxxxxxx", "ForFuturePDP1");
         signDocumentByWorkerAPI(pdp.getId(), worker2.getId(), "Worker2", "ForFuturePDP2");
 
+        signDocumentByUserAPI(pdp.getId(), defaultDonneurDOrdreId, "Donneur", "DOrdre"); // Simulate a user signing
         // Get the current state after signing, then update only the relations
         PdpDTO currentPdp = getPdpByIdAPI(pdp.getId());
         currentPdp.setRelations(new ArrayList<>()); // No permit issues
@@ -723,8 +725,15 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
         // Simulate fulfilling all conditions for ACTIVE
-        pdp.setSignatures(List.of(createSignatureDTO(worker.getId(), pdp.getId(), "TestRole", defaultDonneurDOrdreId),
+     /*   pdp.setSignatures(List.of(createSignatureDTO(worker.getId(), pdp.getId(), "TestRole", defaultDonneurDOrdreId),
                 createSignatureDTO(worker2.getId(), pdp.getId(), "TestRole", defaultDonneurDOrdreId))); // Both workers sign
+*/
+
+
+        signDocumentByWorkerAPI(pdp.getId(), worker.getId(), "Worker1", "ForActivePDP");
+        signDocumentByWorkerAPI(pdp.getId(), worker2.getId(), "Worker2", "ForActivePDP2");
+
+        signDocumentByUserAPI(pdp.getId(), defaultDonneurDOrdreId, "Donneur", "DOrdre"); // Simulate a user signing
 
         pdp.setRelations(new ArrayList<>()); // Assuming no permits needed for this simple case
 
@@ -752,9 +761,12 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
 
-        bdt.setSignatures(List.of(createSignatureDTO(worker.getId(), bdt.getId(), "TestRole", defaultDonneurDOrdreId),
-                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole", defaultDonneurDOrdreId))); // Both workers sign
+/*        bdt.setSignatures(List.of(createSignatureDTO(worker.getId(), bdt.getId(), "TestRole", defaultDonneurDOrdreId),
+                createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole", defaultDonneurDOrdreId)));*/ // Both workers sign
 
+        signDocumentByWorkerAPI(bdt.getId(), worker.getId(), "Worker1", "ForActiveBDT");
+        signDocumentByWorkerAPI(bdt.getId(), worker2.getId(), "Worker2", "ForActiveBDT2");
+    signDocumentByUserAPI( bdt.getId(), defaultDonneurDOrdreId, "Donneur", "DOrdre"); // Simulate a user signing
         bdt.setRelations(new ArrayList<>()); // Assuming no permits needed
 
         BdtDTO updatedBdt = updateBdtAPI(bdt.getId(), bdt);
@@ -840,10 +852,13 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
 
+/*
         pdp.setSignatures(List.of(createSignatureDTO(worker.getId(), pdp.getId(), "TestRole"),createSignatureDTO(worker2.getId(), pdp.getId(), "TestRole2"))); // Both workers sign
+*/
 
 
-
+        signDocumentByWorkerAPI(pdp.getId(),  worker.getId(), "Worker1", "ForActivePDP");
+        signDocumentByWorkerAPI(pdp.getId(),  worker2.getId(), "Worker2", "ForActivePDP2");
         // Create a Permit and a Risque that requires this permit
     //    Permit permitEntity = createPermitAPI("Test Permit For PDP", PermiTypes.FOUILLE);
         Risque risqueEntity = createRisqueAPI("Risque Requiring Permit", true, PermiTypes.ATEX);
@@ -859,7 +874,7 @@ public class DocumentControllerIntergrationTest {
 
         pdp.setRelations(Collections.singletonList(risqueRelation));
 
-
+    signDocumentByUserAPI(pdp.getId(), defaultDonneurDOrdreId, "Donneur", "DOrdre"); // Simulate a user signing
 
 
         PdpDTO updatedPdp = updatePdpAPI(pdp.getId(), pdp);
@@ -887,7 +902,11 @@ public class DocumentControllerIntergrationTest {
         selectWorkerForChantierAPI(worker2.getId(), chantier.getId());
 
 
-        bdt.setSignatures(List.of(createSignatureDTO(worker.getId(), bdt.getId(), "TestRole"),createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole2"))); // Both workers sign
+        //bdt.setSignatures(List.of(createSignatureDTO(worker.getId(), bdt.getId(), "TestRole"),createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole2"))); // Both workers sign
+
+        signDocumentByWorkerAPI(bdt.getId(), worker.getId(), "Worker1", "ForActiveBDT");
+        signDocumentByWorkerAPI(bdt.getId(), worker2.getId(), "Worker2", "ForActiveBDT2");
+        signDocumentByUserAPI(bdt.getId(), defaultDonneurDOrdreId, "Donneur", "DOrdre"); // Simulate a user signing
 
 
 
@@ -988,16 +1007,25 @@ public class DocumentControllerIntergrationTest {
         permitRelation.setAnswer(true);
 
         // Set signatures and relations
-        bdt.setSignatures(List.of(
+     /*   bdt.setSignatures(List.of(
                 createSignatureDTO(worker1.getId(), bdt.getId(), "TestRole", defaultDonneurDOrdreId),
                 createSignatureDTO(worker2.getId(), bdt.getId(), "TestRole2", defaultDonneurDOrdreId)
         ));
+*/
 
+        signDocumentByWorkerAPI(bdt.getId(), worker1.getId(), "TestRole", "dwij");
+        signDocumentByWorkerAPI(bdt.getId(), worker2.getId(), "TestRole2", "djiwj");
+
+
+        signDocumentByUserAPI(bdt.getId(), defaultDonneurDOrdreId, "TestRole","djijw" );
         bdt.setRelations(List.of(risqueRelation, permitRelation));
 
-        BdtDTO updatedBdt = updateBdtAPI(bdt.getId(), bdt);
+        BdtDTO fetchedBdt = getBdtByIdAPI(bdt.getId());
 
-        BdtDTO fetchedBdt = getBdtByIdAPI(updatedBdt.getId());
+
+        BdtDTO updatedBdt = updateBdtAPI(bdt.getId(), fetchedBdt);
+
+        fetchedBdt = getBdtByIdAPI(updatedBdt.getId());
 
         assertEquals(DocumentStatus.ACTIVE, fetchedBdt.getStatus(),
                 "BDT with all signatures and permits should be ACTIVE");

@@ -38,6 +38,9 @@ public class Entreprise {
     @Column(name = "raisonsociale")
     private String raisonSociale;
 
+    @Column(name = "address")
+    private String address; // ✅ Address of the company
+
     @Column(name = "image")
     @Embedded
     private ImageModel image; // ✅ For storing binary data (e.g., logos)

@@ -1,8 +1,11 @@
 package com.danone.pdpbackend.Controller;
 
+import com.danone.pdpbackend.Services.DocumentService;
 import com.danone.pdpbackend.Services.DocumentSignatureService;
 import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.entities.Document;
 import com.danone.pdpbackend.entities.DocumentSignature;
+import com.danone.pdpbackend.entities.dto.DocumentDTO;
 import com.danone.pdpbackend.entities.dto.DocumentSignatureDTO;
 import com.danone.pdpbackend.entities.dto.SignatureRequestDTO;
 import com.danone.pdpbackend.entities.dto.SignatureResponseDTO;
@@ -22,6 +25,7 @@ import java.util.Objects;
 public class DocumentController {
 
     private final DocumentSignatureService documentSignatureService;
+    private final DocumentService documentService;
 
 /*    @PostMapping("/{documentId}/sign")
     public ResponseEntity<ApiResponse<String>> signDocument(
@@ -126,4 +130,19 @@ public class DocumentController {
         }
     }
 
+    @PostMapping("/{documentId}/duplicate")
+    public ResponseEntity<ApiResponse<DocumentDTO>> duplicateDocument(@PathVariable Long documentId) {
+        try {
+            DocumentDTO duplicatedDocument = documentService.duplicateDocument(documentId);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(new ApiResponse<>(duplicatedDocument, "Document duplicated successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(null, e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error duplicating document: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(null, "Internal server error while duplicating document"));
+        }
+    }
 }
