@@ -14,4 +14,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Dispositif extends InfoDeBase {
+    private String type;
 }

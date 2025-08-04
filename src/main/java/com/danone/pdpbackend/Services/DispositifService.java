@@ -1,21 +1,21 @@
 package com.danone.pdpbackend.Services;
 
-import com.danone.pdpbackend.entities.Dispositif;
+import com.danone.pdpbackend.entities.dto.DispositifDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 
 public interface DispositifService {
-    List<Dispositif> getAllDispositifs();
+    List<DispositifDTO> getAllDispositifs();
 
-    Dispositif getDispositifById(Long id);
+    DispositifDTO getDispositifById(Long id);
 
-    Dispositif createDispositif(Dispositif dispositif);
+    DispositifDTO createDispositif(DispositifDTO dispositifDTO);
 
-    Dispositif updateDispositif(Long id, Dispositif dispositifDetails);
+    DispositifDTO updateDispositif(Long id, DispositifDTO dispositifDetailsDTO);
 
     boolean deleteDispositif(Long id);
 
-    List<Dispositif> getDispositifsByIds(List<Long> ids);
+    List<DispositifDTO> getDispositifsByIds(List<Long> ids);
 }
