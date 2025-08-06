@@ -26,23 +26,29 @@ public class SecurityConfiguration {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ApplicationConfig applicationConfig;
+    private final AppProperties appProperties;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(CsrfConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authenticationProvider(applicationConfig.authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("api/auth/**")
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated());
+        // If development mode, disable all security
+        if (appProperties.isDev()) {
+            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        } else {
+            // Production security configuration
+            http.sessionManagement(session -> session
+                            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    )
+                    .authenticationProvider(applicationConfig.authenticationProvider())
+                    .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers("api/auth/**")
+                            .permitAll()
+                            .anyRequest()
+                            .authenticated());
+        }
         return http.build();
     }
 
@@ -74,8 +80,8 @@ public class SecurityConfiguration {
     @Bean
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof User) {
-            return ((User) auth.getPrincipal());
+        if (auth != null && auth.getPrincipal() instanceof User user) {
+            return user;
         }
         return null;
     }

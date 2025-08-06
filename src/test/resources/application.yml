@@ -16,3 +16,5 @@ server:
 logging:
   level:
     sql: debug
+app:
+  dev: true

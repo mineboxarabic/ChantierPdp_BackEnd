@@ -99,7 +99,7 @@ public class DocumentSignatureService {
 
     public List<Worker> getSignedWorkersByDocument(Long documentId){
         if(documentId == null ){
-            return List.of();
+            throw new IllegalArgumentException("Document ID cannot be null");
         }
 
         return documentSignatureRepository.findWorkersByDocumentId(documentId);
