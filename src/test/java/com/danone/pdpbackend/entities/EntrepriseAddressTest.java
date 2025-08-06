@@ -56,8 +56,8 @@ public class EntrepriseAddressTest {
         
         EntrepriseDTO dto = new EntrepriseDTO();
         
-        // Create a simple mapper instance for testing
-        EntrepriseMapper mapper = new EntrepriseMapper(null, null, null);
+        // Create a simple mapper instance for testing with all required services
+        EntrepriseMapper mapper = new EntrepriseMapper(null, null, null, null);
         mapper.setDTOFields(dto, entreprise);
         
         assertEquals(entreprise.getId(), dto.getId());

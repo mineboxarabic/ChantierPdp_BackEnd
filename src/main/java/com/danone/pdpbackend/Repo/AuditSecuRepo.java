@@ -1,5 +1,6 @@
 package com.danone.pdpbackend.Repo;
 
+import com.danone.pdpbackend.Utils.AuditType;
 import com.danone.pdpbackend.entities.AuditSecu;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
@@ -22,7 +23,7 @@ public interface AuditSecuRepo extends Repository<AuditSecu, Long> {
     @Query("SELECT MAX(id) FROM AuditSecu")
     Long findMaxId();
 
-    List<AuditSecu> findByTypeOfAudit(String typeOfAudit);
+    List<AuditSecu> findByTypeOfAudit(AuditType typeOfAudit);
 
     void deleteById(Long id);
 }

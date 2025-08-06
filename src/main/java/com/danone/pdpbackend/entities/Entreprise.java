@@ -59,6 +59,10 @@ public class Entreprise {
     @OneToMany(mappedBy = "entreprise", cascade = CascadeType.ALL)
     private List<Worker> workers = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "responsable_chantier_id")
+    private User responsableChantier;
+
     public Entreprise(long l) {
         this.id = l;
     }

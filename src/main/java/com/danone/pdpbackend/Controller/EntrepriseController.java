@@ -55,14 +55,14 @@ public class EntrepriseController {
 
     //Read
     @GetMapping("/{id}")
-    public ResponseEntity<EntrepriseDTO> getEntreprise(@PathVariable Long id)
+    public ResponseEntity<ApiResponse<EntrepriseDTO>> getEntreprise(@PathVariable Long id)
     {
         Entreprise entreprise = entrepriseService.getById(id);
 
         if( entreprise == null){
-            return ResponseEntity.badRequest().body(null).notFound().build();
+            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Entreprise not found")).notFound().build();
         }
-        return ResponseEntity.ok(entrepriseMapper.toDTO(entreprise));
+        return ResponseEntity.ok(new ApiResponse<>(entrepriseMapper.toDTO(entreprise), "Entreprise fetched successfully"));
     }
 
     //Update

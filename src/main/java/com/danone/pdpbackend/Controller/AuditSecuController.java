@@ -2,6 +2,7 @@ package com.danone.pdpbackend.Controller;
 
 import com.danone.pdpbackend.Services.AuditSecuService;
 import com.danone.pdpbackend.Utils.ApiResponse;
+import com.danone.pdpbackend.Utils.AuditType;
 import com.danone.pdpbackend.Utils.mappers.AuditSecuMapper;
 import com.danone.pdpbackend.entities.AuditSecu;
 import com.danone.pdpbackend.entities.dto.AuditSecuDTO;
@@ -36,11 +37,17 @@ public class AuditSecuController {
 
     @GetMapping("/type/{typeOfAudit}")
     public ResponseEntity<ApiResponse<List<AuditSecuDTO>>> getAuditSecusByType(@PathVariable String typeOfAudit) {
-        List<AuditSecu> auditSecus = auditSecuService.getAuditSecusByType(typeOfAudit);
-        List<AuditSecuDTO> auditSecuDTOs = auditSecus.stream()
-                .map(auditSecuMapper::toDTO)
-                .toList();
-        return ResponseEntity.ok(new ApiResponse<>(auditSecuDTOs, "AuditSecus fetched by type"));
+        try {
+            // Convert string to enum, handling backward compatibility
+            AuditType auditType = AuditType.valueOf(typeOfAudit.toUpperCase());
+            List<AuditSecu> auditSecus = auditSecuService.getAuditSecusByType(auditType);
+            List<AuditSecuDTO> auditSecuDTOs = auditSecus.stream()
+                    .map(auditSecuMapper::toDTO)
+                    .toList();
+            return ResponseEntity.ok(new ApiResponse<>(auditSecuDTOs, "AuditSecus fetched by type"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(null, "Invalid audit type: " + typeOfAudit));
+        }
     }
 
 

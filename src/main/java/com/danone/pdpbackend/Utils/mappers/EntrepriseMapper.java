@@ -4,6 +4,7 @@ package com.danone.pdpbackend.Utils.mappers;
 import com.danone.pdpbackend.Services.BdtService;
 import com.danone.pdpbackend.Services.PdpService;
 import com.danone.pdpbackend.Services.WorkerService;
+import com.danone.pdpbackend.Services.UserService;
 import com.danone.pdpbackend.Utils.BidirectionalRelationshipUtil;
 import com.danone.pdpbackend.entities.Bdt;
 import com.danone.pdpbackend.entities.Entreprise;
@@ -20,10 +21,13 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
     private final PdpService pdpService;
     private final BdtService bdtService;
     private final WorkerService workerService;
-    public EntrepriseMapper(@Lazy PdpService pdpService, BdtService bdtService, WorkerService workerService) {
+    private final UserService userService;
+    
+    public EntrepriseMapper(@Lazy PdpService pdpService, BdtService bdtService, WorkerService workerService, UserService userService) {
         this.pdpService = pdpService;
         this.bdtService = bdtService;
         this.workerService = workerService;
+        this.userService = userService;
     }
 
     @Override
@@ -40,6 +44,11 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
         entrepriseDTO.setImage(entreprise.getImage());
         entrepriseDTO.setMedecinDuTravailleEE(entreprise.getMedecinDuTravailleEE());
         entrepriseDTO.setType(entreprise.getType());
+        
+        // ResponsableChantier
+        if (entreprise.getResponsableChantier() != null) {
+            entrepriseDTO.setResponsableChantier(entreprise.getResponsableChantier().getId());
+        }
 
         //PDP
         if (entreprise.getPdps() != null) {
@@ -78,6 +87,11 @@ public class EntrepriseMapper implements Mapper<EntrepriseDTO, Entreprise> {
         entreprise.setImage(entrepriseDTO.getImage());
         entreprise.setMedecinDuTravailleEE(entrepriseDTO.getMedecinDuTravailleEE());
         entreprise.setType(entrepriseDTO.getType());
+        
+        // ResponsableChantier
+        if (entrepriseDTO.getResponsableChantier() != null) {
+            entreprise.setResponsableChantier(userService.findById(entrepriseDTO.getResponsableChantier()));
+        }
 
         // Update Workers bidirectional relationship
         if (entrepriseDTO.getWorkers() != null) {

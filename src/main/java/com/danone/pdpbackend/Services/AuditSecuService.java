@@ -1,5 +1,6 @@
 package com.danone.pdpbackend.Services;
 
+import com.danone.pdpbackend.Utils.AuditType;
 import com.danone.pdpbackend.entities.AuditSecu;
 
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.List;
 public interface AuditSecuService {
     List<AuditSecu> getAllAuditSecus();
 
-    List<AuditSecu> getAuditSecusByType(String typeOfAudit);
+    List<AuditSecu> getAuditSecusByType(AuditType typeOfAudit);
 
 
 

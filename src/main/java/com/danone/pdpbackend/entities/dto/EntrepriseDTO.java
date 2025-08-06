@@ -26,4 +26,5 @@ public class EntrepriseDTO {
     private List<Long> pdps; // ✅ If this entreprise is an EE, it has PDPs
     private List<Long> bdts; // ✅ If this entreprise is an EE, it has BDTs
     private List<Long> workers; // ✅ Workers employed by this entreprise
+    private Long responsableChantier; // ✅ User ID of the responsible person
 }

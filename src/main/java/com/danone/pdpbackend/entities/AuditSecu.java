@@ -1,7 +1,10 @@
 package com.danone.pdpbackend.entities;
 
 
+import com.danone.pdpbackend.Utils.AuditType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class AuditSecu extends InfoDeBase{
-    private String typeOfAudit; // New attribute to distinguish audit types
+    @Enumerated(EnumType.STRING)
+    private AuditType typeOfAudit; // Enum to distinguish audit types
 
 }

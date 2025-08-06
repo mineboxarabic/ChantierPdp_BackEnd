@@ -3,6 +3,7 @@ package com.danone.pdpbackend.Services.Implimetations;
 import org.springframework.stereotype.Service;
 import com.danone.pdpbackend.Repo.AuditSecuRepo;
 import com.danone.pdpbackend.Services.AuditSecuService;
+import com.danone.pdpbackend.Utils.AuditType;
 import com.danone.pdpbackend.entities.AuditSecu;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class AuditSecuServiceImpl implements AuditSecuService {
     }
 
     @Override
-    public List<AuditSecu> getAuditSecusByType(String typeOfAudit) {
+    public List<AuditSecu> getAuditSecusByType(AuditType typeOfAudit) {
         return auditSecuRepo.findByTypeOfAudit(typeOfAudit);
     }
 
